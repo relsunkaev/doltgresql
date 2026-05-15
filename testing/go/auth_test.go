@@ -134,29 +134,23 @@ func TestAuthTests(t *testing.T) {
 			},
 		},
 		{
-			Name: `ALTER LOGIN`,
-			Assertions: []ScriptTestAssertion{
-				{ // By default, roles cannot be logged into
-					Query: `CREATE ROLE user1 PASSWORD 'pass1';`, PostgresOracle: ScriptTestPostgresOracle{ID:
+			Name: `ALTER LOGIN`, SetUpScript: []string{
 
-					// Users can be logged into by default, this is the only difference between roles and users
-					"auth-test-testauthtests-0017-create-role-user1-password-pass1"},
-				},
-				{
-					Query: `CREATE USER user2 PASSWORD 'pass2';`, PostgresOracle: ScriptTestPostgresOracle{ID:
+				// By default, roles cannot be logged into
+				`CREATE ROLE user1 PASSWORD 'pass1';`,
 
-					// A role with LOGIN defined is exactly equivalent to a default user
-					"auth-test-testauthtests-0018-create-user-user2-password-pass2"},
-				},
-				{
-					Query: `CREATE ROLE user3 PASSWORD 'pass3' LOGIN;`, PostgresOracle: ScriptTestPostgresOracle{ID:
+				// Users can be logged into by default, this is the only difference between roles and users
 
-					// A user with NOLOGIN defined is exactly equivalent to a default role
-					"auth-test-testauthtests-0019-create-role-user3-password-pass3"},
-				},
-				{
-					Query: `CREATE USER user4 PASSWORD 'pass4' NOLOGIN;`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0020-create-user-user4-password-pass4"},
-				},
+				`CREATE USER user2 PASSWORD 'pass2';`,
+
+				// A role with LOGIN defined is exactly equivalent to a default user
+
+				`CREATE ROLE user3 PASSWORD 'pass3' LOGIN;`,
+
+				// A user with NOLOGIN defined is exactly equivalent to a default role
+
+				`CREATE USER user4 PASSWORD 'pass4' NOLOGIN;`}, Assertions: []ScriptTestAssertion{
+
 				{
 					Query:       `SELECT 1;`,
 					Username:    `user1`,

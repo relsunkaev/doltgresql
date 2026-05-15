@@ -1,0 +1,81 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map auth_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/auth_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/auth_test.go:TestAuthTestsPostgresOraclePrefix#0001",
+      "source": "testing/go/postgres16/auth_test.go:TestAuthTestsPostgresOraclePrefix",
+      "ordinal": 1,
+      "scriptName": "ALTER LOGIN",
+      "oracle": "postgres",
+      "postgresId": "auth-test-testauthtests-0017-create-role-user1-password-pass1",
+      "suggestedId": "auth-test-testauthtests-0017-create-role-user1-password-pass1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE ROLE user1 PASSWORD 'pass1';",
+      "querySha256": "e7669b7e3b2973c7ae1e71244ab6f6d8d1813e7ed2fee6108c1844e2066500f1",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/auth_test.go:TestAuthTestsPostgresOraclePrefix#0002",
+      "source": "testing/go/postgres16/auth_test.go:TestAuthTestsPostgresOraclePrefix",
+      "ordinal": 2,
+      "scriptName": "ALTER LOGIN",
+      "oracle": "postgres",
+      "postgresId": "auth-test-testauthtests-0018-create-user-user2-password-pass2",
+      "suggestedId": "auth-test-testauthtests-0018-create-user-user2-password-pass2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE USER user2 PASSWORD 'pass2';",
+      "querySha256": "fbcdc40a2d2985af7532f25423c369526f21baaf284c92e1c02584c72dbec02a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/auth_test.go:TestAuthTestsPostgresOraclePrefix#0003",
+      "source": "testing/go/postgres16/auth_test.go:TestAuthTestsPostgresOraclePrefix",
+      "ordinal": 3,
+      "scriptName": "ALTER LOGIN",
+      "oracle": "postgres",
+      "postgresId": "auth-test-testauthtests-0019-create-role-user3-password-pass3",
+      "suggestedId": "auth-test-testauthtests-0019-create-role-user3-password-pass3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE ROLE user3 PASSWORD 'pass3' LOGIN;",
+      "querySha256": "ee2bf91ea2ae51682629a6559b2636e030b28c6af8358db337c672230baffa9b",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/auth_test.go:TestAuthTestsPostgresOraclePrefix#0004",
+      "source": "testing/go/postgres16/auth_test.go:TestAuthTestsPostgresOraclePrefix",
+      "ordinal": 4,
+      "scriptName": "ALTER LOGIN",
+      "oracle": "postgres",
+      "postgresId": "auth-test-testauthtests-0020-create-user-user4-password-pass4",
+      "suggestedId": "auth-test-testauthtests-0020-create-user-user4-password-pass4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE USER user4 PASSWORD 'pass4' NOLOGIN;",
+      "querySha256": "bdf24cf8b02fdb0977d570c17d341c347f23b4e8788606a2ab7766c567707d35",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

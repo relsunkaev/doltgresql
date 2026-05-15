@@ -2,7 +2,7 @@
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map auth_test.go --force-postgres-oracle",
   "sourceFile": "testing/go/auth_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -290,70 +290,6 @@
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 17,
       "scriptName": "ALTER LOGIN",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0017-create-role-user1-password-pass1",
-      "suggestedId": "auth-test-testauthtests-0017-create-role-user1-password-pass1",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "CREATE ROLE user1 PASSWORD 'pass1';",
-      "querySha256": "e7669b7e3b2973c7ae1e71244ab6f6d8d1813e7ed2fee6108c1844e2066500f1",
-      "expectedRows": [],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/auth_test.go:TestAuthTests#0018",
-      "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 18,
-      "scriptName": "ALTER LOGIN",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0018-create-user-user2-password-pass2",
-      "suggestedId": "auth-test-testauthtests-0018-create-user-user2-password-pass2",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "CREATE USER user2 PASSWORD 'pass2';",
-      "querySha256": "fbcdc40a2d2985af7532f25423c369526f21baaf284c92e1c02584c72dbec02a",
-      "expectedRows": [],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/auth_test.go:TestAuthTests#0019",
-      "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 19,
-      "scriptName": "ALTER LOGIN",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0019-create-role-user3-password-pass3",
-      "suggestedId": "auth-test-testauthtests-0019-create-role-user3-password-pass3",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "CREATE ROLE user3 PASSWORD 'pass3' LOGIN;",
-      "querySha256": "ee2bf91ea2ae51682629a6559b2636e030b28c6af8358db337c672230baffa9b",
-      "expectedRows": [],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/auth_test.go:TestAuthTests#0020",
-      "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 20,
-      "scriptName": "ALTER LOGIN",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0020-create-user-user4-password-pass4",
-      "suggestedId": "auth-test-testauthtests-0020-create-user-user4-password-pass4",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "CREATE USER user4 PASSWORD 'pass4' NOLOGIN;",
-      "querySha256": "bdf24cf8b02fdb0977d570c17d341c347f23b4e8788606a2ab7766c567707d35",
-      "expectedRows": [],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/auth_test.go:TestAuthTests#0021",
-      "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 21,
-      "scriptName": "ALTER LOGIN",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0021-select-1",
       "expectedKind": "error",
@@ -364,9 +300,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0022",
+      "key": "testing/go/auth_test.go:TestAuthTests#0018",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 22,
+      "ordinal": 18,
       "scriptName": "ALTER LOGIN",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0022-select-2",
@@ -387,9 +323,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0023",
+      "key": "testing/go/auth_test.go:TestAuthTests#0019",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 23,
+      "ordinal": 19,
       "scriptName": "ALTER LOGIN",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0023-select-3",
@@ -410,9 +346,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0024",
+      "key": "testing/go/auth_test.go:TestAuthTests#0020",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 24,
+      "ordinal": 20,
       "scriptName": "ALTER LOGIN",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0024-select-4",
@@ -424,9 +360,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0025",
+      "key": "testing/go/auth_test.go:TestAuthTests#0021",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 25,
+      "ordinal": 21,
       "scriptName": "ALTER LOGIN",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0025-alter-user-user1-with-login",
@@ -440,9 +376,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0026",
+      "key": "testing/go/auth_test.go:TestAuthTests#0022",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 26,
+      "ordinal": 22,
       "scriptName": "ALTER LOGIN",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0026-alter-user-user2-with-nologin",
@@ -456,9 +392,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0027",
+      "key": "testing/go/auth_test.go:TestAuthTests#0023",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 27,
+      "ordinal": 23,
       "scriptName": "ALTER LOGIN",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0027-select-5",
@@ -479,9 +415,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0028",
+      "key": "testing/go/auth_test.go:TestAuthTests#0024",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 28,
+      "ordinal": 24,
       "scriptName": "ALTER LOGIN",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0028-select-6",
@@ -493,9 +429,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0029",
+      "key": "testing/go/auth_test.go:TestAuthTests#0025",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 29,
+      "ordinal": 25,
       "scriptName": "CREATE USER IF NOT EXISTS",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0029-select-1",
@@ -507,9 +443,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0030",
+      "key": "testing/go/auth_test.go:TestAuthTests#0026",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 30,
+      "ordinal": 26,
       "scriptName": "CREATE USER IF NOT EXISTS",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0030-create-user-user1-password-hello1",
@@ -523,9 +459,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0031",
+      "key": "testing/go/auth_test.go:TestAuthTests#0027",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 31,
+      "ordinal": 27,
       "scriptName": "CREATE USER IF NOT EXISTS",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0031-create-user-user1-password-hello2",
@@ -540,9 +476,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0032",
+      "key": "testing/go/auth_test.go:TestAuthTests#0028",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 32,
+      "ordinal": 28,
       "scriptName": "CREATE USER IF NOT EXISTS",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0032-create-user-if-not-exists",
@@ -553,9 +489,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0033",
+      "key": "testing/go/auth_test.go:TestAuthTests#0029",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 33,
+      "ordinal": 29,
       "scriptName": "CREATE USER IF NOT EXISTS",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0033-select-2",
@@ -567,9 +503,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0034",
+      "key": "testing/go/auth_test.go:TestAuthTests#0030",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 34,
+      "ordinal": 30,
       "scriptName": "CREATE USER IF NOT EXISTS",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0034-create-role-if-not-exists",
@@ -580,9 +516,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0035",
+      "key": "testing/go/auth_test.go:TestAuthTests#0031",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 35,
+      "ordinal": 31,
       "scriptName": "CREATE USER IF NOT EXISTS",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0035-create-role-user2-password-hi2",
@@ -593,9 +529,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0036",
+      "key": "testing/go/auth_test.go:TestAuthTests#0032",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 36,
+      "ordinal": 32,
       "scriptName": "CREATE USER IF NOT EXISTS",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0036-create-role-if-not-exists",
@@ -606,9 +542,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0037",
+      "key": "testing/go/auth_test.go:TestAuthTests#0033",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 37,
+      "ordinal": 33,
       "scriptName": "CREATE USER IF NOT EXISTS",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0037-select-3",
@@ -620,9 +556,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0038",
+      "key": "testing/go/auth_test.go:TestAuthTests#0034",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 38,
+      "ordinal": 34,
       "scriptName": "DROP USER IF EXISTS",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0038-create-user-user1-password-hello1",
@@ -636,9 +572,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0039",
+      "key": "testing/go/auth_test.go:TestAuthTests#0035",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 39,
+      "ordinal": 35,
       "scriptName": "DROP USER IF EXISTS",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0039-create-user-user2-password-hello2",
@@ -652,9 +588,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0040",
+      "key": "testing/go/auth_test.go:TestAuthTests#0036",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 40,
+      "ordinal": 36,
       "scriptName": "DROP USER IF EXISTS",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0040-select-1",
@@ -675,9 +611,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0041",
+      "key": "testing/go/auth_test.go:TestAuthTests#0037",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 41,
+      "ordinal": 37,
       "scriptName": "DROP USER IF EXISTS",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0041-select-2",
@@ -698,9 +634,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0042",
+      "key": "testing/go/auth_test.go:TestAuthTests#0038",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 42,
+      "ordinal": 38,
       "scriptName": "DROP USER IF EXISTS",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0042-drop-user-user1",
@@ -714,9 +650,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0043",
+      "key": "testing/go/auth_test.go:TestAuthTests#0039",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 43,
+      "ordinal": 39,
       "scriptName": "DROP USER IF EXISTS",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0043-drop-user-user1",
@@ -731,9 +667,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0044",
+      "key": "testing/go/auth_test.go:TestAuthTests#0040",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 44,
+      "ordinal": 40,
       "scriptName": "DROP USER IF EXISTS",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0044-drop-user-if-exists-user1",
@@ -747,9 +683,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0045",
+      "key": "testing/go/auth_test.go:TestAuthTests#0041",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 45,
+      "ordinal": 41,
       "scriptName": "DROP USER IF EXISTS",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0045-select-3",
@@ -761,9 +697,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0046",
+      "key": "testing/go/auth_test.go:TestAuthTests#0042",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 46,
+      "ordinal": 42,
       "scriptName": "DROP USER IF EXISTS",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0046-drop-role-if-exists-user2",
@@ -777,9 +713,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0047",
+      "key": "testing/go/auth_test.go:TestAuthTests#0043",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 47,
+      "ordinal": 43,
       "scriptName": "DROP USER IF EXISTS",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0047-drop-role-user2",
@@ -794,9 +730,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0048",
+      "key": "testing/go/auth_test.go:TestAuthTests#0044",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 48,
+      "ordinal": 44,
       "scriptName": "DROP USER IF EXISTS",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0048-drop-role-if-exists-user2",
@@ -810,9 +746,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0049",
+      "key": "testing/go/auth_test.go:TestAuthTests#0045",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 49,
+      "ordinal": 45,
       "scriptName": "DROP USER IF EXISTS",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0049-select-4",
@@ -824,9 +760,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0050",
+      "key": "testing/go/auth_test.go:TestAuthTests#0046",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 50,
+      "ordinal": 46,
       "scriptName": "DROP USER with multiple users",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0050-create-user-user1-password-hello1",
@@ -840,9 +776,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0051",
+      "key": "testing/go/auth_test.go:TestAuthTests#0047",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 51,
+      "ordinal": 47,
       "scriptName": "DROP USER with multiple users",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0051-create-user-user2-password-hello2",
@@ -856,9 +792,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0052",
+      "key": "testing/go/auth_test.go:TestAuthTests#0048",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 52,
+      "ordinal": 48,
       "scriptName": "DROP USER with multiple users",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0052-create-user-user3-password-hello3",
@@ -872,9 +808,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0053",
+      "key": "testing/go/auth_test.go:TestAuthTests#0049",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 53,
+      "ordinal": 49,
       "scriptName": "DROP USER with multiple users",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0053-select-1",
@@ -895,9 +831,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0054",
+      "key": "testing/go/auth_test.go:TestAuthTests#0050",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 54,
+      "ordinal": 50,
       "scriptName": "DROP USER with multiple users",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0054-select-2",
@@ -918,9 +854,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0055",
+      "key": "testing/go/auth_test.go:TestAuthTests#0051",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 55,
+      "ordinal": 51,
       "scriptName": "DROP USER with multiple users",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0055-select-3",
@@ -941,9 +877,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0056",
+      "key": "testing/go/auth_test.go:TestAuthTests#0052",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 56,
+      "ordinal": 52,
       "scriptName": "DROP USER with multiple users",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0056-drop-user-user1-user3",
@@ -957,9 +893,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0057",
+      "key": "testing/go/auth_test.go:TestAuthTests#0053",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 57,
+      "ordinal": 53,
       "scriptName": "DROP USER with multiple users",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0057-select-4",
@@ -971,9 +907,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0058",
+      "key": "testing/go/auth_test.go:TestAuthTests#0054",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 58,
+      "ordinal": 54,
       "scriptName": "DROP USER with multiple users",
       "oracle": "postgres",
       "postgresId": "auth-test-testauthtests-0058-select-5",
@@ -994,9 +930,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0059",
+      "key": "testing/go/auth_test.go:TestAuthTests#0055",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 59,
+      "ordinal": 55,
       "scriptName": "DROP USER with multiple users",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0059-select-6",
@@ -1008,9 +944,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0060",
+      "key": "testing/go/auth_test.go:TestAuthTests#0056",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 60,
+      "ordinal": 56,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0060-select-1",
@@ -1022,9 +958,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0061",
+      "key": "testing/go/auth_test.go:TestAuthTests#0057",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 61,
+      "ordinal": 57,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0061-insert-into-test-values-1",
@@ -1036,9 +972,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0062",
+      "key": "testing/go/auth_test.go:TestAuthTests#0058",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 62,
+      "ordinal": 58,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0062-select-*-from-test-order",
@@ -1050,12 +986,68 @@
       "cleanupProvided": false
     },
     {
+      "key": "testing/go/auth_test.go:TestAuthTests#0059",
+      "source": "testing/go/auth_test.go:TestAuthTests",
+      "ordinal": 59,
+      "scriptName": "GRANT/REVOKE SELECT Privilege",
+      "oracle": "internal",
+      "suggestedId": "auth-test-testauthtests-0063-select-*-from-test-order",
+      "expectedKind": "error",
+      "username": "user2",
+      "query": "SELECT * FROM test ORDER BY pk",
+      "querySha256": "29fc57bab114a104e0a0b99377d39dbf55b4877d096773c0f7aed290d2d78fcd",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/auth_test.go:TestAuthTests#0060",
+      "source": "testing/go/auth_test.go:TestAuthTests",
+      "ordinal": 60,
+      "scriptName": "GRANT/REVOKE SELECT Privilege",
+      "oracle": "internal",
+      "suggestedId": "auth-test-testauthtests-0064-grant-select-on-test-to",
+      "expectedKind": "rows",
+      "username": "user1",
+      "query": "GRANT SELECT ON test TO user2;",
+      "querySha256": "08c8c4d346608aea6be5e8e4e81fc02f4b855ddf1615869fb08f6b7eeba5ce38",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/auth_test.go:TestAuthTests#0061",
+      "source": "testing/go/auth_test.go:TestAuthTests",
+      "ordinal": 61,
+      "scriptName": "GRANT/REVOKE SELECT Privilege",
+      "oracle": "internal",
+      "suggestedId": "auth-test-testauthtests-0065-select-*-from-test-order",
+      "expectedKind": "rows",
+      "username": "user2",
+      "query": "SELECT * FROM test ORDER BY pk",
+      "querySha256": "29fc57bab114a104e0a0b99377d39dbf55b4877d096773c0f7aed290d2d78fcd",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/auth_test.go:TestAuthTests#0062",
+      "source": "testing/go/auth_test.go:TestAuthTests",
+      "ordinal": 62,
+      "scriptName": "GRANT/REVOKE SELECT Privilege",
+      "oracle": "internal",
+      "suggestedId": "auth-test-testauthtests-0066-revoke-select-on-test-from",
+      "expectedKind": "rows",
+      "username": "user1",
+      "query": "REVOKE SELECT ON test FROM user2;",
+      "querySha256": "4b0e1864a62768837fb2c8d2bffda9347e8b2b5c0e172bbe03075c1ea3642a17",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
       "key": "testing/go/auth_test.go:TestAuthTests#0063",
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 63,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0063-select-*-from-test-order",
+      "suggestedId": "auth-test-testauthtests-0067-select-*-from-test-order",
       "expectedKind": "error",
       "username": "user2",
       "query": "SELECT * FROM test ORDER BY pk",
@@ -1069,62 +1061,6 @@
       "ordinal": 64,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0064-grant-select-on-test-to",
-      "expectedKind": "rows",
-      "username": "user1",
-      "query": "GRANT SELECT ON test TO user2;",
-      "querySha256": "08c8c4d346608aea6be5e8e4e81fc02f4b855ddf1615869fb08f6b7eeba5ce38",
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/auth_test.go:TestAuthTests#0065",
-      "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 65,
-      "scriptName": "GRANT/REVOKE SELECT Privilege",
-      "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0065-select-*-from-test-order",
-      "expectedKind": "rows",
-      "username": "user2",
-      "query": "SELECT * FROM test ORDER BY pk",
-      "querySha256": "29fc57bab114a104e0a0b99377d39dbf55b4877d096773c0f7aed290d2d78fcd",
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/auth_test.go:TestAuthTests#0066",
-      "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 66,
-      "scriptName": "GRANT/REVOKE SELECT Privilege",
-      "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0066-revoke-select-on-test-from",
-      "expectedKind": "rows",
-      "username": "user1",
-      "query": "REVOKE SELECT ON test FROM user2;",
-      "querySha256": "4b0e1864a62768837fb2c8d2bffda9347e8b2b5c0e172bbe03075c1ea3642a17",
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/auth_test.go:TestAuthTests#0067",
-      "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 67,
-      "scriptName": "GRANT/REVOKE SELECT Privilege",
-      "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0067-select-*-from-test-order",
-      "expectedKind": "error",
-      "username": "user2",
-      "query": "SELECT * FROM test ORDER BY pk",
-      "querySha256": "29fc57bab114a104e0a0b99377d39dbf55b4877d096773c0f7aed290d2d78fcd",
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/auth_test.go:TestAuthTests#0068",
-      "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 68,
-      "scriptName": "GRANT/REVOKE SELECT Privilege",
-      "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0068-grant-select-on-test-to",
       "expectedKind": "rows",
       "username": "user1",
@@ -1134,9 +1070,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0069",
+      "key": "testing/go/auth_test.go:TestAuthTests#0065",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 69,
+      "ordinal": 65,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0069-select-*-from-test-order",
@@ -1148,9 +1084,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0070",
+      "key": "testing/go/auth_test.go:TestAuthTests#0066",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 70,
+      "ordinal": 66,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0070-select-*-from-test-order",
@@ -1162,9 +1098,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0071",
+      "key": "testing/go/auth_test.go:TestAuthTests#0067",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 71,
+      "ordinal": 67,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0071-with-cte-as-select-*",
@@ -1176,9 +1112,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0072",
+      "key": "testing/go/auth_test.go:TestAuthTests#0068",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 72,
+      "ordinal": 68,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0072-insert-into-test-values-10",
@@ -1190,9 +1126,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0073",
+      "key": "testing/go/auth_test.go:TestAuthTests#0069",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 73,
+      "ordinal": 69,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0073-update-test-set-pk=pk+20",
@@ -1204,23 +1140,23 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0074",
+      "key": "testing/go/auth_test.go:TestAuthTests#0070",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 74,
+      "ordinal": 70,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0074-delete-from-test-where-pk",
       "expectedKind": "error",
       "username": "user1",
-      "query": "DELETE FROM test WHERE pk > 3;",
+      "query": "DELETE FROM test WHERE pk \u003e 3;",
       "querySha256": "896b1079fa90443791a11072c2c36267a73e6b9bf67b59a3b304da3646c67cd8",
       "needsCleanup": true,
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0075",
+      "key": "testing/go/auth_test.go:TestAuthTests#0071",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 75,
+      "ordinal": 71,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0075-grant-select-insert-update-delete",
@@ -1232,9 +1168,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0076",
+      "key": "testing/go/auth_test.go:TestAuthTests#0072",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 76,
+      "ordinal": 72,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0076-select-*-from-test-order",
@@ -1246,9 +1182,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0077",
+      "key": "testing/go/auth_test.go:TestAuthTests#0073",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 77,
+      "ordinal": 73,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0077-with-cte-as-select-*",
@@ -1260,9 +1196,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0078",
+      "key": "testing/go/auth_test.go:TestAuthTests#0074",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 78,
+      "ordinal": 74,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0078-insert-into-test-values-10",
@@ -1274,9 +1210,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0079",
+      "key": "testing/go/auth_test.go:TestAuthTests#0075",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 79,
+      "ordinal": 75,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0079-update-test-set-pk=pk+20",
@@ -1288,9 +1224,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0080",
+      "key": "testing/go/auth_test.go:TestAuthTests#0076",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 80,
+      "ordinal": 76,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0080-delete-from-test-where-pk",
@@ -1302,9 +1238,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0081",
+      "key": "testing/go/auth_test.go:TestAuthTests#0077",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 81,
+      "ordinal": 77,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0081-select-*-from-test-order",
@@ -1316,9 +1252,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0082",
+      "key": "testing/go/auth_test.go:TestAuthTests#0078",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 82,
+      "ordinal": 78,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0082-revoke-select-insert-update-delete",
@@ -1330,9 +1266,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0083",
+      "key": "testing/go/auth_test.go:TestAuthTests#0079",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 83,
+      "ordinal": 79,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0083-select-*-from-test-order",
@@ -1344,9 +1280,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0084",
+      "key": "testing/go/auth_test.go:TestAuthTests#0080",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 84,
+      "ordinal": 80,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0084-insert-into-test-values-100",
@@ -1358,9 +1294,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0085",
+      "key": "testing/go/auth_test.go:TestAuthTests#0081",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 85,
+      "ordinal": 81,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0085-update-test-set-pk=pk+200",
@@ -1372,16 +1308,84 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0086",
+      "key": "testing/go/auth_test.go:TestAuthTests#0082",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 86,
+      "ordinal": 82,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0086-delete-from-test-where-pk",
       "expectedKind": "error",
       "username": "user1",
-      "query": "DELETE FROM test WHERE pk > 3;",
+      "query": "DELETE FROM test WHERE pk \u003e 3;",
       "querySha256": "896b1079fa90443791a11072c2c36267a73e6b9bf67b59a3b304da3646c67cd8",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/auth_test.go:TestAuthTests#0083",
+      "source": "testing/go/auth_test.go:TestAuthTests",
+      "ordinal": 83,
+      "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
+      "oracle": "internal",
+      "suggestedId": "auth-test-testauthtests-0087-create-function-testfunc3-returns-int",
+      "expectedKind": "error",
+      "username": "user1",
+      "query": "CREATE FUNCTION testfunc3() RETURNS int AS $$ BEGIN RETURN 3; END; $$ LANGUAGE plpgsql",
+      "querySha256": "c2afe88cc08865dceff9d25332bb76a447fe3384338eb49e5fcf174d833409f9",
+      "nonLiteral": [
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/auth_test.go:TestAuthTests#0084",
+      "source": "testing/go/auth_test.go:TestAuthTests",
+      "ordinal": 84,
+      "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
+      "oracle": "internal",
+      "suggestedId": "auth-test-testauthtests-0088-create-procedure-interpreted_example_3-input-text",
+      "expectedKind": "error",
+      "username": "user1",
+      "query": "CREATE PROCEDURE interpreted_example_3(input TEXT) AS $$ BEGIN INSERT INTO test VALUES ('3' || input); END; $$ LANGUAGE plpgsql;",
+      "querySha256": "3e085d17d36e3544443582b7c6fe25fdb5708cf400c61b2ac981077b6e2ebba5",
+      "nonLiteral": [
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/auth_test.go:TestAuthTests#0085",
+      "source": "testing/go/auth_test.go:TestAuthTests",
+      "ordinal": 85,
+      "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
+      "oracle": "internal",
+      "suggestedId": "auth-test-testauthtests-0089-create-sequence-genre_id_seq_by_3-as-integer",
+      "expectedKind": "error",
+      "username": "user1",
+      "query": "CREATE SEQUENCE genre_id_seq_by_3 AS integer START WITH 1 INCREMENT BY 2 NO MINVALUE NO MAXVALUE CACHE 1;",
+      "querySha256": "1f2901bd5b13cc20fe3f63baffd1c83d4f92a0e66001ea561d53148b2c591493",
+      "nonLiteral": [
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/auth_test.go:TestAuthTests#0086",
+      "source": "testing/go/auth_test.go:TestAuthTests",
+      "ordinal": 86,
+      "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
+      "oracle": "internal",
+      "suggestedId": "auth-test-testauthtests-0090-grant-create-on-schema-public",
+      "expectedKind": "rows",
+      "query": "GRANT CREATE ON SCHEMA public TO user1;",
+      "querySha256": "25b2451057a988d0ec04c4779151ec12ef2799115b5a8871cd705c598226d09a",
+      "nonLiteral": [
+        "Username",
+        "SetUpScript"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1391,8 +1395,8 @@
       "ordinal": 87,
       "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0087-create-function-testfunc3-returns-int",
-      "expectedKind": "error",
+      "suggestedId": "auth-test-testauthtests-0091-create-function-testfunc3-returns-int",
+      "expectedKind": "rows",
       "username": "user1",
       "query": "CREATE FUNCTION testfunc3() RETURNS int AS $$ BEGIN RETURN 3; END; $$ LANGUAGE plpgsql",
       "querySha256": "c2afe88cc08865dceff9d25332bb76a447fe3384338eb49e5fcf174d833409f9",
@@ -1408,8 +1412,8 @@
       "ordinal": 88,
       "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0088-create-procedure-interpreted_example_3-input-text",
-      "expectedKind": "error",
+      "suggestedId": "auth-test-testauthtests-0092-create-procedure-interpreted_example_3-input-text",
+      "expectedKind": "rows",
       "username": "user1",
       "query": "CREATE PROCEDURE interpreted_example_3(input TEXT) AS $$ BEGIN INSERT INTO test VALUES ('3' || input); END; $$ LANGUAGE plpgsql;",
       "querySha256": "3e085d17d36e3544443582b7c6fe25fdb5708cf400c61b2ac981077b6e2ebba5",
@@ -1425,8 +1429,8 @@
       "ordinal": 89,
       "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0089-create-sequence-genre_id_seq_by_3-as-integer",
-      "expectedKind": "error",
+      "suggestedId": "auth-test-testauthtests-0093-create-sequence-genre_id_seq_by_3-as-integer",
+      "expectedKind": "rows",
       "username": "user1",
       "query": "CREATE SEQUENCE genre_id_seq_by_3 AS integer START WITH 1 INCREMENT BY 2 NO MINVALUE NO MAXVALUE CACHE 1;",
       "querySha256": "1f2901bd5b13cc20fe3f63baffd1c83d4f92a0e66001ea561d53148b2c591493",
@@ -1442,74 +1446,6 @@
       "ordinal": 90,
       "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0090-grant-create-on-schema-public",
-      "expectedKind": "rows",
-      "query": "GRANT CREATE ON SCHEMA public TO user1;",
-      "querySha256": "25b2451057a988d0ec04c4779151ec12ef2799115b5a8871cd705c598226d09a",
-      "nonLiteral": [
-        "Username",
-        "SetUpScript"
-      ],
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/auth_test.go:TestAuthTests#0091",
-      "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 91,
-      "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
-      "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0091-create-function-testfunc3-returns-int",
-      "expectedKind": "rows",
-      "username": "user1",
-      "query": "CREATE FUNCTION testfunc3() RETURNS int AS $$ BEGIN RETURN 3; END; $$ LANGUAGE plpgsql",
-      "querySha256": "c2afe88cc08865dceff9d25332bb76a447fe3384338eb49e5fcf174d833409f9",
-      "nonLiteral": [
-        "SetUpScript"
-      ],
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/auth_test.go:TestAuthTests#0092",
-      "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 92,
-      "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
-      "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0092-create-procedure-interpreted_example_3-input-text",
-      "expectedKind": "rows",
-      "username": "user1",
-      "query": "CREATE PROCEDURE interpreted_example_3(input TEXT) AS $$ BEGIN INSERT INTO test VALUES ('3' || input); END; $$ LANGUAGE plpgsql;",
-      "querySha256": "3e085d17d36e3544443582b7c6fe25fdb5708cf400c61b2ac981077b6e2ebba5",
-      "nonLiteral": [
-        "SetUpScript"
-      ],
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/auth_test.go:TestAuthTests#0093",
-      "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 93,
-      "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
-      "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0093-create-sequence-genre_id_seq_by_3-as-integer",
-      "expectedKind": "rows",
-      "username": "user1",
-      "query": "CREATE SEQUENCE genre_id_seq_by_3 AS integer START WITH 1 INCREMENT BY 2 NO MINVALUE NO MAXVALUE CACHE 1;",
-      "querySha256": "1f2901bd5b13cc20fe3f63baffd1c83d4f92a0e66001ea561d53148b2c591493",
-      "nonLiteral": [
-        "SetUpScript"
-      ],
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/auth_test.go:TestAuthTests#0094",
-      "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 94,
-      "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
-      "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0094-select-nextval-genre_id_seq_by_3",
       "expectedKind": "rows",
       "username": "user1",
@@ -1522,9 +1458,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0095",
+      "key": "testing/go/auth_test.go:TestAuthTests#0091",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 95,
+      "ordinal": 91,
       "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0095-revoke-usage-on-sequence-genre_id_seq_by_3",
@@ -1539,9 +1475,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0096",
+      "key": "testing/go/auth_test.go:TestAuthTests#0092",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 96,
+      "ordinal": 92,
       "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0096-select-nextval-genre_id_seq_by_3",
@@ -1556,9 +1492,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0097",
+      "key": "testing/go/auth_test.go:TestAuthTests#0093",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 97,
+      "ordinal": 93,
       "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0097-alter-sequence-genre_id_seq_by_3-owner-to",
@@ -1573,9 +1509,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0098",
+      "key": "testing/go/auth_test.go:TestAuthTests#0094",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 98,
+      "ordinal": 94,
       "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0098-select-nextval-genre_id_seq_by_3",
@@ -1590,9 +1526,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0099",
+      "key": "testing/go/auth_test.go:TestAuthTests#0095",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 99,
+      "ordinal": 95,
       "scriptName": "owner of a relation has all privileges granted by default and cannot be revoked unless ownership is altered",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0099-create-table-mytable-pk-int",
@@ -1607,9 +1543,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0100",
+      "key": "testing/go/auth_test.go:TestAuthTests#0096",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 100,
+      "ordinal": 96,
       "scriptName": "owner of a relation has all privileges granted by default and cannot be revoked unless ownership is altered",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0100-grant-create-on-schema-public",
@@ -1624,9 +1560,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0101",
+      "key": "testing/go/auth_test.go:TestAuthTests#0097",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 101,
+      "ordinal": 97,
       "scriptName": "owner of a relation has all privileges granted by default and cannot be revoked unless ownership is altered",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0101-create-table-mytable-pk-int",
@@ -1641,9 +1577,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0102",
+      "key": "testing/go/auth_test.go:TestAuthTests#0098",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 102,
+      "ordinal": 98,
       "scriptName": "owner of a relation has all privileges granted by default and cannot be revoked unless ownership is altered",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0102-select-*-from-mytable",
@@ -1658,9 +1594,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0103",
+      "key": "testing/go/auth_test.go:TestAuthTests#0099",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 103,
+      "ordinal": 99,
       "scriptName": "GRANT/REVOKE USAGE ON SCHEMA",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0103-select-nextval-genre_id_seq_by_3",
@@ -1675,9 +1611,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0104",
+      "key": "testing/go/auth_test.go:TestAuthTests#0100",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 104,
+      "ordinal": 100,
       "scriptName": "GRANT/REVOKE USAGE ON SCHEMA",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0104-grant-usage-on-schema-public",
@@ -1692,9 +1628,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0105",
+      "key": "testing/go/auth_test.go:TestAuthTests#0101",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 105,
+      "ordinal": 101,
       "scriptName": "GRANT/REVOKE USAGE ON SCHEMA",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0105-select-nextval-genre_id_seq_by_3",
@@ -1709,9 +1645,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0106",
+      "key": "testing/go/auth_test.go:TestAuthTests#0102",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 106,
+      "ordinal": 102,
       "scriptName": "GRANT/REVOKE USAGE ON SCHEMA",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0106-revoke-usage-on-schema-public",
@@ -1726,9 +1662,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0107",
+      "key": "testing/go/auth_test.go:TestAuthTests#0103",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 107,
+      "ordinal": 103,
       "scriptName": "GRANT/REVOKE USAGE ON SCHEMA",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0107-select-nextval-genre_id_seq_by_3",
@@ -1743,9 +1679,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0108",
+      "key": "testing/go/auth_test.go:TestAuthTests#0104",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 108,
+      "ordinal": 104,
       "scriptName": "privileges ON FUNCTION",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0108-select-testfunc1",
@@ -1760,9 +1696,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0109",
+      "key": "testing/go/auth_test.go:TestAuthTests#0105",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 109,
+      "ordinal": 105,
       "scriptName": "privileges ON FUNCTION",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0109-grant-all-on-function-public.testfunc1",
@@ -1777,9 +1713,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0110",
+      "key": "testing/go/auth_test.go:TestAuthTests#0106",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 110,
+      "ordinal": 106,
       "scriptName": "privileges ON FUNCTION",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0110-select-testfunc1",
@@ -1794,9 +1730,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0111",
+      "key": "testing/go/auth_test.go:TestAuthTests#0107",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 111,
+      "ordinal": 107,
       "scriptName": "privileges ON FUNCTION",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0111-select-testfunc2",
@@ -1811,9 +1747,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0112",
+      "key": "testing/go/auth_test.go:TestAuthTests#0108",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 112,
+      "ordinal": 108,
       "scriptName": "privileges ON FUNCTION",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0112-revoke-all-on-function-testfunc1",
@@ -1828,9 +1764,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0113",
+      "key": "testing/go/auth_test.go:TestAuthTests#0109",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 113,
+      "ordinal": 109,
       "scriptName": "privileges ON FUNCTION",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0113-select-testfunc1",
@@ -1845,9 +1781,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0114",
+      "key": "testing/go/auth_test.go:TestAuthTests#0110",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 114,
+      "ordinal": 110,
       "scriptName": "privileges ON FUNCTION",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0114-select-upper-hello",
@@ -1862,9 +1798,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0115",
+      "key": "testing/go/auth_test.go:TestAuthTests#0111",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 115,
+      "ordinal": 111,
       "scriptName": "privileges ON FUNCTION",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0115-select-dolt_checkout-main",
@@ -1879,9 +1815,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0116",
+      "key": "testing/go/auth_test.go:TestAuthTests#0112",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 116,
+      "ordinal": 112,
       "scriptName": "privileges ON PROCEDURE",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0116-call-interpreted_example_1-12",
@@ -1896,9 +1832,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0117",
+      "key": "testing/go/auth_test.go:TestAuthTests#0113",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 117,
+      "ordinal": 113,
       "scriptName": "privileges ON PROCEDURE",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0117-grant-all-on-procedure-public.interpreted_example_1",
@@ -1913,9 +1849,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0118",
+      "key": "testing/go/auth_test.go:TestAuthTests#0114",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 118,
+      "ordinal": 114,
       "scriptName": "privileges ON PROCEDURE",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0118-call-interpreted_example_1-22",
@@ -1930,9 +1866,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0119",
+      "key": "testing/go/auth_test.go:TestAuthTests#0115",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 119,
+      "ordinal": 115,
       "scriptName": "privileges ON PROCEDURE",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0119-select-*-from-test",
@@ -1947,9 +1883,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0120",
+      "key": "testing/go/auth_test.go:TestAuthTests#0116",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 120,
+      "ordinal": 116,
       "scriptName": "privileges ON PROCEDURE",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0120-call-interpreted_example_3-32",
@@ -1964,9 +1900,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0121",
+      "key": "testing/go/auth_test.go:TestAuthTests#0117",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 121,
+      "ordinal": 117,
       "scriptName": "privileges ON PROCEDURE",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0121-select-*-from-test",
@@ -1981,9 +1917,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0122",
+      "key": "testing/go/auth_test.go:TestAuthTests#0118",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 122,
+      "ordinal": 118,
       "scriptName": "privileges ON PROCEDURE",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0122-revoke-all-on-procedure-public.interpreted_example_1",
@@ -1998,9 +1934,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0123",
+      "key": "testing/go/auth_test.go:TestAuthTests#0119",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 123,
+      "ordinal": 119,
       "scriptName": "privileges ON PROCEDURE",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0123-call-interpreted_example_1-42",
@@ -2015,9 +1951,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0124",
+      "key": "testing/go/auth_test.go:TestAuthTests#0120",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 124,
+      "ordinal": 120,
       "scriptName": "privileges ON PROCEDURE",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0124-select-*-from-test",
@@ -2032,9 +1968,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0125",
+      "key": "testing/go/auth_test.go:TestAuthTests#0121",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 125,
+      "ordinal": 121,
       "scriptName": "SELECT/USAGE privileges ON SEQUENCE",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0125-select-nextval-genre_id_seq_by_2",
@@ -2049,9 +1985,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0126",
+      "key": "testing/go/auth_test.go:TestAuthTests#0122",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 126,
+      "ordinal": 122,
       "scriptName": "SELECT/USAGE privileges ON SEQUENCE",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0126-grant-usage-on-sequence-public.genre_id_seq_by_2",
@@ -2066,9 +2002,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0127",
+      "key": "testing/go/auth_test.go:TestAuthTests#0123",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 127,
+      "ordinal": 123,
       "scriptName": "SELECT/USAGE privileges ON SEQUENCE",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0127-select-nextval-genre_id_seq_by_2",
@@ -2083,9 +2019,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0128",
+      "key": "testing/go/auth_test.go:TestAuthTests#0124",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 128,
+      "ordinal": 124,
       "scriptName": "SELECT/USAGE privileges ON SEQUENCE",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0128-grant-select-on-sequence-public.genre_id_seq_by_2",
@@ -2100,9 +2036,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0129",
+      "key": "testing/go/auth_test.go:TestAuthTests#0125",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 129,
+      "ordinal": 125,
       "scriptName": "SELECT/USAGE privileges ON SEQUENCE",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0129-select-nextval-genre_id_seq_by_2",
@@ -2117,9 +2053,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0130",
+      "key": "testing/go/auth_test.go:TestAuthTests#0126",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 130,
+      "ordinal": 126,
       "scriptName": "SELECT/USAGE privileges ON SEQUENCE",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0130-select-is_called-from-genre_id_seq_by_2",
@@ -2134,9 +2070,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0131",
+      "key": "testing/go/auth_test.go:TestAuthTests#0127",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 131,
+      "ordinal": 127,
       "scriptName": "user can create table with sequence that they don't have privileges for but they cannot use it'",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0131-select-nextval-genre_id_seq_by_2",
@@ -2151,9 +2087,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0132",
+      "key": "testing/go/auth_test.go:TestAuthTests#0128",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 132,
+      "ordinal": 128,
       "scriptName": "user can create table with sequence that they don't have privileges for but they cannot use it'",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0132-grant-create-on-schema-public",
@@ -2168,9 +2104,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0133",
+      "key": "testing/go/auth_test.go:TestAuthTests#0129",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 133,
+      "ordinal": 129,
       "scriptName": "user can create table with sequence that they don't have privileges for but they cannot use it'",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0133-create-table-test_by_user1-pk-int",
@@ -2185,9 +2121,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0134",
+      "key": "testing/go/auth_test.go:TestAuthTests#0130",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 134,
+      "ordinal": 130,
       "scriptName": "user can create table with sequence that they don't have privileges for but they cannot use it'",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0134-grant-all-privileges-on-all",
@@ -2202,9 +2138,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0135",
+      "key": "testing/go/auth_test.go:TestAuthTests#0131",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 135,
+      "ordinal": 131,
       "scriptName": "user can create table with sequence that they don't have privileges for but they cannot use it'",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0135-insert-into-test_by_user1-pk-values",
@@ -2219,9 +2155,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0136",
+      "key": "testing/go/auth_test.go:TestAuthTests#0132",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 136,
+      "ordinal": 132,
       "scriptName": "user can create table with sequence that they don't have privileges for but they cannot use it'",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0136-select-*-from-test_by_user1",
@@ -2236,9 +2172,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0137",
+      "key": "testing/go/auth_test.go:TestAuthTests#0133",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 137,
+      "ordinal": 133,
       "scriptName": "user can create table with sequence that they don't have privileges for but they cannot use it'",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0137-grant-usage-on-sequence-public.genre_id_seq_by_2",
@@ -2253,9 +2189,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0138",
+      "key": "testing/go/auth_test.go:TestAuthTests#0134",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 138,
+      "ordinal": 134,
       "scriptName": "user can create table with sequence that they don't have privileges for but they cannot use it'",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0138-insert-into-test_by_user1-pk-values",
@@ -2270,9 +2206,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0139",
+      "key": "testing/go/auth_test.go:TestAuthTests#0135",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 139,
+      "ordinal": 135,
       "scriptName": "user can create table with sequence that they don't have privileges for but they cannot use it'",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0139-select-*-from-test_by_user1",
@@ -2287,9 +2223,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0140",
+      "key": "testing/go/auth_test.go:TestAuthTests#0136",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 140,
+      "ordinal": 136,
       "scriptName": "Branch Control: Namespace entries block",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0140-select-dolt_branch-otherbranch1",
@@ -2301,9 +2237,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0141",
+      "key": "testing/go/auth_test.go:TestAuthTests#0137",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 141,
+      "ordinal": 137,
       "scriptName": "Branch Control: Namespace entries block",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0141-insert-into-dolt_branch_namespace_control-values-%",
@@ -2315,9 +2251,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0142",
+      "key": "testing/go/auth_test.go:TestAuthTests#0138",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 142,
+      "ordinal": 138,
       "scriptName": "Branch Control: Namespace entries block",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0142-select-dolt_branch-otherbranch2",
@@ -2329,9 +2265,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0143",
+      "key": "testing/go/auth_test.go:TestAuthTests#0139",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 143,
+      "ordinal": 139,
       "scriptName": "Branch Control: Namespace entries block",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0143-insert-into-dolt_branch_namespace_control-values-%",
@@ -2343,9 +2279,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0144",
+      "key": "testing/go/auth_test.go:TestAuthTests#0140",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 144,
+      "ordinal": 140,
       "scriptName": "Branch Control: Namespace entries block",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0144-select-dolt_branch-otherbranch2",
@@ -2357,9 +2293,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0145",
+      "key": "testing/go/auth_test.go:TestAuthTests#0141",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 145,
+      "ordinal": 141,
       "scriptName": "Branch Control: Namespace entries block",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0145-insert-into-dolt_branch_namespace_control-values-%",
@@ -2371,9 +2307,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0146",
+      "key": "testing/go/auth_test.go:TestAuthTests#0142",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 146,
+      "ordinal": 142,
       "scriptName": "Branch Control: Namespace entries block",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0146-select-dolt_branch-otherbranch3",
@@ -2385,9 +2321,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0147",
+      "key": "testing/go/auth_test.go:TestAuthTests#0143",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 147,
+      "ordinal": 143,
       "scriptName": "Branch Control: Namespace entries block",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0147-select-dolt_branch-other3",
@@ -2399,9 +2335,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0148",
+      "key": "testing/go/auth_test.go:TestAuthTests#0144",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 148,
+      "ordinal": 144,
       "scriptName": "Branch Control: Namespace entries block",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0148-insert-into-dolt_branch_namespace_control-values-%",
@@ -2413,9 +2349,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0149",
+      "key": "testing/go/auth_test.go:TestAuthTests#0145",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 149,
+      "ordinal": 145,
       "scriptName": "Branch Control: Namespace entries block",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0149-select-dolt_branch-otherbranch3",
@@ -2427,9 +2363,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0150",
+      "key": "testing/go/auth_test.go:TestAuthTests#0146",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 150,
+      "ordinal": 146,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0150-delete-from-dolt_branch_control-where-branch",
@@ -2441,9 +2377,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0151",
+      "key": "testing/go/auth_test.go:TestAuthTests#0147",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 151,
+      "ordinal": 147,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0151-delete-from-dolt_branch_control-where-branch",
@@ -2455,9 +2391,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0152",
+      "key": "testing/go/auth_test.go:TestAuthTests#0148",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 152,
+      "ordinal": 148,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0152-delete-from-dolt_branch_control-where-branch",
@@ -2469,9 +2405,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0153",
+      "key": "testing/go/auth_test.go:TestAuthTests#0149",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 153,
+      "ordinal": 149,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0153-insert-into-dolt_branch_control-values-%",
@@ -2483,13 +2419,69 @@
       "cleanupProvided": false
     },
     {
+      "key": "testing/go/auth_test.go:TestAuthTests#0150",
+      "source": "testing/go/auth_test.go:TestAuthTests",
+      "ordinal": 150,
+      "scriptName": "Require admin to modify tables",
+      "oracle": "internal",
+      "suggestedId": "auth-test-testauthtests-0154-delete-from-dolt_branch_control-where-branch",
+      "expectedKind": "error",
+      "username": "b",
+      "query": "DELETE FROM dolt_branch_control WHERE \"branch\" = 'prefix1%';",
+      "querySha256": "b3644a3565a63a05da9ca906f8877434543fafb88fd60a5d00d9abf49d30b044",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/auth_test.go:TestAuthTests#0151",
+      "source": "testing/go/auth_test.go:TestAuthTests",
+      "ordinal": 151,
+      "scriptName": "Require admin to modify tables",
+      "oracle": "internal",
+      "suggestedId": "auth-test-testauthtests-0155-update-dolt_branch_control-set-branch-=",
+      "expectedKind": "error",
+      "username": "a",
+      "query": "UPDATE dolt_branch_control SET \"branch\" = 'other1' WHERE \"user\" = 'b' AND \"branch\" = 'prefix1%';",
+      "querySha256": "ad5f5458f8b0874e931223fa0f4d3631ff3637ac3ec76d08c9d33c94bce8ee2a",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/auth_test.go:TestAuthTests#0152",
+      "source": "testing/go/auth_test.go:TestAuthTests",
+      "ordinal": 152,
+      "scriptName": "Require admin to modify tables",
+      "oracle": "internal",
+      "suggestedId": "auth-test-testauthtests-0156-update-dolt_branch_control-set-permissions-=",
+      "expectedKind": "error",
+      "username": "b",
+      "query": "UPDATE dolt_branch_control SET \"permissions\" = 'admin' WHERE \"user\" = 'b' AND \"branch\" = 'prefix1%';",
+      "querySha256": "1395cd39e91f8c262c28251b53275e5a593894985b5029d2d5d6539f0cd73b12",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/auth_test.go:TestAuthTests#0153",
+      "source": "testing/go/auth_test.go:TestAuthTests",
+      "ordinal": 153,
+      "scriptName": "Require admin to modify tables",
+      "oracle": "internal",
+      "suggestedId": "auth-test-testauthtests-0157-update-dolt_branch_control-set-permissions-=",
+      "expectedKind": "rows",
+      "username": "a",
+      "query": "UPDATE dolt_branch_control SET \"permissions\" = 'admin' WHERE \"user\" = 'b' AND \"branch\" = 'prefix1%';",
+      "querySha256": "1395cd39e91f8c262c28251b53275e5a593894985b5029d2d5d6539f0cd73b12",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
       "key": "testing/go/auth_test.go:TestAuthTests#0154",
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 154,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0154-delete-from-dolt_branch_control-where-branch",
-      "expectedKind": "error",
+      "suggestedId": "auth-test-testauthtests-0158-delete-from-dolt_branch_control-where-branch",
+      "expectedKind": "rows",
       "username": "b",
       "query": "DELETE FROM dolt_branch_control WHERE \"branch\" = 'prefix1%';",
       "querySha256": "b3644a3565a63a05da9ca906f8877434543fafb88fd60a5d00d9abf49d30b044",
@@ -2502,62 +2494,6 @@
       "ordinal": 155,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0155-update-dolt_branch_control-set-branch-=",
-      "expectedKind": "error",
-      "username": "a",
-      "query": "UPDATE dolt_branch_control SET \"branch\" = 'other1' WHERE \"user\" = 'b' AND \"branch\" = 'prefix1%';",
-      "querySha256": "ad5f5458f8b0874e931223fa0f4d3631ff3637ac3ec76d08c9d33c94bce8ee2a",
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/auth_test.go:TestAuthTests#0156",
-      "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 156,
-      "scriptName": "Require admin to modify tables",
-      "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0156-update-dolt_branch_control-set-permissions-=",
-      "expectedKind": "error",
-      "username": "b",
-      "query": "UPDATE dolt_branch_control SET \"permissions\" = 'admin' WHERE \"user\" = 'b' AND \"branch\" = 'prefix1%';",
-      "querySha256": "1395cd39e91f8c262c28251b53275e5a593894985b5029d2d5d6539f0cd73b12",
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/auth_test.go:TestAuthTests#0157",
-      "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 157,
-      "scriptName": "Require admin to modify tables",
-      "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0157-update-dolt_branch_control-set-permissions-=",
-      "expectedKind": "rows",
-      "username": "a",
-      "query": "UPDATE dolt_branch_control SET \"permissions\" = 'admin' WHERE \"user\" = 'b' AND \"branch\" = 'prefix1%';",
-      "querySha256": "1395cd39e91f8c262c28251b53275e5a593894985b5029d2d5d6539f0cd73b12",
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/auth_test.go:TestAuthTests#0158",
-      "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 158,
-      "scriptName": "Require admin to modify tables",
-      "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0158-delete-from-dolt_branch_control-where-branch",
-      "expectedKind": "rows",
-      "username": "b",
-      "query": "DELETE FROM dolt_branch_control WHERE \"branch\" = 'prefix1%';",
-      "querySha256": "b3644a3565a63a05da9ca906f8877434543fafb88fd60a5d00d9abf49d30b044",
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/auth_test.go:TestAuthTests#0159",
-      "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 159,
-      "scriptName": "Require admin to modify tables",
-      "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0159-insert-into-dolt_branch_control-values-%",
       "expectedKind": "error",
       "username": "b",
@@ -2567,9 +2503,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0160",
+      "key": "testing/go/auth_test.go:TestAuthTests#0156",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 160,
+      "ordinal": 156,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0160-insert-into-dolt_branch_namespace_control-values-%",
@@ -2581,9 +2517,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0161",
+      "key": "testing/go/auth_test.go:TestAuthTests#0157",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 161,
+      "ordinal": 157,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0161-insert-into-dolt_branch_namespace_control-values-%",
@@ -2595,9 +2531,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0162",
+      "key": "testing/go/auth_test.go:TestAuthTests#0158",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 162,
+      "ordinal": 158,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0162-update-dolt_branch_namespace_control-set-branch-=",
@@ -2609,9 +2545,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0163",
+      "key": "testing/go/auth_test.go:TestAuthTests#0159",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 163,
+      "ordinal": 159,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0163-update-dolt_branch_namespace_control-set-branch-=",
@@ -2623,9 +2559,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0164",
+      "key": "testing/go/auth_test.go:TestAuthTests#0160",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 164,
+      "ordinal": 160,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0164-delete-from-dolt_branch_namespace_control-where-branch",
@@ -2637,9 +2573,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/auth_test.go:TestAuthTests#0165",
+      "key": "testing/go/auth_test.go:TestAuthTests#0161",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 165,
+      "ordinal": 161,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0165-update-dolt_branch_namespace_control-set-branch-=",

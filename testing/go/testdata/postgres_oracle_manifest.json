@@ -415,104 +415,9 @@
       ]
     },
     {
-      "id": "auth-test-testauthtests-0017-create-role-user1-password-pass1",
-      "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 17,
-      "oracle": "postgres",
-      "compare": "structural",
-      "query": "CREATE ROLE user1 PASSWORD 'pass1';",
-      "expectedRows": [],
-      "cleanup": [
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'user1') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('user1'); END IF; END $$",
-        "DROP ROLE IF EXISTS user1"
-      ]
-    },
-    {
-      "id": "auth-test-testauthtests-0018-create-user-user2-password-pass2",
-      "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 18,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE ROLE user1 PASSWORD 'pass1';"
-      ],
-      "query": "CREATE USER user2 PASSWORD 'pass2';",
-      "expectedRows": [],
-      "cleanup": [
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'user2') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('user2'); END IF; END $$",
-        "DROP ROLE IF EXISTS user2",
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'user1') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('user1'); END IF; END $$",
-        "DROP ROLE IF EXISTS user1",
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
-      "id": "auth-test-testauthtests-0019-create-role-user3-password-pass3",
-      "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 19,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE ROLE user1 PASSWORD 'pass1';",
-        "CREATE USER user2 PASSWORD 'pass2';"
-      ],
-      "query": "CREATE ROLE user3 PASSWORD 'pass3' LOGIN;",
-      "expectedRows": [],
-      "cleanup": [
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'user2') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('user2'); END IF; END $$",
-        "DROP ROLE IF EXISTS user2",
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'user1') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('user1'); END IF; END $$",
-        "DROP ROLE IF EXISTS user1",
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'user3') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('user3'); END IF; END $$",
-        "DROP ROLE IF EXISTS user3",
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
-      "id": "auth-test-testauthtests-0020-create-user-user4-password-pass4",
-      "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 20,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE ROLE user1 PASSWORD 'pass1';",
-        "CREATE USER user2 PASSWORD 'pass2';",
-        "CREATE ROLE user3 PASSWORD 'pass3' LOGIN;"
-      ],
-      "query": "CREATE USER user4 PASSWORD 'pass4' NOLOGIN;",
-      "expectedRows": [],
-      "cleanup": [
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'user2') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('user2'); END IF; END $$",
-        "DROP ROLE IF EXISTS user2",
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'user4') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('user4'); END IF; END $$",
-        "DROP ROLE IF EXISTS user4",
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'user1') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('user1'); END IF; END $$",
-        "DROP ROLE IF EXISTS user1",
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'user3') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('user3'); END IF; END $$",
-        "DROP ROLE IF EXISTS user3",
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
       "id": "auth-test-testauthtests-0022-select-2",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 22,
+      "ordinal": 18,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -552,7 +457,7 @@
     {
       "id": "auth-test-testauthtests-0023-select-3",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 23,
+      "ordinal": 19,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -593,7 +498,7 @@
     {
       "id": "auth-test-testauthtests-0025-alter-user-user1-with-login",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 25,
+      "ordinal": 21,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -627,7 +532,7 @@
     {
       "id": "auth-test-testauthtests-0026-alter-user-user2-with-nologin",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 26,
+      "ordinal": 22,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -662,7 +567,7 @@
     {
       "id": "auth-test-testauthtests-0027-select-5",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 27,
+      "ordinal": 23,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -706,7 +611,7 @@
     {
       "id": "auth-test-testauthtests-0030-create-user-user1-password-hello1",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 30,
+      "ordinal": 26,
       "oracle": "postgres",
       "compare": "structural",
       "query": "CREATE USER user1 PASSWORD 'hello1';",
@@ -720,7 +625,7 @@
     {
       "id": "auth-test-testauthtests-0031-create-user-user1-password-hello2",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 31,
+      "ordinal": 27,
       "oracle": "postgres",
       "compare": "sqlstate",
       "setup": [
@@ -741,7 +646,7 @@
     {
       "id": "auth-test-testauthtests-0038-create-user-user1-password-hello1",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 38,
+      "ordinal": 34,
       "oracle": "postgres",
       "compare": "structural",
       "query": "CREATE USER user1 PASSWORD 'hello1';",
@@ -755,7 +660,7 @@
     {
       "id": "auth-test-testauthtests-0039-create-user-user2-password-hello2",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 39,
+      "ordinal": 35,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -778,7 +683,7 @@
     {
       "id": "auth-test-testauthtests-0040-select-1",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 40,
+      "ordinal": 36,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -810,7 +715,7 @@
     {
       "id": "auth-test-testauthtests-0041-select-2",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 41,
+      "ordinal": 37,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -843,7 +748,7 @@
     {
       "id": "auth-test-testauthtests-0042-drop-user-user1",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 42,
+      "ordinal": 38,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -869,7 +774,7 @@
     {
       "id": "auth-test-testauthtests-0043-drop-user-user1",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 43,
+      "ordinal": 39,
       "oracle": "postgres",
       "compare": "sqlstate",
       "setup": [
@@ -897,7 +802,7 @@
     {
       "id": "auth-test-testauthtests-0044-drop-user-if-exists-user1",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 44,
+      "ordinal": 40,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -924,7 +829,7 @@
     {
       "id": "auth-test-testauthtests-0046-drop-role-if-exists-user2",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 46,
+      "ordinal": 42,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -952,7 +857,7 @@
     {
       "id": "auth-test-testauthtests-0047-drop-role-user2",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 47,
+      "ordinal": 43,
       "oracle": "postgres",
       "compare": "sqlstate",
       "setup": [
@@ -982,7 +887,7 @@
     {
       "id": "auth-test-testauthtests-0048-drop-role-if-exists-user2",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 48,
+      "ordinal": 44,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -1011,7 +916,7 @@
     {
       "id": "auth-test-testauthtests-0050-create-user-user1-password-hello1",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 50,
+      "ordinal": 46,
       "oracle": "postgres",
       "compare": "structural",
       "query": "CREATE USER user1 PASSWORD 'hello1';",
@@ -1025,7 +930,7 @@
     {
       "id": "auth-test-testauthtests-0051-create-user-user2-password-hello2",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 51,
+      "ordinal": 47,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -1048,7 +953,7 @@
     {
       "id": "auth-test-testauthtests-0052-create-user-user3-password-hello3",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 52,
+      "ordinal": 48,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -1075,7 +980,7 @@
     {
       "id": "auth-test-testauthtests-0053-select-1",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 53,
+      "ordinal": 49,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -1111,7 +1016,7 @@
     {
       "id": "auth-test-testauthtests-0054-select-2",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 54,
+      "ordinal": 50,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -1148,7 +1053,7 @@
     {
       "id": "auth-test-testauthtests-0055-select-3",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 55,
+      "ordinal": 51,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -1186,7 +1091,7 @@
     {
       "id": "auth-test-testauthtests-0056-drop-user-user1-user3",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 56,
+      "ordinal": 52,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -1217,7 +1122,7 @@
     {
       "id": "auth-test-testauthtests-0058-select-5",
       "source": "testing/go/auth_test.go:TestAuthTests",
-      "ordinal": 58,
+      "ordinal": 54,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
