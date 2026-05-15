@@ -10,11 +10,38 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### beta - 2026-05-15 00:02 MST
+
+- Full run result: current `HEAD=e8d75b91` passes `go test -json -vet=off ./testing/go -count=1 -timeout=40m` with ICU env.
+- Counts from `/tmp/doltgresql-beta-testing-go-full-5.json`: 3670 pass, 0 fail, 91 skip. Package elapsed: 813.805s.
+- Pass rate: 100.0% of non-skipped tests, or about 97.6% if skipped tests are included in the denominator.
+- Claim status: goal gate closed from beta's latest run. No known real `./testing/go` failures remain after the auth race fix.
+
+### beta - 2026-05-14 23:42 MST
+
+- Lane claimed: `TestPsycopg2ClientSmoke` full-suite fatal crash, specifically `fatal error: concurrent map read and map write` in `server/auth.GetRole` while `NewPrivilegeSetLayer` builds privileges during concurrent client connections.
+- Rationale: beta's current `./testing/go` full run at `HEAD=136aedea` reported zero assertion failures but crashed the package from this auth map race. This is not covered by alpha's BasicIndexing/PHP/oracle-helper lanes.
+- Expected files: likely `server/auth/database.go` and focused auth/concurrency coverage. Boundary: no oracle map/test expectation changes, no PHP harness, no index metadata files.
+- Next action: inspect auth role map ownership/locking, add the smallest synchronization fix, reproduce with focused client or auth concurrency coverage, then rerun the full suite.
+- Failure proof: beta full run `/tmp/doltgresql-beta-testing-go-full-4.json` failed after 752.168s with 3182 pass, 1 package-level fail, and 86 skip; the only failure was the fatal auth map race during `TestPsycopg2ClientSmoke`.
+- Result update beta - 2026-05-14 23:47 MST: root cause was `server/auth/gms_privilege_set.go` reading auth role maps without `auth.LockRead` while other connections could update role state under `LockWrite`.
+- Change made: `NewPrivilegeSetLayer` and GMS privilege/superuser checks now take auth read locks, preserving the existing lower-level auth helper locking contract. Added `TestPrivilegeSetLayerConcurrentRoleWrites` to exercise privilege reads during role-map writes.
+- Validation passed: `go test -vet=off ./server/auth -run '^TestPrivilegeSetLayerConcurrentRoleWrites$' -count=1 -timeout=10m -v`; `go test -race -vet=off ./server/auth -run '^TestPrivilegeSetLayerConcurrentRoleWrites$' -count=1 -timeout=10m -v`; `go test -vet=off ./server/auth -count=1 -timeout=10m`; and `go test -vet=off ./testing/go -run '^TestPsycopg2ClientSmoke$' -count=1 -timeout=10m -v`, all with ICU env where needed.
+- Commit landed: `e8d75b91 fix(auth): lock gms privilege role reads`.
+- Claim status: closed. Next action is another full `./testing/go` run.
+
 ### alpha - 2026-05-14 23:26 MST
 
 - Full run result: current `HEAD` passes `go test -json -vet=off ./testing/go -count=1 -timeout=30m` with ICU env and `GOFLAGS=-p=1`.
 - Counts from `/tmp/doltgresql-alpha-testing-go-full-2.json`: 3669 pass, 0 fail, 91 skip. Package elapsed: 824.863s.
 - Claim status: goal gate closed. Remaining dirty files are beta coordination notes and local untracked artifacts, not new test failures.
+
+### beta - 2026-05-14 23:19 MST
+
+- Full run result: `go test -json -vet=off ./testing/go -count=1 -timeout=30m` with ICU env failed after 821.837s. Counts from `/tmp/doltgresql-beta-testing-go-full-2.json`: 3662 pass, 8 fail, 91 skip (about 97.4% pass including skips, 99.8% excluding skips).
+- Failure detail: only `TestBasicIndexing` child/parent failures were reported, but this run started before alpha landed `136aedea test(index): pin doltgres metadata expectations`, so those failures are stale relative to current `HEAD`.
+- Other observed result: PHP and Perl client harnesses both skipped after the bounded Docker timeout (`signal: killed`) rather than hanging the package.
+- Next action: rerun full `./testing/go` from current `HEAD` before claiming any new lane.
 
 ### alpha - 2026-05-14 23:05 MST
 
@@ -24,6 +51,18 @@ Use this file to avoid overlapping work. Add short entries with:
 - Result: restored those metadata assertions to explicit Doltgres expectations, marked the four stale `index_test` oracle-map entries internal, and regenerated the root manifest.
 - Validation passed: `go test -vet=off ./testing/go -run '^TestBasicIndexing$/(Index_attributes|PostgreSQL_mixed_expression_index_metadata)$' -count=1 -timeout=10m -v`; `go test -vet=off ./testing/go -run '^(TestPostgresOracleManifestGenerated|TestPostgresOracleMigrationCandidatesGenerated|TestPostgresOracleCacheCoversManifestScriptEntries)$' -count=1 -timeout=10m -v`; `jq empty` on touched oracle JSON; and `git diff --check` on touched files, all Go tests with ICU env and `GOFLAGS=-p=1`.
 - Claim status: closed pending commit. Next action after commit is a fresh root `./testing/go` run to identify any remaining real failures.
+
+### beta - 2026-05-14 23:02 MST
+
+- Lane claimed: remaining root `SHOW` failures outside the closed `TestShowIndexes` panic slice, specifically `TestShowCreateTable` and `TestShowDatabasesAndSchemas` stale PostgreSQL-oracle SQLSTATE expectations for Doltgres-supported SHOW-family commands.
+- Rationale: prior show-lane notes classify these MySQL/Doltgres-style SHOW forms as product dialect behavior, not PostgreSQL syntax/configuration-error parity. This does not overlap alpha's active PHP harness or postgres-oracle helper pathing lanes.
+- Expected files: likely `testing/go/show_test.go`, `testing/go/testdata/postgres_oracle_migrations/show_test.oracle-map.json`, and `testing/go/testdata/postgres_oracle_manifest.json`. Boundary: no `testing/go/postgres_oracle_manifest_test.go`, no PHP harness, no server catalog/index expression work.
+- Next action: reproduce the focused failing SHOW subset, restore internal expectations for invalid PG-oracle rows only, regenerate the manifest, and validate focused SHOW plus manifest consistency tests.
+- Result update beta - 2026-05-14 23:03 MST: reproduced `SHOW CREATE TABLE t1` and `SHOW databases` failing with stale PostgreSQL SQLSTATE cache expectations even though Doltgres returns supported rows.
+- Change made: restored both assertions to explicit internal expected rows and marked their `show_test` oracle-map entries `DoltSpecific`, removing the two cached PostgreSQL manifest entries.
+- Validation passed: `go test -vet=off ./testing/go -run '^(TestShowCreateTable|TestShowDatabasesAndSchemas|TestShowIndexes)$' -count=1 -timeout=10m -v`; `jq empty` on touched show manifest/map; and `go test -vet=off ./testing/go -run '^(TestPostgresOracleManifestGenerated|TestPostgresOracleMigrationCandidatesGenerated|TestPostgresOracleCacheCoversManifestScriptEntries)$' -count=1 -timeout=10m -v`, all Go tests with ICU env.
+- Commit landed: `58008bca fix(testing): keep show commands on doltgres oracle`.
+- Claim status: closed. Next beta target is a fresh root `./testing/go` failure after re-checking current failures and avoiding alpha-owned helper/PHP lanes.
 
 ### alpha - 2026-05-14 22:57 MST
 
@@ -43,6 +82,32 @@ Use this file to avoid overlapping work. Add short entries with:
 - Next action: add the same bounded Docker skip behavior to the PHP harness, validate the focused PHP smoke under current local Docker behavior, then rerun the root gate.
 - Result: PHP now uses the same three-minute Docker infrastructure timeout/skip path as Perl. Focused validation passed as a skip under current local Docker behavior: `go test -vet=off ./testing/go -run '^TestPHPPgSQLClientSmoke$' -count=1 -timeout=6m -v` with ICU env and `GOFLAGS=-p=1`.
 - Claim status: closed after commit. Full root failures outside this lane remain beta-owned or unclaimed per current `coop.md`.
+
+### beta - 2026-05-14 22:49 MST
+
+- Full run result: `go test -json -vet=off ./testing/go -count=1 -timeout=30m` with ICU env failed after 1044.474s. Counts from `/tmp/doltgresql-beta-testing-go-full-1.json`: 3633 pass, 37 fail, 90 skip (about 96.6% pass including skips, 99.0% excluding skips).
+- Failure clusters observed: `TestBasicIndexing` catalog/index metadata, `TestPostgresOracle*` manifest/helper pathing, `TestPHPPgSQLClientSmoke` Docker harness exit 143 after 395s, `TestShow*` oracle mismatches/panic, and one likely transient port collision in `TestCopyToStdoutAllowsColumnSelectGrantRepro`.
+- Lane claimed: `TestBasicIndexing` catalog/index metadata, specifically primary-key constraint rows, index attribute rows, and expression-index metadata under `pg_catalog.pg_constraint`, `pg_catalog.pg_attribute`, `pg_catalog.pg_index`, and index-definition functions.
+- Expected files: likely catalog metadata table implementations and focused index/constraint helper code after reproduction. Boundary: no oracle-map generator/manifest files, no PHP client harness, no enginetest converter, no copy port-collision workaround unless reproduction proves it belongs here.
+- Root cause fixed for the primary-key constraint subcluster: root `./testing/go` advertises PostgreSQL 16 semantics, but `pg_constraint` was unconditionally exposing PostgreSQL 18 `contype = 'n'` rows for NOT NULL/primary-key columns.
+- Change made: gated generated NOT NULL constraint rows on `server_version_num >= 180000`, leaving PostgreSQL 16 catalog results with only primary/unique/check/foreign-key constraints.
+- Validation passed: `go test -json -vet=off ./testing/go -run '^TestBasicIndexing$/(PostgreSQL_primary_key_index_rename_unsupported_boundary|PostgreSQL_custom_primary_key_constraint_names)$' -count=1 -timeout=10m` with ICU env.
+- Commit landed: `5e3b0a88 fix(pgcatalog): hide not-null constraints before postgres 18`.
+- Remaining in this lane: `Index_attributes` and `PostgreSQL_mixed_expression_index_metadata`. Latest focused `TestBasicIndexing` rerun shows only those remaining failure nodes.
+- Discovery: the remaining `pg_attribute` expected rows include duplicate `items` / `items_pkey` rows from another schema even though the root script runner starts a fresh server per script; this looks like invalid cached-oracle data, while `indexprs`/`pg_get_indexdef` remains a separate expression-index deparse gap.
+- Claim status: source-side primary-key constraint subcluster closed. Remaining index-expression/cache rows are unclaimed by beta for now.
+
+### beta - 2026-05-14 22:56 MST
+
+- Lane claimed: `TestShowIndexes`, specifically `SHOW indexes FROM t1` panicking through `server/functions/int8.go` with `interface conversion: interface {} is int, not int64` while formatting catalog rows.
+- Expected files: likely numeric output/cast function handling in `server/functions/int8.go` or adjacent function code. Boundary: no PHP harness, no oracle-map generator/manifest files, no remaining `TestBasicIndexing` index-expression/cache rows.
+- Next action: reproduce focused `TestShowIndexes`, patch the narrow type-handling bug, then validate focused show-index tests and adjacent integer output tests if present.
+- Result update beta - 2026-05-14 23:01 MST: fixed the panic by making `int8out`/`int8send` coerce compatible Go integer carriers instead of asserting `int64`; this exposed a stale PostgreSQL-oracle cache row for `SHOW indexes FROM t1`.
+- Oracle root cause: `SHOW indexes FROM t1` is a supported Doltgres/MySQL-style command, and prior show-lane notes already classified these SHOW-family forms as Dolt-specific rather than PostgreSQL syntax-error parity.
+- Change made: restored `SHOW indexes FROM t1` to explicit internal expected rows and removed the cached PostgreSQL SQLSTATE entry from `show_test` oracle metadata/manifest.
+- Validation passed: `go test -vet=off ./testing/go -run '^TestShowIndexes$' -count=1 -timeout=10m -v`; `go test -vet=off ./server/functions -run '^$' -count=1 -timeout=10m`; `jq empty` on the touched manifest/map; and `go test -vet=off ./testing/go -run '^(TestPostgresOracleManifestGenerated|TestPostgresOracleMigrationCandidatesGenerated|TestPostgresOracleCacheCoversManifestScriptEntries)$' -count=1 -timeout=10m -v`, all Go tests with ICU env where needed.
+- Commit landed: `cb193f31 fix(testing): keep show indexes on doltgres oracle`.
+- Claim status: closed. Next beta target after commit is a fresh remaining root `./testing/go` failure outside alpha-owned PHP/oracle-helper lanes.
 
 ### beta - 2026-05-14 22:25 MST
 
