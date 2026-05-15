@@ -10,6 +10,21 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### beta - 2026-05-14 22:25 MST
+
+- Lane claimed: enginetest `TestScripts/Subqueries inside NOT EXISTS clause with correlated column filter`, specifically the recursive CTE query failing during prepare with `table "bt" does not have column "issue_id"` inside `JOIN dependencies d ON d.depends_on_id = bt.issue_id`.
+- Root cause candidate: recursive CTE alias resolution is losing the CTE output-column names for the recursive reference alias `bt`, likely exposing child expression names instead of the set-op output schema.
+- Expected files: likely analyzer/planner CTE alias or set-operation projection code after focused reproduction. Boundary: no `testing/go/enginetest/query_converter_test.go`, no oracle-map/generator/auth/grant/pg_get_viewdef/submodule files, and no weakening the enginetest.
+- Root cause: Doltgres wrapped bare columns in set-operation operands with `SetOpProjection` but left the output alias empty. For a recursive CTE without an explicit column list, GMS derived the recursive table column name from the wrapper string instead of `issue_id`, so the recursive alias `bt.issue_id` could not resolve.
+- Result: set-operation conversion now preserves bare unqualified column aliases, and added AST conversion coverage proving `SELECT issue_id ... UNION ALL ...` keeps `issue_id` as the set-op output alias.
+- Validation passed:
+  - `go test -vet=off ./server/ast -run '^TestSetOpBareColumnKeepsOutputAlias$' -count=1 -timeout=10m -v`
+  - `go test -json -vet=off ./testing/go/enginetest -run '^TestScripts$/Subqueries_inside_NOT_EXISTS_clause_with_correlated_column_filter$' -count=1 -timeout=10m`
+  - `go test -vet=off ./server/ast -count=1 -timeout=10m`
+  - `go test -json -vet=off ./testing/go/enginetest -run '^TestScripts$/set_op_schema_merge$' -count=1 -timeout=10m`
+  - `go test -json -vet=off ./testing/go/enginetest -run '^TestScripts$' -count=1 -timeout=20m` (428 pass, 233 skip, 0 fail)
+- Claim status: closed/unclaimed. Next beta target is a fresh full `./testing/go` run to discover remaining failures outside `TestScripts`.
+
 ### beta - 2026-05-14 22:17 MST
 
 - Lane claimed: enginetest `TestScripts/Between filter`, specifically `select x, y, z, ... from test order by x` returning the `NULL` `x` row last while the shared MySQL expected rows put `NULL` first.
