@@ -4244,10 +4244,8 @@ func TestPgStatArchiver(t *testing.T) {
 			Name: "pg_stat_archiver",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_stat_archiver";`, PostgresOracle: ScriptTestPostgresOracle{ID:
-
-					// Different cases and quoted, so it fails
-					"pgcatalog-test-testpgstatarchiver-0001-select-*-from-pg_catalog-."},
+					Query: `SELECT archived_count, failed_count
+FROM "pg_catalog"."pg_stat_archiver";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatarchiver-0001-select-archived_count-failed_count-from-pg_catalog.pg_stat_archiver"},
 				},
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_stat_archiver";`, PostgresOracle: ScriptTestPostgresOracle{
