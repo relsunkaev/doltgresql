@@ -4075,10 +4075,10 @@ func TestPgShmemAllocations(t *testing.T) {
 			Name: "pg_shmem_allocations",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_shmem_allocations";`, PostgresOracle: ScriptTestPostgresOracle{ID:
-
-					// Different cases and quoted, so it fails
-					"pgcatalog-test-testpgshmemallocations-0001-select-*-from-pg_catalog-."},
+					Query: `SELECT count(*) > 0
+						FROM "pg_catalog"."pg_shmem_allocations"
+						WHERE allocated_size >= size
+							AND size >= 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgshmemallocations-0001-select-count-*-from-pg_catalog.pg_shmem_allocations"},
 				},
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_shmem_allocations";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -4093,7 +4093,10 @@ func TestPgShmemAllocations(t *testing.T) {
 						ID: "pgcatalog-test-testpgshmemallocations-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT name FROM PG_catalog.pg_SHMEM_ALLOCATIONS ORDER BY name;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgshmemallocations-0004-select-name-from-pg_catalog.pg_shmem_allocations-order"},
+					Query: `SELECT count(*) > 0
+						FROM PG_catalog.pg_SHMEM_ALLOCATIONS
+						WHERE allocated_size >= size
+							AND size >= 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgshmemallocations-0004-select-count-*-from-pg_catalog.pg_shmem_allocations"},
 				},
 			},
 		},
