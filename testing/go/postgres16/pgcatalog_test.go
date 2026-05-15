@@ -3376,27 +3376,66 @@ func TestPgPublicationTables(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "pg_publication_tables",
+			SetUpScript: []string{
+				`CREATE TABLE pg_publication_tables_oracle_items (
+					id int PRIMARY KEY,
+					note text
+				);`,
+				`CREATE PUBLICATION pg_publication_tables_oracle_pub
+					FOR TABLE pg_publication_tables_oracle_items (id)
+					WITH (publish = 'insert');`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_publication_tables";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT pubname,
+	schemaname,
+	tablename,
+	array_to_string(attnames, ',') AS attnames,
+	rowfilter IS NULL AS no_filter
+FROM "pg_catalog"."pg_publication_tables"
+WHERE pubname = 'pg_publication_tables_oracle_pub'
+ORDER BY pubname, schemaname, tablename;`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpgpublicationtables-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "schema"}},
 				},
+			},
+		},
+		{
+			Name: "pg_publication_tables schema case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_publication_tables";`, PostgresOracle: ScriptTestPostgresOracle{
 
 						// Different cases and quoted, so it fails
 						ID: "pgcatalog-test-testpgpublicationtables-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_publication_tables relation case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "pg_catalog"."PG_publication_tables";`, PostgresOracle: ScriptTestPostgresOracle{
 
 						// Different cases but non-quoted, so it works
 						ID: "pgcatalog-test-testpgpublicationtables-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_publication_tables mixed-case lookup",
+			SetUpScript: []string{
+				`CREATE TABLE pg_publication_tables_mixed_items (
+					id int PRIMARY KEY
+				);`,
+				`CREATE PUBLICATION pg_publication_tables_mixed_pub
+					FOR TABLE pg_publication_tables_mixed_items
+					WITH (publish = 'insert');`,
+			},
+			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT pubname FROM PG_catalog.pg_PUBLICATION_TABLES ORDER BY pubname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgpublicationtables-0004-select-pubname-from-pg_catalog.pg_publication_tables-order"},
+					Query: "SELECT pubname FROM PG_catalog.pg_PUBLICATION_TABLES WHERE pubname = 'pg_publication_tables_mixed_pub' ORDER BY pubname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgpublicationtables-0004-select-pubname-from-pg_catalog.pg_publication_tables-order"},
 				},
 			},
 		},
