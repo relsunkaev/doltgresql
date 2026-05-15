@@ -1484,9 +1484,18 @@ func TestPgEnum(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "pg_enum",
+			SetUpScript: []string{
+				`CREATE TYPE pg_enum_mood AS ENUM ('sad', 'ok', 'happy');`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_enum";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT t.typname, e.enumsortorder, e.enumlabel
+						FROM "pg_catalog"."pg_enum" e
+						JOIN pg_catalog.pg_type t ON e.enumtypid = t.oid
+						JOIN pg_catalog.pg_namespace n ON t.typnamespace = n.oid
+						WHERE t.typname = 'pg_enum_mood'
+							AND n.nspname = current_schema()
+						ORDER BY e.enumsortorder;`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpgenum-0001-select-*-from-pg_catalog-."},
@@ -1504,7 +1513,13 @@ func TestPgEnum(t *testing.T) {
 						ID: "pgcatalog-test-testpgenum-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT enumlabel FROM PG_catalog.pg_ENUM ORDER BY enumlabel;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgenum-0004-select-enumlabel-from-pg_catalog.pg_enum-order"},
+					Query: `SELECT e.enumlabel
+						FROM PG_catalog.pg_ENUM e
+						JOIN PG_catalog.pg_TYPE t ON e.enumtypid = t.oid
+						JOIN PG_catalog.pg_NAMESPACE n ON t.typnamespace = n.oid
+						WHERE t.typname = 'pg_enum_mood'
+							AND n.nspname = current_schema()
+						ORDER BY e.enumlabel;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgenum-0004-select-enumlabel-from-pg_catalog.pg_enum-order"},
 				},
 			},
 		},
