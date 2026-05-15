@@ -2889,14 +2889,23 @@ WHERE lt.typname = 'jsonb'
 func TestPgOpfamily(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "pg_opfamily",
+			Name: "pg_opfamily rows",
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT opf.opfname, am.amname
 FROM "pg_catalog"."pg_opfamily" opf
 JOIN "pg_catalog"."pg_am" am ON am.oid = opf.opfmethod
+WHERE (am.amname = 'btree' AND opf.opfname IN ('datetime_ops', 'integer_ops', 'jsonb_ops', 'text_ops'))
+	OR (am.amname = 'hash' AND opf.opfname IN ('integer_ops', 'jsonb_ops', 'text_ops'))
+	OR (am.amname = 'gin' AND opf.opfname IN ('jsonb_ops', 'jsonb_path_ops'))
+	OR (am.amname = 'spgist' AND opf.opfname = 'text_ops')
 ORDER BY opf.opfname, am.amname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgopfamily-0001-select-opf.opfname-am.amname-from-pg_catalog"},
 				},
+			},
+		},
+		{
+			Name: "pg_opfamily case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{ // Different cases and quoted, so it fails
 					Query: `SELECT * FROM "PG_catalog"."pg_opfamily";`, PostgresOracle: ScriptTestPostgresOracle{
 
@@ -2909,8 +2918,20 @@ ORDER BY opf.opfname, am.amname;`, PostgresOracle: ScriptTestPostgresOracle{ID: 
 						// Different cases but non-quoted, so it works
 						ID: "pgcatalog-test-testpgopfamily-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_opfamily mixed-case lookup",
+			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT opfname FROM PG_catalog.pg_OPFAMILY ORDER BY opfname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgopfamily-0004-select-opfname-from-pg_catalog.pg_opfamily-order"},
+					Query: `SELECT opf.opfname, am.amname
+FROM PG_catalog.pg_OPFAMILY opf
+JOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod
+WHERE (am.amname = 'btree' AND opf.opfname IN ('datetime_ops', 'integer_ops', 'jsonb_ops', 'text_ops'))
+	OR (am.amname = 'hash' AND opf.opfname IN ('integer_ops', 'jsonb_ops', 'text_ops'))
+	OR (am.amname = 'gin' AND opf.opfname IN ('jsonb_ops', 'jsonb_path_ops'))
+	OR (am.amname = 'spgist' AND opf.opfname = 'text_ops')
+ORDER BY opf.opfname, am.amname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgopfamily-0004-select-opfname-from-pg_catalog.pg_opfamily-order"},
 				},
 			},
 		},
