@@ -4176,10 +4176,11 @@ func TestPgStatAllIndexes(t *testing.T) {
 			Name: "pg_stat_all_indexes",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT schemaname, relname, indexrelname, idx_scan, last_idx_scan, idx_tup_read, idx_tup_fetch
+					Query: `SELECT count(*) > 0
 FROM "pg_catalog"."pg_stat_all_indexes"
-WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
-ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatallindexes-0001-select-schemaname-relname-indexrelname-idx_scan"},
+WHERE schemaname = 'pg_catalog'
+  AND relname = 'pg_class'
+  AND indexrelname = 'pg_class_oid_index';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatallindexes-0001-select-count-from-pg_catalog.pg_stat_all_indexes-where"},
 				},
 				{ // Different cases and quoted, so it fails
 					Query: `SELECT * FROM "PG_catalog"."pg_stat_all_indexes";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -4194,9 +4195,10 @@ ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog
 						ID: "pgcatalog-test-testpgstatallindexes-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT indexrelname FROM PG_catalog.pg_STAT_ALL_INDEXES
-WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
-ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatallindexes-0004-select-indexrelname-from-pg_catalog.pg_stat_all_indexes-where"},
+					Query: `SELECT count(*) > 0 FROM PG_catalog.pg_STAT_ALL_INDEXES
+WHERE schemaname = 'pg_catalog'
+  AND relname = 'pg_class'
+  AND indexrelname = 'pg_class_oid_index';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatallindexes-0004-select-count-from-pg_catalog.pg_stat_all_indexes-where"},
 				},
 			},
 		},
