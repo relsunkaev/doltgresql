@@ -15,7 +15,9 @@
 package pgcatalog
 
 import (
+	"fmt"
 	"io"
+	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
 
@@ -43,8 +45,26 @@ func (p PgFileSettingsHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgFileSettingsHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_file_settings row iter
-	return emptyRowIter()
+	rows := make([]sql.Row, 0, len(pgFileSettingsSupportedParameters))
+	for i, name := range pgFileSettingsSupportedParameters {
+		settingsRow, err := pgSettingsRow(ctx, name)
+		if err != nil {
+			return nil, err
+		}
+		if settingsRow == nil {
+			continue
+		}
+		rows = append(rows, sql.Row{
+			"postgresql.conf", // sourcefile
+			int32(i + 1),      // sourceline
+			int32(i + 1),      // seqno
+			strings.ToLower(fmt.Sprint(settingsRow[0])), // name
+			fmt.Sprint(settingsRow[1]),                  // setting
+			true,                                        // applied
+			nil,                                         // error
+		})
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -64,6 +84,10 @@ var pgFileSettingsSchema = sql.Schema{
 	{Name: "setting", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgFileSettingsName},
 	{Name: "applied", Type: pgtypes.Bool, Default: nil, Nullable: true, Source: PgFileSettingsName},
 	{Name: "error", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgFileSettingsName},
+}
+
+var pgFileSettingsSupportedParameters = []string{
+	"datestyle",
 }
 
 // pgFileSettingsRowIter is the sql.RowIter for the pg_file_settings table.

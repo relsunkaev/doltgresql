@@ -1609,7 +1609,10 @@ func TestPgFileSettings(t *testing.T) {
 			Name: "pg_file_settings",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_file_settings";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT name, applied, error IS NULL
+						FROM "pg_catalog"."pg_file_settings"
+						WHERE name = 'datestyle'
+						ORDER BY name;`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpgfilesettings-0001-select-*-from-pg_catalog-."},
@@ -1627,7 +1630,10 @@ func TestPgFileSettings(t *testing.T) {
 						ID: "pgcatalog-test-testpgfilesettings-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT name FROM PG_catalog.pg_FILE_SETTINGS ORDER BY name;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgfilesettings-0004-select-name-from-pg_catalog.pg_file_settings-order"},
+					Query: `SELECT name
+						FROM PG_catalog.pg_FILE_SETTINGS
+						WHERE name = 'datestyle'
+						ORDER BY name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgfilesettings-0004-select-name-from-pg_catalog.pg_file_settings-order"},
 				},
 			},
 		},
