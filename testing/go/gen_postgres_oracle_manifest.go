@@ -1439,6 +1439,9 @@ func mergeMigrationFiles(existing migrationFile, generated migrationFile, preser
 		if _, ok := replaced[assertion.Key]; ok {
 			continue
 		}
+		if preserveExistingBatchRows && assertion.Oracle != "postgres" {
+			continue
+		}
 		merged = append(merged, assertion)
 	}
 	if existing.SourceFile == "" {
