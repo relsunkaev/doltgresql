@@ -3093,7 +3093,7 @@ var postgresConfigParameters = map[string]sql.SystemVariable{
 		Category:  "Preset Options",
 		ShortDesc: "Shows the server version as an integer.",
 		Context:   ParameterContextInternal,
-		Type:      types.NewSystemIntType("server_version_num", 160013, 160013, false),
+		Type:      types.NewSystemIntType("server_version_num", 0, math.MaxInt32, false),
 		Source:    ParameterSourceDefault,
 		ResetVal:  int64(160013),
 		Scope:     GetPgsqlScope(PsqlScopeSession),

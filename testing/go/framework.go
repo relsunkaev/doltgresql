@@ -26,6 +26,7 @@ import (
 	"net/netip"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -504,7 +505,7 @@ func runInMemoryTestServer(port int) (*svcs.Controller, error) {
 	replicaidentity.ResetForTests()
 	rowsecurity.ResetForTests()
 	auth.ResetForTests(nil, nil)
-	return dserver.RunInMemory(&servercfg.DoltgresConfig{
+	controller, err := dserver.RunInMemory(&servercfg.DoltgresConfig{
 		DoltgresConfig: cfgdetails.DoltgresConfig{
 			ListenerConfig: &cfgdetails.DoltgresListenerConfig{
 				PortNumber: &port,
@@ -513,6 +514,33 @@ func runInMemoryTestServer(port int) (*svcs.Controller, error) {
 			LogLevelStr: &testServerLogLevel,
 		},
 	}, dserver.NewListener)
+	if err != nil {
+		return nil, err
+	}
+	if err = applyTestPostgresVersionOverrides(); err != nil {
+		controller.Stop()
+		_ = controller.WaitForStop()
+		return nil, err
+	}
+	return controller, nil
+}
+
+func applyTestPostgresVersionOverrides() error {
+	overrides := make(map[string]any)
+	if version := os.Getenv("DOLTGRES_TEST_SERVER_VERSION"); version != "" {
+		overrides["server_version"] = version
+	}
+	if versionNum := os.Getenv("DOLTGRES_TEST_SERVER_VERSION_NUM"); versionNum != "" {
+		parsed, err := strconv.ParseInt(versionNum, 10, 64)
+		if err != nil {
+			return err
+		}
+		overrides["server_version_num"] = parsed
+	}
+	if len(overrides) == 0 {
+		return nil
+	}
+	return sql.SystemVariables.AssignValues(overrides)
 }
 
 func isAddressAlreadyInUseError(err error) bool {
@@ -566,6 +594,7 @@ func createServerLocalWithFileSystemAndPort(t testing.TB, database string, port 
 	auth.ResetForTests(doltEnv, cfg)
 	controller, err := dserver.RunOnDisk(ctx, cfg, doltEnv)
 	require.NoError(t, err)
+	require.NoError(t, applyTestPostgresVersionOverrides())
 	fmt.Printf("port is %d\n", port)
 
 	connection := newTestDatabaseConnection(t, ctx, database, serverHost, port)

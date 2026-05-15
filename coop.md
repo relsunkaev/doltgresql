@@ -10,6 +10,19 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### beta - 2026-05-15 03:19 MST
+
+- Lane claimed: fresh `./testing/go/...` failfast discovery from current `HEAD=b319cd2e` after alpha's tableoid commit and beta's PostgreSQL 18 virtual generated column commit.
+- Expected files: none for the discovery run; follow-up claim will name source/test files after the first current failure is reproduced and inspected.
+- Next action: run `go test -json -vet=off ./testing/go/... -count=1 -failfast -timeout=60m`, record the first current blocker and avoid overlapping any newly claimed alpha lane.
+- Focused red proof: `go test -vet=off ./testing/go/postgres18 -run '^TestPostgres18NotNullConstraintCatalogRepro$' -count=1 -timeout=10m -v` still fails because cached PG18 expects `contype = 'n'` rows for NOT NULL constraints, while Doltgres returns empty.
+- Root cause: `server/tables/pgcatalog/pg_constraint.go` already synthesizes NOT NULL constraints, but it is correctly gated on `server_version_num >= 180000`; the `postgres18` test package starts Doltgres through the shared harness with the default PG16 `server_version_num=160013`.
+- Expected files: `testing/go/framework.go`, `testing/go/postgres18/main_test.go`, and `server/config/parameters_list.go` for a narrow test-harness server-version profile. Boundary: do not expose PG18 NOT NULL catalog rows to PG16/default runs.
+- Change made: the shared test framework now applies explicit test-only `DOLTGRES_TEST_SERVER_VERSION` / `DOLTGRES_TEST_SERVER_VERSION_NUM` overrides after server startup, `postgres18` sets those to `18.0` / `180000` in `TestMain`, and `server_version_num` validation now permits test/global initialization values beyond the default while remaining read-only to SQL.
+- Validation passed: focused PG18 NOT NULL constraint tests `go test -vet=off ./testing/go/postgres18 -run '^(TestPostgres18NotNullConstraintCatalogRepro|TestPostgres18TableNotNullConstraintSyntaxRepro|TestPostgres18AlterNotNullConstraintInheritanceRepro)$' -count=1 -timeout=10m -v`; exact PG16 `server_version_num` subtest `go test -vet=off ./testing/go/postgres16 -run "^TestSetStatements$/^set_'server_version_num'_configuration_variable$" -count=1 -timeout=10m -v`; and compile check `go test -vet=off ./server/config ./testing/go -run '^$' -count=1 -timeout=10m`, all with ICU env and `GOFLAGS=-p=1`.
+- Broader PG18 result: `go test -vet=off ./testing/go/postgres18 -count=1 -timeout=20m` gets past the NOT NULL constraint catalog tests and next fails in temporal constraint setup with `ERROR: at or near "without": syntax error (SQLSTATE 42601)` for `UNIQUE ... WITHOUT OVERLAPS` / temporal FK `PERIOD`.
+- Next action: commit the PG18 test-version-profile increment, then claim the temporal constraints parser/runtime blocker if still unowned.
+
 ### beta - 2026-05-15 03:00 MST
 
 - Lane claimed: `TestPostgres18VirtualGeneratedColumnRepro/virtual_generated_columns_compute_on_read`, specifically PostgreSQL 18 `GENERATED ALWAYS AS (...) VIRTUAL` parsing during setup.
