@@ -98,6 +98,7 @@ const (
 	ruleId_ValidateOrderBy                                                        // validateOrderBy
 	ruleId_ValidateCheckConstraints                                               // validateCheckConstraints
 	ruleId_AssignFetchWithTies                                                    // assignFetchWithTies
+	ruleId_ValidateUnionSchemasMatch                                              // validateUnionSchemasMatch
 )
 
 // Init adds additional rules to the analyzer to handle Doltgres-specific functionality.
@@ -156,6 +157,8 @@ func Init() {
 	analyzer.DefaultRules = wrapAnalyzerRuleByName(analyzer.DefaultRules, "validateNoHiddenSystemColumns", skipInsertDestinationHiddenSystemValidation)
 	analyzer.DefaultRules = replaceAnalyzerRuleByName(analyzer.DefaultRules, "validateCheckConstraints",
 		analyzer.Rule{Id: ruleId_ValidateCheckConstraints, Apply: ValidateCheckConstraints})
+	analyzer.DefaultValidationRules = replaceAnalyzerRuleByName(analyzer.DefaultValidationRules, "validateUnionSchemasMatch",
+		analyzer.Rule{Id: ruleId_ValidateUnionSchemasMatch, Apply: ValidateUnionSchemasMatch})
 
 	analyzer.OnceBeforeDefault = removeAnalyzerRules(
 		analyzer.OnceBeforeDefault,
@@ -165,7 +168,10 @@ func Init() {
 	)
 
 	// Remove all other validation rules that do not apply to Postgres
-	analyzer.DefaultValidationRules = removeAnalyzerRules(analyzer.DefaultValidationRules, analyzer.ValidateOperandsId)
+	analyzer.DefaultValidationRules = removeAnalyzerRules(
+		analyzer.DefaultValidationRules,
+		analyzer.ValidateOperandsId,
+	)
 
 	analyzer.OnceAfterDefault = insertAnalyzerRulesByName(analyzer.OnceAfterDefault, "optimizeJoins", true,
 		analyzer.Rule{Id: ruleId_PreserveLateralLeftJoin, Apply: PreserveLateralLeftJoin},
