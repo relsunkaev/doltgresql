@@ -56,7 +56,6 @@ import (
 	"github.com/dolthub/doltgresql/core/dataloader"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
-	psql "github.com/dolthub/doltgresql/postgres/parser/parser/sql"
 	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
 	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
@@ -514,21 +513,13 @@ func (h *ConnectionHandler) chooseInitialParameters(startupMessage *pgproto3.Sta
 		}
 	}
 	// set initial database
-	db, ok := startupMessage.Parameters["database"]
-	dbSpecified := ok && len(db) > 0
+	db := h.startupParam("database", "")
+	dbSpecified := db != ""
 	if !dbSpecified {
 		db = h.mysqlConn.User
 	}
 	h.database = db
-	useStmt := fmt.Sprintf("SET database TO '%s';", db)
-	postgresParser := psql.PostgresParser{}
-	parsed, err := postgresParser.ParseSimple(useStmt)
-	if err != nil {
-		return err
-	}
-	err = h.doltgresHandler.ComQuery(context.Background(), h.mysqlConn, useStmt, parsed, func(_ *sql.Context, _ *Result) error {
-		return nil
-	})
+	err := h.doltgresHandler.sm.SetDB(context.Background(), h.mysqlConn, db)
 	// If a database isn't specified, then we attempt to connect to a database with the same name as the user,
 	// ignoring any error
 	if err != nil && dbSpecified {
