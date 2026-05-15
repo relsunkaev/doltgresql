@@ -4603,7 +4603,7 @@ func TestPgStatRecoveryPrefetch(t *testing.T) {
 			Name: "pg_stat_recovery_prefetch",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_stat_recovery_prefetch";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT count(*) = 1, count(prefetch) = 1, count(hit) = 1, count(wal_distance) = 1 FROM "pg_catalog"."pg_stat_recovery_prefetch";`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpgstatrecoveryprefetch-0001-select-*-from-pg_catalog-."},
@@ -4621,7 +4621,7 @@ func TestPgStatRecoveryPrefetch(t *testing.T) {
 						ID: "pgcatalog-test-testpgstatrecoveryprefetch-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT hit FROM PG_catalog.pg_STAT_RECOVERY_PREFETCH ORDER BY hit;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatrecoveryprefetch-0004-select-hit-from-pg_catalog.pg_stat_recovery_prefetch-order"},
+					Query: "SELECT count(*) = 1, count(hit) = 1 FROM PG_catalog.pg_STAT_RECOVERY_PREFETCH;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatrecoveryprefetch-0004-select-hit-from-pg_catalog.pg_stat_recovery_prefetch-order"},
 				},
 			},
 		},

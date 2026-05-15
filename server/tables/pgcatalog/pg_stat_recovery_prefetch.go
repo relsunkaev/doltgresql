@@ -43,8 +43,18 @@ func (p PgStatRecoveryPrefetchHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatRecoveryPrefetchHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_stat_recovery_prefetch row iter
-	return emptyRowIter()
+	return sql.RowsToRowIter(sql.Row{
+		nil,      // stats_reset
+		int64(0), // prefetch
+		int64(0), // hit
+		int64(0), // skip_init
+		int64(0), // skip_new
+		int64(0), // skip_fpw
+		int64(0), // skip_rep
+		int32(0), // wal_distance
+		int32(0), // block_distance
+		int32(0), // io_depth
+	}), nil
 }
 
 // Schema implements the interface tables.Handler.
