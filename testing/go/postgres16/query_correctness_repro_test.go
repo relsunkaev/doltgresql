@@ -15,9 +15,11 @@
 package postgres16
 
 import (
-	. "github.com/dolthub/doltgresql/testing/go"
-
 	"testing"
+
+	"github.com/dolthub/go-mysql-server/sql"
+
+	. "github.com/dolthub/doltgresql/testing/go"
 )
 
 // TestValuesQuotedCaseDistinctAggregateColumnsRepro reproduces a correctness
@@ -1697,11 +1699,12 @@ func TestFunctionNamedArgumentNotationRepro(t *testing.T) {
 func TestCurrentCatalogColumnNameRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name:     "current_catalog column name",
-			Database: "test",
+			Name: "current_catalog column name",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT current_catalog;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testcurrentcatalogcolumnnamerepro-0001-select-current_catalog"},
+					Query:            `SELECT current_catalog;`,
+					ExpectedColNames: []string{"current_catalog"},
+					PostgresOracle:   ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testcurrentcatalogcolumnnamerepro-0001-select-current_catalog"},
 				},
 			},
 		},
@@ -1728,8 +1731,7 @@ func TestCurrentSchemaColumnNameRepro(t *testing.T) {
 func TestCurrentDatabaseFromFunctionGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name:     "current_database function in FROM",
-			Database: "test",
+			Name: "current_database function in FROM",
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM current_database();`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testcurrentdatabasefromfunctionguard-0001-select-*-from-current_database"},
@@ -1744,11 +1746,39 @@ func TestCurrentDatabaseFromFunctionGuard(t *testing.T) {
 func TestCurrentCatalogFromExpressionGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name:     "current_catalog expression in FROM",
-			Database: "test",
+			Name: "current_catalog expression in FROM",
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM current_catalog;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testcurrentcatalogfromexpressionguard-0001-select-*-from-current_catalog"},
+				},
+			},
+		},
+	})
+}
+
+// TestCurrentCatalogAndDatabaseTrackConnectionDatabaseRepro guards that the
+// current-database system information expressions follow the active connection
+// database, not the default PostgreSQL oracle database.
+func TestCurrentCatalogAndDatabaseTrackConnectionDatabaseRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name:     "current catalog and database track connection database",
+			Database: "test",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:            `SELECT current_catalog, current_database();`,
+					Expected:         []sql.Row{{"test", "test"}},
+					ExpectedColNames: []string{"current_catalog", "current_database"},
+				},
+				{
+					Query:            `SELECT * FROM current_database();`,
+					Expected:         []sql.Row{{"test"}},
+					ExpectedColNames: []string{"current_database"},
+				},
+				{
+					Query:            `SELECT * FROM current_catalog;`,
+					Expected:         []sql.Row{{"test"}},
+					ExpectedColNames: []string{"current_catalog"},
 				},
 			},
 		},
