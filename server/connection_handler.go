@@ -4477,6 +4477,13 @@ func errorResponseCode(err error) string {
 	if code := pgerror.GetPGCode(err); code != pgcode.Uncategorized {
 		return code.String()
 	}
+	errMsg := err.Error()
+	if strings.HasPrefix(errMsg, "conflicting key value violates exclusion constraint") {
+		return pgcode.ExclusionViolation.String()
+	}
+	if strings.Contains(errMsg, "violates foreign key constraint") {
+		return pgcode.ForeignKeyViolation.String()
+	}
 	if _, _, ok := exclusionConstraintNameFromUniqueError(err.Error()); ok {
 		return pgcode.ExclusionViolation.String()
 	}

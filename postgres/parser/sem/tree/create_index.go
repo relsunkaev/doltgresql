@@ -52,12 +52,13 @@ func (node *IndexElemOpClassOption) Format(ctx *FmtCtx) {
 
 // IndexElem represents a column with a direction in a CREATE INDEX statement.
 type IndexElem struct {
-	Column     Name
-	Expr       Expr // in parentheses or function name
-	Collation  string
-	OpClass    *IndexElemOpClass
-	Direction  Direction
-	NullsOrder NullsOrder
+	Column          Name
+	Expr            Expr // in parentheses or function name
+	Collation       string
+	OpClass         *IndexElemOpClass
+	Direction       Direction
+	NullsOrder      NullsOrder
+	WithoutOverlaps bool
 	// only used for EXCLUDE clause
 	ExcludeOp Operator
 }
@@ -93,6 +94,9 @@ func (node *IndexElem) Format(ctx *FmtCtx) {
 	if node.NullsOrder != DefaultNullsOrder {
 		ctx.WriteByte(' ')
 		ctx.WriteString(node.NullsOrder.String())
+	}
+	if node.WithoutOverlaps {
+		ctx.WriteString(" WITHOUT OVERLAPS")
 	}
 	if node.ExcludeOp != nil {
 		ctx.WriteString(" WITH ")

@@ -24,6 +24,7 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 	"github.com/dolthub/doltgresql/utils"
 )
 
@@ -91,6 +92,9 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 	case *tree.ForeignKeyConstraintTableDef:
 		if target.TableSpec == nil {
 			target.TableSpec = &vitess.TableSpec{}
+		}
+		if node.FromPeriod != "" || node.ToPeriod != "" {
+			return assignTemporalForeignKeyTableDef(target.Table.Name.String(), node, target.TableSpec)
 		}
 		fkDef, err := nodeForeignKeyConstraintTableDef(ctx, target.Table.Name.String(), node)
 		if err != nil {
@@ -189,6 +193,49 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 	default:
 		return errors.Errorf("unknown table definition encountered")
 	}
+}
+
+func assignTemporalForeignKeyTableDef(childTable string, node *tree.ForeignKeyConstraintTableDef, tableSpec *vitess.TableSpec) error {
+	if node.FromPeriod == "" || node.ToPeriod == "" {
+		return errors.Errorf("PERIOD foreign keys require PERIOD columns on both referencing and referenced sides")
+	}
+	if len(node.FromCols) != len(node.ToCols) {
+		return errors.Errorf("number of referencing and referenced columns for foreign key disagree")
+	}
+	name := string(node.Name)
+	if name == "" {
+		name = defaultForeignKeyConstraintName(childTable, node.FromCols, node.FromPeriod)
+	}
+	parentSchema := ""
+	if node.Table.ExplicitSchema {
+		parentSchema = string(node.Table.SchemaName)
+	}
+	parentTable := string(node.Table.ObjectName)
+	setTableMetadataCommentOption(tableSpec, func(comment string) string {
+		return tablemetadata.AddTemporalForeignKey(comment, tablemetadata.TemporalForeignKey{
+			Name:               name,
+			Columns:            nameListToStrings(node.FromCols),
+			PeriodColumn:       string(node.FromPeriod),
+			ParentSchema:       parentSchema,
+			ParentTable:        parentTable,
+			ParentColumns:      nameListToStrings(node.ToCols),
+			ParentPeriodColumn: string(node.ToPeriod),
+		})
+	})
+	return nil
+}
+
+func defaultForeignKeyConstraintName(tableName string, columns tree.NameList, period tree.Name) string {
+	parts := make([]string, 0, len(columns)+3)
+	parts = append(parts, sanitizeIndexNamePart(tableName, "table"))
+	for _, column := range columns {
+		parts = append(parts, sanitizeIndexNamePart(string(column), "column"))
+	}
+	if period != "" {
+		parts = append(parts, sanitizeIndexNamePart(string(period), "period"))
+	}
+	parts = append(parts, "fkey")
+	return strings.Join(parts, "_")
 }
 
 func nodeExcludeConstraintTableDef(ctx *Context, tableName string, node *tree.ExcludeConstraintTableDef) (*vitess.IndexDefinition, error) {

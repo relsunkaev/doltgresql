@@ -268,6 +268,9 @@ func (u *sqlSymUnion) newTableIndexNames() tree.TableIndexNames {
 func (u *sqlSymUnion) nameList() tree.NameList {
     return u.val.(tree.NameList)
 }
+func (u *sqlSymUnion) periodNameList() tree.PeriodNameList {
+    return u.val.(tree.PeriodNameList)
+}
 func (u *sqlSymUnion) unresolvedName() *tree.UnresolvedName {
     return u.val.(*tree.UnresolvedName)
 }
@@ -944,7 +947,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> OBJECT OBJECTS OF OFF OFFSET OID OIDS OIDVECTOR OLD ON ON_ERROR ONLY ONLY_DATABASE_STATS OPT OPTION OPTIONS OR
 %token <str> ORDER ORDINALITY OTHERS OUT OUTER OUTPUT OVER OVERLAPS OVERLAY OVERRIDING OWNED OWNER OPERATOR
 
-%token <str> PARALLEL PARAMETER PARENT PARSER PARTIAL PARTITION PARTITIONS PASSEDBYVALUE PASSWORD PATH PAUSE PAUSED PHYSICAL
+%token <str> PARALLEL PARAMETER PARENT PARSER PARTIAL PARTITION PARTITIONS PASSEDBYVALUE PASSWORD PATH PAUSE PAUSED PERIOD PHYSICAL
 %token <str> PLACING PLAIN PLAN PLANS POINT POINTM POINTZ POINTZM POLICY POLYGON POLYGONM POLYGONZ POLYGONZM
 %token <str> POSITION PRECEDING PRECISION PREFERRED PREPARE PREPARED PRESERVE PRIMARY PRIORITY PRIVILEGES
 %token <str> PROCEDURAL PROCEDURE PROCEDURES PROGRAM PROCESS_MAIN PROCESS_TOAST PUBLIC PUBLICATION
@@ -1401,6 +1404,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.IndexParams> constraint_index_params
 %type <tree.IndexElemList> index_params index_params_name_only opt_index_params_name_only opt_include_index_cols partition_index_params exclude_elems
 %type <tree.NameList> name_list opt_name_list privilege_list sconst_as_name_list
+%type <tree.PeriodNameList> fk_period_name fk_period_name_list opt_fk_period_name_list
 %type <[]int32> array_bounds opt_array_bounds
 %type <tree.From> from_clause
 %type <tree.TableExprs> from_list opt_from_list
@@ -1525,7 +1529,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <*types.T> geo_shape_type
 %type <*types.T> const_geo
 %type <str> extract_arg
-%type <bool> opt_varying opt_no_inherit opt_not_enforced
+%type <bool> opt_varying opt_no_inherit opt_not_enforced opt_without_overlaps
 
 %type <*tree.NumVal> signed_iconst only_signed_iconst
 %type <*tree.NumVal> signed_fconst only_signed_fconst
@@ -9556,16 +9560,59 @@ table_constraint_elem:
       Predicate: $7.expr(),
     }
   }
-| FOREIGN KEY '(' name_list ')' REFERENCES table_name opt_column_list key_match reference_actions
+| FOREIGN KEY '(' fk_period_name_list ')' REFERENCES table_name opt_fk_period_name_list key_match reference_actions
   {
     name := $7.unresolvedObjectName().ToTableName()
+    fromCols := $4.periodNameList()
+    toCols := $8.periodNameList()
     $$.val = &tree.ForeignKeyConstraintTableDef{
       Table: name,
-      FromCols: $4.nameList(),
-      ToCols: $8.nameList(),
+      FromCols: fromCols.Names,
+      FromPeriod: fromCols.Period,
+      ToCols: toCols.Names,
+      ToPeriod: toCols.Period,
       Match: $9.compositeKeyMatchMethod(),
       Actions: $10.referenceActions(),
     }
+  }
+
+opt_fk_period_name_list:
+  '(' fk_period_name_list ')'
+  {
+    $$.val = $2.periodNameList()
+  }
+| /* EMPTY */
+  {
+    $$.val = tree.PeriodNameList{}
+  }
+
+fk_period_name_list:
+  fk_period_name
+  {
+    $$.val = $1.periodNameList()
+  }
+| fk_period_name_list ',' fk_period_name
+  {
+    columns := $1.periodNameList()
+    next := $3.periodNameList()
+    if columns.Period != "" && next.Period != "" {
+      return setErr(sqllex, fmt.Errorf("multiple PERIOD columns specified"))
+    }
+    columns.Names = append(columns.Names, next.Names...)
+    if next.Period != "" {
+      columns.Period = next.Period
+    }
+    $$.val = columns
+  }
+
+fk_period_name:
+  name
+  {
+    $$.val = tree.PeriodNameList{Names: tree.NameList{tree.Name($1)}}
+  }
+| PERIOD name
+  {
+    $$.val = tree.PeriodNameList{Period: tree.Name($2)}
   }
 
 exclude_elems:
@@ -10922,17 +10969,27 @@ index_params:
 // expressions in parens. For backwards-compatibility reasons, we allow an
 // expression that is just a function call to be written without parens.
 index_elem:
-  name opt_collate opt_opclass opt_asc_desc opt_nulls_order
+  name opt_collate opt_opclass opt_asc_desc opt_nulls_order opt_without_overlaps
   {
-    $$.val = tree.IndexElem{Column: tree.Name($1), Collation: $2.unresolvedObjectName().UnquotedString(), OpClass: $3.opClass(), Direction: $4.dir(), NullsOrder: $5.nullsOrder()}
+    $$.val = tree.IndexElem{Column: tree.Name($1), Collation: $2.unresolvedObjectName().UnquotedString(), OpClass: $3.opClass(), Direction: $4.dir(), NullsOrder: $5.nullsOrder(), WithoutOverlaps: $6.bool()}
   }
-| '(' a_expr ')' opt_collate opt_opclass opt_asc_desc opt_nulls_order
+| '(' a_expr ')' opt_collate opt_opclass opt_asc_desc opt_nulls_order opt_without_overlaps
   {
-    $$.val = tree.IndexElem{Expr: $2.expr(), Collation: $4.unresolvedObjectName().UnquotedString(), OpClass: $5.opClass(), Direction: $6.dir(), NullsOrder: $7.nullsOrder()}
+    $$.val = tree.IndexElem{Expr: $2.expr(), Collation: $4.unresolvedObjectName().UnquotedString(), OpClass: $5.opClass(), Direction: $6.dir(), NullsOrder: $7.nullsOrder(), WithoutOverlaps: $8.bool()}
   }
-| func_expr opt_collate opt_opclass opt_asc_desc opt_nulls_order
+| func_expr opt_collate opt_opclass opt_asc_desc opt_nulls_order opt_without_overlaps
   {
-    $$.val = tree.IndexElem{Expr: $1.expr(), Collation: $2.unresolvedObjectName().UnquotedString(), OpClass: $3.opClass(), Direction: $4.dir(), NullsOrder: $5.nullsOrder()}
+    $$.val = tree.IndexElem{Expr: $1.expr(), Collation: $2.unresolvedObjectName().UnquotedString(), OpClass: $3.opClass(), Direction: $4.dir(), NullsOrder: $5.nullsOrder(), WithoutOverlaps: $6.bool()}
+  }
+
+opt_without_overlaps:
+  WITHOUT OVERLAPS
+  {
+    $$.val = true
+  }
+| /* EMPTY */
+  {
+    $$.val = false
   }
 
 opt_opclass:
@@ -16892,6 +16949,7 @@ unreserved_keyword:
 | PATH
 | PAUSE
 | PAUSED
+| PERIOD
 | PHYSICAL
 | PLAIN
 | PLAN

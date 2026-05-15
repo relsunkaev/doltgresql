@@ -998,6 +998,13 @@ func (node *ReferenceActions) Format(ctx *FmtCtx) {
 	}
 }
 
+// PeriodNameList stores a column list that may contain one PERIOD column for
+// PostgreSQL temporal foreign keys.
+type PeriodNameList struct {
+	Names  NameList
+	Period Name
+}
+
 // CompositeKeyMatchMethod is the algorithm use when matching composite keys.
 // See https://github.com/cockroachdb/cockroach/issues/20305 or
 // https://www.postgresql.org/docs/11/sql-createtable.html for details on the
@@ -1025,8 +1032,10 @@ func (c CompositeKeyMatchMethod) String() string {
 type ForeignKeyConstraintTableDef struct {
 	Name       Name
 	FromCols   NameList
+	FromPeriod Name
 	Table      TableName
 	ToCols     NameList
+	ToPeriod   Name
 	Actions    ReferenceActions
 	Match      CompositeKeyMatchMethod
 	Deferrable DeferrableMode
@@ -1041,14 +1050,14 @@ func (node *ForeignKeyConstraintTableDef) Format(ctx *FmtCtx) {
 		ctx.WriteByte(' ')
 	}
 	ctx.WriteString("FOREIGN KEY (")
-	ctx.FormatNode(&node.FromCols)
+	formatPeriodNameList(ctx, node.FromCols, node.FromPeriod)
 	ctx.WriteString(") REFERENCES ")
 	ctx.FormatNode(&node.Table)
 
-	if len(node.ToCols) > 0 {
+	if len(node.ToCols) > 0 || node.ToPeriod != "" {
 		ctx.WriteByte(' ')
 		ctx.WriteByte('(')
-		ctx.FormatNode(&node.ToCols)
+		formatPeriodNameList(ctx, node.ToCols, node.ToPeriod)
 		ctx.WriteByte(')')
 	}
 
@@ -1071,6 +1080,24 @@ func (node *ForeignKeyConstraintTableDef) Format(ctx *FmtCtx) {
 	case NotDeferrable:
 		ctx.WriteString(" NOT DEFERRABLE")
 	default:
+	}
+}
+
+func formatPeriodNameList(ctx *FmtCtx, names NameList, period Name) {
+	first := true
+	for i := range names {
+		if !first {
+			ctx.WriteString(", ")
+		}
+		ctx.FormatNode(&names[i])
+		first = false
+	}
+	if period != "" {
+		if !first {
+			ctx.WriteString(", ")
+		}
+		ctx.WriteString("PERIOD ")
+		ctx.FormatNode(&period)
 	}
 }
 

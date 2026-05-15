@@ -1531,6 +1531,9 @@ func (node *IndexElem) doc(p *PrettyCfg) pretty.Doc {
 	if node.NullsOrder != DefaultNullsOrder {
 		d = pretty.ConcatSpace(d, pretty.Keyword(node.NullsOrder.String()))
 	}
+	if node.WithoutOverlaps {
+		d = pretty.ConcatSpace(d, pretty.Keyword("WITHOUT OVERLAPS"))
+	}
 	return d
 }
 
@@ -1621,7 +1624,7 @@ func (node *ForeignKeyConstraintTableDef) doc(p *PrettyCfg) pretty.Doc {
 	clauses := make([]pretty.Doc, 0, 4)
 	title := pretty.ConcatSpace(
 		pretty.Keyword("FOREIGN KEY"),
-		p.bracket("(", p.Doc(&node.FromCols), ")"))
+		p.bracket("(", p.periodNameListDoc(node.FromCols, node.FromPeriod), ")"))
 
 	if node.Name != "" {
 		clauses = append(clauses, title)
@@ -1630,8 +1633,8 @@ func (node *ForeignKeyConstraintTableDef) doc(p *PrettyCfg) pretty.Doc {
 
 	ref := pretty.ConcatSpace(
 		pretty.Keyword("REFERENCES"), p.Doc(&node.Table))
-	if len(node.ToCols) > 0 {
-		ref = pretty.ConcatSpace(ref, p.bracket("(", p.Doc(&node.ToCols), ")"))
+	if len(node.ToCols) > 0 || node.ToPeriod != "" {
+		ref = pretty.ConcatSpace(ref, p.bracket("(", p.periodNameListDoc(node.ToCols, node.ToPeriod), ")"))
 	}
 	clauses = append(clauses, ref)
 
@@ -1644,6 +1647,17 @@ func (node *ForeignKeyConstraintTableDef) doc(p *PrettyCfg) pretty.Doc {
 	}
 
 	return p.nestUnder(title, pretty.Group(pretty.Stack(clauses...)))
+}
+
+func (p *PrettyCfg) periodNameListDoc(names NameList, period Name) pretty.Doc {
+	docs := make([]pretty.Doc, 0, len(names)+1)
+	for i := range names {
+		docs = append(docs, p.Doc(&names[i]))
+	}
+	if period != "" {
+		docs = append(docs, pretty.ConcatSpace(pretty.Keyword("PERIOD"), p.Doc(&period)))
+	}
+	return p.commaSeparated(docs...)
 }
 
 func (p *PrettyCfg) maybePrependConstraintName(constraintName *Name, d pretty.Doc) pretty.Doc {

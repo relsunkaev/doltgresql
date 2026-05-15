@@ -51,6 +51,7 @@ type Metadata struct {
 	Inherits                    []InheritedTable             `json:"inherits,omitempty"`
 	DroppedColumns              []DroppedColumn              `json:"droppedColumns,omitempty"`
 	ExtendedStatistics          []ExtendedStatistic          `json:"extendedStatistics,omitempty"`
+	TemporalForeignKeys         []TemporalForeignKey         `json:"temporalForeignKeys,omitempty"`
 }
 
 // InheritedTable stores one parent relation from CREATE TABLE ... INHERITS.
@@ -70,6 +71,18 @@ type ExtendedStatistic struct {
 	Name    string   `json:"name,omitempty"`
 	Columns []string `json:"columns,omitempty"`
 	Kinds   []string `json:"kinds,omitempty"`
+}
+
+// TemporalForeignKey stores PostgreSQL PERIOD foreign-key metadata that Dolt's
+// native FK metadata cannot represent.
+type TemporalForeignKey struct {
+	Name               string   `json:"name,omitempty"`
+	Columns            []string `json:"columns,omitempty"`
+	PeriodColumn       string   `json:"periodColumn,omitempty"`
+	ParentSchema       string   `json:"parentSchema,omitempty"`
+	ParentTable        string   `json:"parentTable,omitempty"`
+	ParentColumns      []string `json:"parentColumns,omitempty"`
+	ParentPeriodColumn string   `json:"parentPeriodColumn,omitempty"`
 }
 
 // NotNullConstraint stores PostgreSQL metadata for a column NOT NULL
@@ -98,6 +111,7 @@ func EncodeComment(metadata Metadata) string {
 	normalizeInheritedTables(&metadata.Inherits)
 	normalizeDroppedColumns(&metadata.DroppedColumns)
 	normalizeExtendedStatistics(&metadata.ExtendedStatistics)
+	normalizeTemporalForeignKeys(&metadata.TemporalForeignKeys)
 	encoded, _ := json.Marshal(metadata)
 	return commentPrefix + string(encoded)
 }
@@ -129,6 +143,7 @@ func DecodeComment(comment string) (Metadata, bool) {
 	normalizeInheritedTables(&metadata.Inherits)
 	normalizeDroppedColumns(&metadata.DroppedColumns)
 	normalizeExtendedStatistics(&metadata.ExtendedStatistics)
+	normalizeTemporalForeignKeys(&metadata.TemporalForeignKeys)
 	return metadata, true
 }
 
@@ -191,6 +206,27 @@ func PrimaryKeyIndexComment(comment string) string {
 func SetPrimaryKeyIndexComment(comment string, indexComment string) string {
 	metadata, _ := DecodeComment(comment)
 	metadata.PrimaryKeyIndexComment = strings.TrimSpace(indexComment)
+	if metadata.empty() {
+		return ""
+	}
+	return EncodeComment(metadata)
+}
+
+// TemporalForeignKeys returns PostgreSQL PERIOD foreign keys encoded in a table
+// metadata comment.
+func TemporalForeignKeys(comment string) []TemporalForeignKey {
+	metadata, ok := DecodeComment(comment)
+	if !ok || len(metadata.TemporalForeignKeys) == 0 {
+		return nil
+	}
+	return append([]TemporalForeignKey(nil), metadata.TemporalForeignKeys...)
+}
+
+// AddTemporalForeignKey returns a table metadata comment with fk appended.
+func AddTemporalForeignKey(comment string, fk TemporalForeignKey) string {
+	metadata, _ := DecodeComment(comment)
+	metadata.TemporalForeignKeys = append(metadata.TemporalForeignKeys, fk)
+	normalizeTemporalForeignKeys(&metadata.TemporalForeignKeys)
 	if metadata.empty() {
 		return ""
 	}
@@ -967,6 +1003,33 @@ func normalizeExtendedStatistic(value *ExtendedStatistic) {
 	value.Kinds = normalizeStringList(value.Kinds)
 }
 
+func normalizeTemporalForeignKeys(values *[]TemporalForeignKey) {
+	if len(*values) == 0 {
+		return
+	}
+	ret := (*values)[:0]
+	for _, value := range *values {
+		value.Name = strings.TrimSpace(value.Name)
+		value.Columns = normalizeStringList(value.Columns)
+		value.PeriodColumn = strings.TrimSpace(value.PeriodColumn)
+		value.ParentSchema = strings.TrimSpace(value.ParentSchema)
+		value.ParentTable = strings.TrimSpace(value.ParentTable)
+		value.ParentColumns = normalizeStringList(value.ParentColumns)
+		value.ParentPeriodColumn = strings.TrimSpace(value.ParentPeriodColumn)
+		if value.PeriodColumn == "" || value.ParentTable == "" || value.ParentPeriodColumn == "" {
+			continue
+		}
+		ret = append(ret, value)
+	}
+	*values = ret
+	sort.Slice(*values, func(i, j int) bool {
+		if (*values)[i].Name != (*values)[j].Name {
+			return (*values)[i].Name < (*values)[j].Name
+		}
+		return (*values)[i].ParentTable < (*values)[j].ParentTable
+	})
+}
+
 func normalizeStringList(values []string) []string {
 	ret := values[:0]
 	for _, value := range values {
@@ -1006,5 +1069,6 @@ func (metadata Metadata) empty() bool {
 		len(metadata.NotNullConstraints) == 0 &&
 		len(metadata.Inherits) == 0 &&
 		len(metadata.DroppedColumns) == 0 &&
-		len(metadata.ExtendedStatistics) == 0
+		len(metadata.ExtendedStatistics) == 0 &&
+		len(metadata.TemporalForeignKeys) == 0
 }

@@ -17,6 +17,7 @@ package ast
 import (
 	"strings"
 
+	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
@@ -171,8 +172,12 @@ func uniqueConstraintIndexOptionsForDef(node *tree.UniqueConstraintTableDef) ([]
 	if err != nil {
 		return nil, err
 	}
+	withoutOverlaps, err := uniqueConstraintWithoutOverlapsColumn(node.Columns)
+	if err != nil {
+		return nil, err
+	}
 	isDeferrable := uniqueConstraintIsDeferrable(node.Deferrable)
-	if len(includeColumns) == 0 && len(relOptions) == 0 && !node.NullsNotDistinct && !isDeferrable {
+	if len(includeColumns) == 0 && len(relOptions) == 0 && !node.NullsNotDistinct && !isDeferrable && withoutOverlaps == "" {
 		return nil, nil
 	}
 	metadata := indexmetadata.Metadata{
@@ -180,9 +185,27 @@ func uniqueConstraintIndexOptionsForDef(node *tree.UniqueConstraintTableDef) ([]
 		IncludeColumns:   includeColumns,
 		RelOptions:       relOptions,
 		NullsNotDistinct: node.NullsNotDistinct,
+		WithoutOverlaps:  withoutOverlaps,
 	}
 	applyUniqueConstraintTimingMetadata(&metadata, node.PrimaryKey, node.Deferrable, node.Initially)
 	return []*vitess.IndexOption{indexMetadataCommentOption(metadata)}, nil
+}
+
+func uniqueConstraintWithoutOverlapsColumn(columns tree.IndexElemList) (string, error) {
+	var withoutOverlaps string
+	for _, column := range columns {
+		if !column.WithoutOverlaps {
+			continue
+		}
+		if withoutOverlaps != "" {
+			return "", errors.Errorf("only one WITHOUT OVERLAPS column is supported")
+		}
+		if column.Expr != nil || column.Column == "" {
+			return "", errors.Errorf("WITHOUT OVERLAPS expression indexes are not yet supported")
+		}
+		withoutOverlaps = string(column.Column)
+	}
+	return withoutOverlaps, nil
 }
 
 func uniqueConstraintIsDeferrable(deferrable tree.DeferrableMode) bool {

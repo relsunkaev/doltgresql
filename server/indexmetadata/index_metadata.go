@@ -154,6 +154,7 @@ type Metadata struct {
 	SortOptions       []IndexColumnOption `json:"sortOptions,omitempty"`
 	Unique            bool                `json:"unique,omitempty"`
 	NullsNotDistinct  bool                `json:"nullsNotDistinct,omitempty"`
+	WithoutOverlaps   string              `json:"withoutOverlaps,omitempty"`
 	Deferrable        bool                `json:"deferrable,omitempty"`
 	InitiallyDeferred bool                `json:"initiallyDeferred,omitempty"`
 	Clustered         bool                `json:"clustered,omitempty"`
@@ -201,6 +202,7 @@ func EncodeComment(metadata Metadata) string {
 		metadata.IncludeColumns[i] = strings.TrimSpace(metadata.IncludeColumns[i])
 	}
 	metadata.Predicate = strings.TrimSpace(metadata.Predicate)
+	metadata.WithoutOverlaps = strings.TrimSpace(metadata.WithoutOverlaps)
 	for i := range metadata.PredicateColumns {
 		metadata.PredicateColumns[i] = strings.TrimSpace(metadata.PredicateColumns[i])
 	}
@@ -238,6 +240,7 @@ func DecodeComment(comment string) (Metadata, bool) {
 		metadata.IncludeColumns[i] = strings.TrimSpace(metadata.IncludeColumns[i])
 	}
 	metadata.Predicate = strings.TrimSpace(metadata.Predicate)
+	metadata.WithoutOverlaps = strings.TrimSpace(metadata.WithoutOverlaps)
 	for i := range metadata.PredicateColumns {
 		metadata.PredicateColumns[i] = strings.TrimSpace(metadata.PredicateColumns[i])
 	}
@@ -370,6 +373,22 @@ func RelOptions(comment string) []string {
 func NullsNotDistinct(comment string) bool {
 	metadata, ok := DecodeComment(comment)
 	return ok && metadata.NullsNotDistinct
+}
+
+// WithoutOverlapsColumn returns the period column declared with WITHOUT
+// OVERLAPS for PostgreSQL temporal unique constraints.
+func WithoutOverlapsColumn(comment string) string {
+	metadata, ok := DecodeComment(comment)
+	if !ok {
+		return ""
+	}
+	return metadata.WithoutOverlaps
+}
+
+// HasWithoutOverlaps reports whether index metadata carries a PostgreSQL
+// temporal WITHOUT OVERLAPS period column.
+func HasWithoutOverlaps(index sql.Index, table sql.Table) bool {
+	return WithoutOverlapsColumn(CommentForTable(index, table)) != ""
 }
 
 // Deferrable returns whether this PostgreSQL constraint-backed index was

@@ -10,6 +10,16 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### beta - 2026-05-15 03:30 MST
+
+- Lane claimed: PostgreSQL 18 temporal constraints, specifically `TestPostgres18WithoutOverlapsTemporalUniqueRepro` and `TestPostgres18TemporalForeignKeyPeriodRepro` failing during setup on `WITHOUT OVERLAPS` syntax.
+- Current red proof from the preceding broader PG18 run: `UNIQUE (room_id, booked WITHOUT OVERLAPS)` and `PRIMARY KEY (product_id, available WITHOUT OVERLAPS)` parse with `ERROR: at or near "without": syntax error (SQLSTATE 42601)`.
+- Expected files after inspection: PostgreSQL parser/AST table-constraint handling and the smallest runtime enforcement path needed for temporal unique / temporal foreign key period behavior. Boundary: no alpha Alembic `format_type` lane and no peer-dirty pg_catalog hidden-column files.
+- Root cause confirmed: the parser/AST did not represent `WITHOUT OVERLAPS` index elements or `PERIOD` foreign-key columns, and Dolt/GMS has no native temporal unique / period-FK enforcement once the syntax is accepted.
+- Change made: added parser/AST support for `WITHOUT OVERLAPS` and FK `PERIOD` columns, stores temporal unique metadata on index comments and period-FK metadata on table comments, and wraps write targets to reject overlapping ranges (`23P01`) and require full parent period coverage (`23503`). Also mapped GMS-wrapped PostgreSQL constraint messages back to their SQLSTATEs.
+- Validation passed: compile check `go test -vet=off ./postgres/parser/parser ./postgres/parser/sem/tree ./server/indexmetadata ./server/tablemetadata ./server/ast ./server/node ./server/analyzer -run '^$' -count=1 -timeout=10m`; SQLSTATE regression `go test -vet=off ./server -run '^TestErrorResponseCodeFormatsWrappedPostgresConstraintMessages$' -count=1 -timeout=10m -v`; focused temporal PG18 repros; and broader `go test -vet=off ./testing/go/postgres18 -count=1 -timeout=20m`, all with ICU env and `GOFLAGS=-p=1`.
+- Next action: commit the temporal-constraints increment, then re-check `coop.md` and run a fresh `./testing/go/...` failfast to find the next unclaimed blocker.
+
 ### beta - 2026-05-15 03:19 MST
 
 - Lane claimed: fresh `./testing/go/...` failfast discovery from current `HEAD=b319cd2e` after alpha's tableoid commit and beta's PostgreSQL 18 virtual generated column commit.

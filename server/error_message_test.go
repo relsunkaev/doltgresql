@@ -65,6 +65,14 @@ func TestErrorResponseCodeFormatsExclusionConstraintViolation(t *testing.T) {
 	require.Equal(t, pgcode.ExclusionViolation.String(), code)
 }
 
+func TestErrorResponseCodeFormatsWrappedPostgresConstraintMessages(t *testing.T) {
+	exclusion := errors.New(`conflicting key value violates exclusion constraint "temporal_unique_bookings_room_id_booked_key" (errno 1105) (sqlstate HY000)`)
+	require.Equal(t, pgcode.ExclusionViolation.String(), errorResponseCode(exclusion))
+
+	foreignKey := errors.New(`insert or update on table "temporal_fk_child" violates foreign key constraint "temporal_fk_child_product_id_requested_fkey" (errno 1105) (sqlstate HY000)`)
+	require.Equal(t, pgcode.ForeignKeyViolation.String(), errorResponseCode(foreignKey))
+}
+
 func TestCastSQLErrorPreservesExplicitPGCodes(t *testing.T) {
 	for _, code := range []pgcode.Code{
 		pgcode.Syntax,
