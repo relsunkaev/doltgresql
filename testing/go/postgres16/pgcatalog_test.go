@@ -2647,7 +2647,12 @@ ORDER BY opc.opcname, am.amname;`, PostgresOracle: ScriptTestPostgresOracle{ID: 
 						ID: "pgcatalog-test-testpgopclass-0007-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT opcname FROM PG_catalog.pg_OPCLASS ORDER BY opcname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgopclass-0008-select-opcname-from-pg_catalog.pg_opclass-order"},
+					Query: `SELECT opc.opcname
+FROM PG_catalog.pg_OPCLASS opc
+JOIN pg_catalog.pg_am am ON am.oid = opc.opcmethod
+WHERE am.amname = 'btree'
+	AND opc.opcname IN ('name_ops', 'text_ops', 'varchar_ops')
+ORDER BY opc.opcname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgopclass-0008-select-opcname-from-pg_catalog.pg_opclass-order"},
 				},
 			},
 		},

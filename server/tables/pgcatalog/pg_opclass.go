@@ -148,7 +148,7 @@ var defaultPostgresOpclasses = []opclass{
 	newBtreeOpclass("char_ops", "char", "char_ops"),
 	newBtreeOpclassWithKeyType("name_ops", "name", "text_ops", "cstring"),
 	newBtreeOpclass("text_ops", "text", "text_ops"),
-	newBtreeOpclass("varchar_ops", "text", "text_ops"),
+	newBtreeOpclassWithDefault("varchar_ops", "text", "text_ops", false),
 	newBtreeOpclass("bpchar_ops", "bpchar", "bpchar_ops"),
 	newBtreeOpclass("bytea_ops", "bytea", "bytea_ops"),
 	newBtreeOpclassWithDefault(indexmetadata.OpClassTextPatternOps, "text", "text_pattern_ops", false),
