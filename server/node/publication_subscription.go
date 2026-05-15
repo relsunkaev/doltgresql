@@ -430,7 +430,7 @@ func (c *CreateSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, 
 		return nil, err
 	}
 	if connect {
-		return nil, errors.New("subscription publisher connections are not yet supported; use WITH (connect=false)")
+		return nil, pgerror.New(pgcode.ProtocolViolation, "subscription publisher connections are not yet supported; use WITH (connect=false)")
 	}
 	if err = validateMetadataOnlySubscriptionCreateOptions(c.Options); err != nil {
 		return nil, err
@@ -568,7 +568,7 @@ func (a *AlterSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 		return nil, errors.New("subscription refresh requires publisher connections, which are not yet supported")
 	case SubscriptionAlterEnable:
 		if sub.SlotName == "" {
-			return nil, errors.New("cannot enable subscription that does not have a slot name")
+			return nil, pgerror.New(pgcode.ObjectNotInPrerequisiteState, "cannot enable subscription that does not have a slot name")
 		}
 		sub.Enabled = true
 	case SubscriptionAlterDisable:
@@ -1387,7 +1387,7 @@ func applySubscriptionOptions(sub *subscriptions.Subscription, options map[strin
 		switch key {
 		case "connect":
 			if optionBoolDefault(options, "connect", true) {
-				return errors.New("subscription publisher connections are not yet supported; use connect=false")
+				return pgerror.New(pgcode.ProtocolViolation, "subscription publisher connections are not yet supported; use connect=false")
 			}
 		case "create_slot":
 			if optionBoolDefault(options, "create_slot", false) {
@@ -1505,7 +1505,7 @@ func validateMetadataOnlySubscriptionCreateOptions(options map[string]string) er
 			return err
 		}
 		if ok && value {
-			return errors.Errorf("connect = false and %s = true are mutually exclusive options", key)
+			return pgerror.Newf(pgcode.Syntax, "connect = false and %s = true are mutually exclusive options", key)
 		}
 	}
 	return nil

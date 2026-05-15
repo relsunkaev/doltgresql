@@ -319,6 +319,7 @@ func castSQLError(err error) error {
 		pgcode.NotNullViolation,
 		pgcode.NullValueNotAllowed,
 		pgcode.ObjectNotInPrerequisiteState,
+		pgcode.ProtocolViolation,
 		pgcode.ProgramLimitExceeded,
 		pgcode.QueryCanceled,
 		pgcode.RaiseException,

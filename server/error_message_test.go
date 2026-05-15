@@ -75,6 +75,7 @@ func TestCastSQLErrorPreservesExplicitPGCodes(t *testing.T) {
 		pgcode.NotNullViolation,
 		pgcode.ArraySubscript,
 		pgcode.NullValueNotAllowed,
+		pgcode.ProtocolViolation,
 	} {
 		err := pgerror.New(code, "plpgsql error")
 		require.Equal(t, code, pgerror.GetPGCode(castSQLError(err)))
