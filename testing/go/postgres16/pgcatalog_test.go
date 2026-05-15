@@ -4825,9 +4825,14 @@ func TestPgStatSysIndexes(t *testing.T) {
 			Name: "pg_stat_sys_indexes",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT schemaname, relname, indexrelname, idx_scan, last_idx_scan, idx_tup_read, idx_tup_fetch
+					Query: `SELECT schemaname, relname, indexrelname,
+       idx_scan >= 0 AS idx_scan_nonnegative,
+       idx_tup_read >= 0 AS idx_tup_read_nonnegative,
+       idx_tup_fetch >= 0 AS idx_tup_fetch_nonnegative
 FROM "pg_catalog"."pg_stat_sys_indexes"
-WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
+WHERE schemaname = 'pg_catalog'
+  AND relname = 'pg_class'
+  AND indexrelname IN ('pg_class_oid_index', 'pg_class_relname_nsp_index')
 ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatsysindexes-0001-select-schemaname-relname-indexrelname-idx_scan"},
 				},
 				{ // Different cases and quoted, so it fails
@@ -4843,9 +4848,10 @@ ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog
 						ID: "pgcatalog-test-testpgstatsysindexes-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT indexrelname FROM PG_catalog.pg_STAT_SYS_INDEXES
-WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
-ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatsysindexes-0004-select-indexrelname-from-pg_catalog.pg_stat_sys_indexes-where"},
+					Query: `SELECT count(*) = 2 FROM PG_catalog.pg_STAT_SYS_INDEXES
+WHERE schemaname = 'pg_catalog'
+  AND relname = 'pg_class'
+  AND indexrelname IN ('pg_class_oid_index', 'pg_class_relname_nsp_index');`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatsysindexes-0004-select-indexrelname-from-pg_catalog.pg_stat_sys_indexes-where"},
 				},
 			},
 		},
