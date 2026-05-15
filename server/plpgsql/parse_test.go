@@ -450,6 +450,35 @@ func TestParseExplicitCursorParameters(t *testing.T) {
 	}
 }
 
+func TestParseRefcursorOpenForQuery(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION test_block(cursor_name REFCURSOR) RETURNS REFCURSOR AS $$
+		BEGIN
+			OPEN cursor_name FOR SELECT 1 AS id;
+			RETURN cursor_name;
+		END;
+	$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var openOp *InterpreterOperation
+	for i := range ops {
+		if ops[i].OpCode == OpCode_ForQueryInit && ops[i].Options[cursorNameFromVariableOption] == "true" {
+			openOp = &ops[i]
+			break
+		}
+	}
+	if openOp == nil {
+		t.Fatalf("expected refcursor OPEN operation; ops: %#v", ops)
+	}
+	if openOp.Options[cursorNameFromVariableOption] != "true" {
+		t.Fatalf("cursor name option = %q; op: %#v", openOp.Options[cursorNameFromVariableOption], openOp)
+	}
+	if !strings.Contains(openOp.PrimaryData, "SELECT 1") {
+		t.Fatalf("OPEN query = %q; op: %#v", openOp.PrimaryData, openOp)
+	}
+}
+
 func TestParseDynamicExecuteIntoStrict(t *testing.T) {
 	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS void AS $$
 		DECLARE

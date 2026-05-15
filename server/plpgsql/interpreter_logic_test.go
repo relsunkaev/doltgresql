@@ -80,6 +80,10 @@ func (f testInterpretedFunction) QuerySingleReturn(ctx *sql.Context, stack Inter
 	return nil, nil
 }
 
+func (f testInterpretedFunction) StoreCursor(ctx *sql.Context, name string, statement string, schema sql.Schema, rows []sql.Row) error {
+	return nil
+}
+
 func (f testInterpretedFunction) IsSRF() bool {
 	return false
 }

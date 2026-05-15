@@ -61,6 +61,7 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/ast"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/cursorstate"
 	"github.com/dolthub/doltgresql/server/deferrable"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/functionstats"
@@ -294,6 +295,7 @@ func (h *ConnectionHandler) HandleConnection() {
 		h.closeReplicationSender()
 		replsource.DropTemporarySlotsForPID(int32(h.mysqlConn.ConnectionID))
 		sessionstate.DeleteAllPreparedStatements(h.mysqlConn.ConnectionID)
+		cursorstate.CloseAll(h.mysqlConn.ConnectionID)
 		functionstats.DeleteAll(h.mysqlConn.ConnectionID)
 		globalCancelRegistry.unregister(h.mysqlConn.ConnectionID, h.cancelSecretKey)
 		_ = auth.RollbackTransaction(h.mysqlConn.ConnectionID)
@@ -867,6 +869,9 @@ func (h *ConnectionHandler) cursorReturnFields(query ConvertedQuery) []pgproto3.
 	if cursor, ok := h.cursors[normalizeCursorName(stmt.Name)]; ok {
 		return cloneCursorFields(cursor.fields)
 	}
+	if fields, ok := cursorstate.Fields(h.mysqlConn.ConnectionID, normalizeCursorName(stmt.Name)); ok {
+		return fields
+	}
 	return nil
 }
 
@@ -903,6 +908,9 @@ func (h *ConnectionHandler) declareSQLCursor(name string, hold bool, selectSQL s
 		return pgerror.New(pgcode.InvalidCursorName, "invalid cursor name")
 	}
 	if _, ok := h.cursors[name]; ok {
+		return pgerror.Newf(pgcode.DuplicateCursor, `cursor "%s" already exists`, name)
+	}
+	if cursorstate.Exists(h.mysqlConn.ConnectionID, name) {
 		return pgerror.Newf(pgcode.DuplicateCursor, `cursor "%s" already exists`, name)
 	}
 	queries, err := h.convertQuery(selectSQL)
@@ -944,7 +952,19 @@ func (h *ConnectionHandler) declareSQLCursor(name string, hold bool, selectSQL s
 func (h *ConnectionHandler) fetchSQLCursor(name string, direction string) error {
 	cursor, ok := h.cursors[normalizeCursorName(name)]
 	if !ok {
-		return pgerror.Newf(pgcode.InvalidCursorName, `cursor "%s" does not exist`, name)
+		fields, rows, ok := cursorstate.Fetch(h.mysqlConn.ConnectionID, normalizeCursorName(name), direction == "ALL")
+		if !ok {
+			return pgerror.Newf(pgcode.InvalidCursorName, `cursor "%s" does not exist`, name)
+		}
+		h.sendBuffered(&pgproto3.RowDescription{
+			Fields: fields,
+		})
+		for _, row := range rows {
+			h.sendBuffered(&pgproto3.DataRow{Values: row.Values})
+		}
+		h.markCursorTransactionStatement()
+		h.sendBuffered(makeCommandComplete("FETCH", int32(len(rows))))
+		return nil
 	}
 	h.sendBuffered(&pgproto3.RowDescription{
 		Fields: cloneCursorFields(cursor.fields),
@@ -972,11 +992,17 @@ func (h *ConnectionHandler) fetchSQLCursor(name string, direction string) error 
 func (h *ConnectionHandler) closeSQLCursor(name string) error {
 	if strings.EqualFold(name, "ALL") {
 		clear(h.cursors)
+		cursorstate.CloseAll(h.mysqlConn.ConnectionID)
 		h.sendBuffered(makeCommandComplete("CLOSE CURSOR", 0))
 		return nil
 	}
 	normalized := normalizeCursorName(name)
 	if _, ok := h.cursors[normalized]; !ok {
+		if cursorstate.Close(h.mysqlConn.ConnectionID, normalized) {
+			h.markCursorTransactionStatement()
+			h.sendBuffered(makeCommandComplete("CLOSE CURSOR", 0))
+			return nil
+		}
 		return pgerror.Newf(pgcode.InvalidCursorName, `cursor "%s" does not exist`, name)
 	}
 	delete(h.cursors, normalized)
@@ -991,6 +1017,7 @@ func (h *ConnectionHandler) closeNonHoldCursors() {
 			delete(h.cursors, name)
 		}
 	}
+	cursorstate.CloseNonHold(h.mysqlConn.ConnectionID)
 }
 
 func (h *ConnectionHandler) markCursorTransactionStatement() {

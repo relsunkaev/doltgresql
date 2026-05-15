@@ -28,7 +28,8 @@ import (
 // containing the contents of the body.
 func Parse(fullCreateFunctionString string) ([]InterpreterOperation, error) {
 	var functions []function
-	parsedBody, err := pg_query.ParsePlPgSqlToJSON(fullCreateFunctionString)
+	rewrittenCreateFunctionString := rewriteRefcursorParameterOpen(fullCreateFunctionString)
+	parsedBody, err := pg_query.ParsePlPgSqlToJSON(rewrittenCreateFunctionString)
 	if err != nil {
 		return nil, err
 	}
@@ -59,6 +60,64 @@ func Parse(fullCreateFunctionString string) ([]InterpreterOperation, error) {
 		return nil, err
 	}
 	return ops, nil
+}
+
+var createFunctionArgsRegex = regexp.MustCompile(`(?is)\bCREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+[^()]+\((.*?)\)`)
+var refcursorParamRegex = regexp.MustCompile(`(?is)^\s*(?:IN|OUT|INOUT|VARIADIC\s+)?([A-Za-z_][A-Za-z0-9_$]*)\s+(?:pg_catalog\.)?refcursor\b`)
+var plpgsqlBodyStartRegex = regexp.MustCompile(`(?is)(AS\s+\$[^$]*\$\s*)(DECLARE\b|BEGIN\b)`)
+
+func rewriteRefcursorParameterOpen(source string) string {
+	matches := createFunctionArgsRegex.FindStringSubmatch(source)
+	if len(matches) < 2 {
+		return source
+	}
+	refcursorParams := extractRefcursorParams(matches[1])
+	if len(refcursorParams) == 0 {
+		return source
+	}
+	rewritten := source
+	var declarations []string
+	for _, param := range refcursorParams {
+		generatedName := "__doltgres_refcursor_" + param
+		openRegex := regexp.MustCompile(`(?is)\bOPEN\s+` + regexp.QuoteMeta(param) + `\s+FOR\b`)
+		if !openRegex.MatchString(rewritten) {
+			continue
+		}
+		rewritten = openRegex.ReplaceAllString(rewritten, "OPEN "+generatedName+" FOR")
+		declarations = append(declarations, generatedName+" refcursor := "+param+";")
+	}
+	if len(declarations) == 0 {
+		return source
+	}
+	return injectRefcursorDeclarations(rewritten, declarations)
+}
+
+func extractRefcursorParams(args string) []string {
+	parts := strings.Split(args, ",")
+	params := make([]string, 0, len(parts))
+	for _, part := range parts {
+		matches := refcursorParamRegex.FindStringSubmatch(part)
+		if len(matches) >= 2 {
+			params = append(params, matches[1])
+		}
+	}
+	return params
+}
+
+func injectRefcursorDeclarations(source string, declarations []string) string {
+	indexes := plpgsqlBodyStartRegex.FindStringSubmatchIndex(source)
+	if len(indexes) < 6 {
+		return source
+	}
+	prefixEnd := indexes[3]
+	keywordStart := indexes[4]
+	keywordEnd := indexes[5]
+	keyword := source[keywordStart:keywordEnd]
+	declarationText := strings.Join(declarations, "\n") + "\n"
+	if strings.EqualFold(keyword, "DECLARE") {
+		return source[:keywordEnd] + "\n" + declarationText + source[keywordEnd:]
+	}
+	return source[:prefixEnd] + "DECLARE\n" + declarationText + source[keywordStart:]
 }
 
 var plpgsqlAliasDeclarationRegex = regexp.MustCompile(`(?i)\b([A-Za-z_][A-Za-z0-9_$]*)\s+alias\s+for\s+(\$[0-9]+|[A-Za-z_][A-Za-z0-9_$]*)\s*;`)

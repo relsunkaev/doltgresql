@@ -50,6 +50,7 @@ type InterpretedFunction interface {
 	InternalID() id.Id
 	QueryMultiReturn(ctx *sql.Context, stack InterpreterStack, stmt string, bindings []string) (schema sql.Schema, rows []sql.Row, err error)
 	QuerySingleReturn(ctx *sql.Context, stack InterpreterStack, stmt string, targetType *pgtypes.DoltgresType, bindings []string) (val any, err error)
+	StoreCursor(ctx *sql.Context, name string, statement string, schema sql.Schema, rows []sql.Row) error
 	// IsSRF returns whether the function is a set returning function, meaning whether the
 	// function returns one or more rows as a result.
 	IsSRF() bool
@@ -73,6 +74,7 @@ const (
 	cursorArgQueryOption              = "cursorArgQuery"
 	cursorArgNamesOption              = "cursorArgNames"
 	cursorArgQueryBindingCountOption  = "cursorArgQueryBindingCount"
+	cursorNameFromVariableOption      = "cursorNameFromVariable"
 )
 
 // The interpreter has no async statement timeout hook, so bound runaway loops
@@ -844,6 +846,23 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 				return nil, false, err
 			}
 			state.lastRowCount = rowCountFromResultRows(rows)
+			if operation.Options[cursorNameFromVariableOption] == "true" {
+				cursorVar := stack.GetVariable(operation.Target)
+				if cursorVar.Type == nil {
+					return nil, false, fmt.Errorf("variable `%s` could not be found", operation.Target)
+				}
+				if cursorVar.Value == nil || *cursorVar.Value == nil {
+					return nil, false, errors.New("cursor variable cannot be null")
+				}
+				cursorName, err := cursorVar.Type.IoOutput(ctx, *cursorVar.Value)
+				if err != nil {
+					return nil, false, err
+				}
+				if err = iFunc.StoreCursor(ctx, cursorName, statement, schema, rows); err != nil {
+					return nil, false, err
+				}
+				continue
+			}
 			stack.InitCursor(operation.Target, schema, rows)
 		case OpCode_ForEachInit:
 			targetName := operation.Options["target"]
@@ -2118,6 +2137,7 @@ var plpgsqlDeclareTypeAliases = map[string]string{
 	"double precision":  "float8",
 	"int":               "int4",
 	"record":            "record",
+	"refcursor":         "text",
 	"smallint":          "int2",
 }
 

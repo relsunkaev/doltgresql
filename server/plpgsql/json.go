@@ -247,6 +247,7 @@ type plpgSQL_stmt_open struct {
 	LineNumber int32 `json:"lineno"`
 	CursorVar  int32 `json:"curvar"`
 	ArgQuery   *expr `json:"argquery"`
+	Query      *expr `json:"query"`
 }
 
 // plpgSQL_stmt_fetch exists to match the expected JSON format.
@@ -637,14 +638,23 @@ func (stmt *plpgSQL_stmt_open) Convert(conv jsonConversionContext) (OpenCursor, 
 	if !ok {
 		return OpenCursor{}, errors.Errorf("OPEN cursor datum %d could not be resolved", stmt.CursorVar)
 	}
-	query, ok := conv.cursorQuery(stmt.CursorVar)
-	if !ok {
-		return OpenCursor{}, errors.Errorf("OPEN cursor datum %d has no explicit query", stmt.CursorVar)
+	query := ""
+	useCursorValue := false
+	if stmt.Query != nil && stmt.Query.Expression.Query != "" {
+		query = stmt.Query.Expression.Query
+		useCursorValue = true
+	} else {
+		var ok bool
+		query, ok = conv.cursorQuery(stmt.CursorVar)
+		if !ok {
+			return OpenCursor{}, errors.Errorf("OPEN cursor datum %d has no explicit query", stmt.CursorVar)
+		}
 	}
 	openCursor := OpenCursor{
-		CursorName: cursorName,
-		Query:      query,
-		LineNumber: stmt.LineNumber,
+		CursorName:     cursorName,
+		Query:          query,
+		UseCursorValue: useCursorValue,
+		LineNumber:     stmt.LineNumber,
 	}
 	if stmt.ArgQuery != nil && stmt.ArgQuery.Expression.Query != "" {
 		openCursor.ArgQuery = stmt.ArgQuery.Expression.Query

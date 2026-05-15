@@ -165,6 +165,8 @@ func (pgs *TypeCollection) GetType(ctx context.Context, name id.Type) (*pgtypes.
 			return pgtypes.TsVector, nil
 		case "gtsvector":
 			return pgtypes.Text, nil
+		case "refcursor":
+			return pgtypes.Text, nil
 		}
 	}
 	// Check the built-in types first

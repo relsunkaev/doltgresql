@@ -22,9 +22,11 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	pg_query "github.com/dolthub/pg_query_go/v6"
+	"github.com/jackc/pgx/v5/pgproto3"
 	"github.com/lib/pq"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/cursorstate"
 	"github.com/dolthub/doltgresql/server/plpgsql"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -220,6 +222,72 @@ func (iFunc InterpretedFunction) QueryMultiReturn(ctx *sql.Context, stack plpgsq
 		return sql.RowIterToRows(subCtx, rowIter)
 	})
 	return schema, rows, err
+}
+
+// StoreCursor stores a PL/pgSQL-opened refcursor for later SQL FETCH commands in the same session.
+func (iFunc InterpretedFunction) StoreCursor(ctx *sql.Context, name string, statement string, schema sql.Schema, rows []sql.Row) error {
+	if ctx == nil || ctx.Session == nil {
+		return errors.New("cannot store cursor without a session")
+	}
+	fields, err := cursorFieldsForSchema(schema)
+	if err != nil {
+		return err
+	}
+	cursorRows := make([]cursorstate.Row, len(rows))
+	for rowIdx, row := range rows {
+		values := make([][]byte, len(row))
+		for colIdx, value := range row {
+			if value == nil {
+				continue
+			}
+			if colIdx >= len(schema) {
+				return errors.New("cursor row has more values than schema columns")
+			}
+			doltgresType, err := cursorDoltgresType(schema[colIdx].Type)
+			if err != nil {
+				return err
+			}
+			output, err := doltgresType.IoOutput(ctx, value)
+			if err != nil {
+				return err
+			}
+			values[colIdx] = []byte(output)
+		}
+		cursorRows[rowIdx] = cursorstate.Row{Values: values}
+	}
+	cursor := cursorstate.Cursor{
+		Fields: fields,
+		Rows:   cursorRows,
+	}
+	if !cursorstate.Store(uint32(ctx.Session.ID()), strings.ToLower(strings.TrimSpace(name)), cursor) {
+		return errors.Errorf(`cursor "%s" already exists`, name)
+	}
+	return nil
+}
+
+func cursorFieldsForSchema(schema sql.Schema) ([]pgproto3.FieldDescription, error) {
+	fields := make([]pgproto3.FieldDescription, len(schema))
+	for idx, column := range schema {
+		doltgresType, err := cursorDoltgresType(column.Type)
+		if err != nil {
+			return nil, err
+		}
+		fields[idx] = pgproto3.FieldDescription{
+			Name:         []byte(column.Name),
+			DataTypeOID:  id.Cache().ToOID(doltgresType.ID.AsId()),
+			DataTypeSize: doltgresType.TypLength,
+			TypeModifier: -1,
+			Format:       0,
+		}
+	}
+	return fields, nil
+}
+
+func cursorDoltgresType(sqlType sql.Type) (*pgtypes.DoltgresType, error) {
+	if doltgresType, ok := sqlType.(*pgtypes.DoltgresType); ok {
+		return doltgresType, nil
+	}
+	return pgtypes.FromGmsTypeToDoltgresType(sqlType)
 }
 
 // ApplyBindings applies the given bindings to the statement. If `varFound` is false, then the error will state that

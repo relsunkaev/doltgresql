@@ -549,11 +549,12 @@ func (stmt ForQueryNext) AppendOperations(ops *[]InterpreterOperation, stack *In
 
 // OpenCursor executes an explicit cursor's query and stores its rows on the stack.
 type OpenCursor struct {
-	CursorName string
-	Query      string
-	ArgQuery   string
-	ArgNames   []string
-	LineNumber int32
+	CursorName     string
+	Query          string
+	ArgQuery       string
+	ArgNames       []string
+	UseCursorValue bool
+	LineNumber     int32
 }
 
 var _ Statement = OpenCursor{}
@@ -585,6 +586,9 @@ func (stmt OpenCursor) AppendOperations(ops *[]InterpreterOperation, stack *Inte
 		options[cursorArgNamesOption] = strings.Join(stmt.ArgNames, ",")
 		options[cursorArgQueryBindingCountOption] = strconv.Itoa(len(referencedVariables))
 		options[cursorArgQueryOption] = argQueryStr
+	}
+	if stmt.UseCursorValue {
+		options[cursorNameFromVariableOption] = "true"
 	}
 	*ops = append(*ops, InterpreterOperation{
 		OpCode:        OpCode_ForQueryInit,
