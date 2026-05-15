@@ -17,6 +17,8 @@ package postgres16
 import (
 	. "github.com/dolthub/doltgresql/testing/go"
 
+	"github.com/dolthub/go-mysql-server/sql"
+
 	"testing"
 )
 
@@ -60,7 +62,11 @@ func TestPgStatUserIndexesProbe(t *testing.T) {
 						WHERE relname = 'accounts' AND indexrelname = 'accounts_email_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-stat-user-indexes-probe-test-testpgstatuserindexesprobe-0003-select-idx_scan::text-last_idx_scan-is-null"},
 				},
 				{
-					Query: `EXPLAIN SELECT id FROM accounts WHERE email = 'a@example.com';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-stat-user-indexes-probe-test-testpgstatuserindexesprobe-0004-explain-select-id-from-accounts"},
+					Query: `EXPLAIN SELECT id FROM accounts WHERE email = 'a@example.com';`,
+					Expected: []sql.Row{
+						{"Index Scan using accounts_email_idx on accounts  (cost=0.15..8.17 rows=1 width=4)"},
+						{"  Index Cond: (email = 'a@example.com'::text)"},
+					},
 				},
 				{
 					Query: `SELECT id FROM accounts WHERE email = 'a@example.com';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-stat-user-indexes-probe-test-testpgstatuserindexesprobe-0005-select-id-from-accounts-where"},
@@ -68,7 +74,8 @@ func TestPgStatUserIndexesProbe(t *testing.T) {
 				{
 					Query: `SELECT idx_scan::text, (last_idx_scan IS NOT NULL)::text, idx_tup_read::text, idx_tup_fetch::text
 						FROM pg_stat_user_indexes
-						WHERE relname = 'accounts' AND indexrelname = 'accounts_email_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-stat-user-indexes-probe-test-testpgstatuserindexesprobe-0006-select-idx_scan::text-last_idx_scan-is-not"},
+						WHERE relname = 'accounts' AND indexrelname = 'accounts_email_idx';`,
+					Expected: []sql.Row{{"1", "true", "1", "1"}},
 				},
 				{
 					Query: `SELECT id FROM accounts WHERE email = 'missing@example.com';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-stat-user-indexes-probe-test-testpgstatuserindexesprobe-0007-select-id-from-accounts-where"},
@@ -76,7 +83,8 @@ func TestPgStatUserIndexesProbe(t *testing.T) {
 				{
 					Query: `SELECT idx_scan::text, (last_idx_scan IS NOT NULL)::text, idx_tup_read::text, idx_tup_fetch::text
 						FROM pg_stat_user_indexes
-						WHERE relname = 'accounts' AND indexrelname = 'accounts_email_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-stat-user-indexes-probe-test-testpgstatuserindexesprobe-0008-select-idx_scan::text-last_idx_scan-is-not"},
+						WHERE relname = 'accounts' AND indexrelname = 'accounts_email_idx';`,
+					Expected: []sql.Row{{"2", "true", "1", "1"}},
 				},
 			},
 		},

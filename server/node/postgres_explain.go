@@ -17,6 +17,7 @@ package node
 import (
 	"fmt"
 	"io"
+	"reflect"
 	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
@@ -176,24 +177,35 @@ func unwrapPostgresExplainWrapper(node sql.Node) sql.Node {
 
 func renderPostgresIndexScan(ctx *sql.Context, node sql.Node) ([]string, bool) {
 	shape, ok := simpleIndexedSelect(node)
-	if !ok || shape.filter == nil {
+	if !ok {
 		return nil, false
 	}
 	index := shape.access.Index()
 	if index == nil || indexmetadata.AccessMethod(index.IndexType(), index.Comment()) != indexmetadata.AccessMethodBtree {
 		return nil, false
 	}
-	condition, ok := postgresExplainCondition(ctx, shape.filter.Expression)
-	if !ok {
-		condition, ok = postgresExplainStringCondition(ctx, shape.filter.Expression, shape.access.Schema(ctx))
-		if !ok {
-			return nil, false
-		}
-	}
 
 	tableName := shape.access.Name()
 	indexName := indexmetadata.DisplayNameForTable(index, shape.access.UnderlyingTable())
 	width := postgresExplainWidth(ctx, shape.project, shape.access.Schema(ctx))
+	if shape.filter != nil {
+		condition, ok := postgresExplainCondition(ctx, shape.filter.Expression)
+		if !ok {
+			condition, ok = postgresExplainStringCondition(ctx, shape.filter.Expression, shape.access.Schema(ctx))
+			if !ok {
+				return nil, false
+			}
+		}
+		return []string{
+			fmt.Sprintf("Index Scan using %s on %s  (cost=0.15..8.17 rows=1 width=%d)", indexName, tableName, width),
+			fmt.Sprintf("  Index Cond: (%s)", condition),
+		}, true
+	}
+
+	condition, ok := postgresExplainLookupCondition(ctx, shape.access, index)
+	if !ok {
+		return nil, false
+	}
 	return []string{
 		fmt.Sprintf("Index Scan using %s on %s  (cost=0.15..8.17 rows=1 width=%d)", indexName, tableName, width),
 		fmt.Sprintf("  Index Cond: (%s)", condition),
@@ -244,6 +256,40 @@ func postgresExplainStringCondition(ctx *sql.Context, expr sql.Expression, schem
 		}
 	}
 	return fmt.Sprintf("%s = %s", left, right), true
+}
+
+func postgresExplainLookupCondition(ctx *sql.Context, access *plan.IndexedTableAccess, index sql.Index) (string, bool) {
+	lookup, inRange, err := access.GetLookup(ctx, nil)
+	if err != nil || !inRange || lookup.IsEmpty() {
+		return "", false
+	}
+	ranges, ok := lookup.Ranges.(sql.MySQLRangeCollection)
+	if !ok || len(ranges) != 1 || len(ranges[0]) != 1 {
+		return "", false
+	}
+	rangeColumn := ranges[0][0]
+	if !sql.MySQLRangeCutIsBinding(rangeColumn.LowerBound) || !sql.MySQLRangeCutIsBinding(rangeColumn.UpperBound) {
+		return "", false
+	}
+	if !rangeColumn.LowerBound.TypeAsLowerBound().Inclusive() || !rangeColumn.UpperBound.TypeAsUpperBound().Inclusive() {
+		return "", false
+	}
+	lower := sql.GetMySQLRangeCutKey(rangeColumn.LowerBound)
+	upper := sql.GetMySQLRangeCutKey(rangeColumn.UpperBound)
+	if !reflect.DeepEqual(lower, upper) {
+		return "", false
+	}
+	expressions := index.Expressions()
+	if len(expressions) != 1 {
+		return "", false
+	}
+	columnName := postgresExplainColumnName(expressions[0])
+	literal := gmsexpression.NewLiteral(lower, rangeColumn.Typ)
+	literalString := literal.String()
+	if typeName := postgresExplainTypeName(ctx, rangeColumn.Typ); typeName != "" {
+		literalString = fmt.Sprintf("%s::%s", literalString, typeName)
+	}
+	return fmt.Sprintf("%s = %s", columnName, literalString), true
 }
 
 func postgresExplainColumnName(name string) string {

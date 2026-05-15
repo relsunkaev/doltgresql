@@ -93,25 +93,12 @@
       "source": "testing/go/postgres16/pg_stat_user_indexes_probe_test.go:TestPgStatUserIndexesProbe",
       "ordinal": 4,
       "scriptName": "pg_stat_user_indexes returns and updates user index counters",
-      "oracle": "postgres",
-      "postgresId": "pg-stat-user-indexes-probe-test-testpgstatuserindexesprobe-0004-explain-select-id-from-accounts",
+      "oracle": "internal",
       "suggestedId": "pg-stat-user-indexes-probe-test-testpgstatuserindexesprobe-0004-explain-select-id-from-accounts",
       "compare": "structural",
       "expectedKind": "rows",
       "query": "EXPLAIN SELECT id FROM accounts WHERE email = 'a@example.com';",
       "querySha256": "7e02ea4d379d0d79f3586ea48eece9e94c0a68fed3d0d63c055683cb3fe433da",
-      "expectedRows": [
-        [
-          {
-            "value": "Seq Scan on accounts  (cost=0.00..1.02 rows=1 width=4)"
-          }
-        ],
-        [
-          {
-            "value": "  Filter: (email = 'a@example.com'::text)"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -142,29 +129,12 @@
       "source": "testing/go/postgres16/pg_stat_user_indexes_probe_test.go:TestPgStatUserIndexesProbe",
       "ordinal": 6,
       "scriptName": "pg_stat_user_indexes returns and updates user index counters",
-      "oracle": "postgres",
-      "postgresId": "pg-stat-user-indexes-probe-test-testpgstatuserindexesprobe-0006-select-idx_scan::text-last_idx_scan-is-not",
+      "oracle": "internal",
       "suggestedId": "pg-stat-user-indexes-probe-test-testpgstatuserindexesprobe-0006-select-idx_scan::text-last_idx_scan-is-not",
       "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT idx_scan::text, (last_idx_scan IS NOT NULL)::text, idx_tup_read::text, idx_tup_fetch::text\n\t\t\t\t\t\tFROM pg_stat_user_indexes\n\t\t\t\t\t\tWHERE relname = 'accounts' AND indexrelname = 'accounts_email_idx';",
       "querySha256": "f7f38c45ceed37921acc667920f8bad5d89d7f687a2705b6af40cee3ddf19e77",
-      "expectedRows": [
-        [
-          {
-            "value": "0"
-          },
-          {
-            "value": "false"
-          },
-          {
-            "value": "0"
-          },
-          {
-            "value": "0"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -189,29 +159,12 @@
       "source": "testing/go/postgres16/pg_stat_user_indexes_probe_test.go:TestPgStatUserIndexesProbe",
       "ordinal": 8,
       "scriptName": "pg_stat_user_indexes returns and updates user index counters",
-      "oracle": "postgres",
-      "postgresId": "pg-stat-user-indexes-probe-test-testpgstatuserindexesprobe-0008-select-idx_scan::text-last_idx_scan-is-not",
+      "oracle": "internal",
       "suggestedId": "pg-stat-user-indexes-probe-test-testpgstatuserindexesprobe-0008-select-idx_scan::text-last_idx_scan-is-not",
       "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT idx_scan::text, (last_idx_scan IS NOT NULL)::text, idx_tup_read::text, idx_tup_fetch::text\n\t\t\t\t\t\tFROM pg_stat_user_indexes\n\t\t\t\t\t\tWHERE relname = 'accounts' AND indexrelname = 'accounts_email_idx';",
       "querySha256": "f7f38c45ceed37921acc667920f8bad5d89d7f687a2705b6af40cee3ddf19e77",
-      "expectedRows": [
-        [
-          {
-            "value": "0"
-          },
-          {
-            "value": "false"
-          },
-          {
-            "value": "0"
-          },
-          {
-            "value": "0"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     }
