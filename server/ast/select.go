@@ -504,12 +504,16 @@ func nodeSelectExpr(ctx *Context, node tree.SelectExpr) (vitess.SelectExpr, erro
 
 		if ctx.InSetOpOperand() {
 			as := vitess.ColIdent{}
+			sourceName := ""
 			if node.As != "" {
 				as = outputColumnIdent(string(node.As))
+			} else if colName.Qualifier.Name.String() != "" && expr.NumParts > 0 {
+				as = outputColumnIdent(expr.Parts[0])
+				sourceName = tree.AsString(expr)
 			}
 			return &vitess.AliasedExpr{
 				Expr: vitess.InjectedExpr{
-					Expression: pgexprs.NewSetOpProjection(),
+					Expression: pgexprs.NewSetOpProjection(sourceName),
 					Children:   vitess.Exprs{colName},
 				},
 				As: as,

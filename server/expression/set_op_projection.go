@@ -30,17 +30,22 @@ import (
 // without implementing sql.IdExpression, which prevents the GMS set-op planner
 // from reusing sparse source-table indexes as output projection indexes.
 type SetOpProjection struct {
-	child sql.Expression
+	child      sql.Expression
+	sourceName string
+	typ        sql.Type
 }
 
 var _ sql.Expression = (*SetOpProjection)(nil)
 var _ vitess.Injectable = (*SetOpProjection)(nil)
 
-func NewSetOpProjection() *SetOpProjection {
-	return &SetOpProjection{}
+func NewSetOpProjection(sourceName string) *SetOpProjection {
+	return &SetOpProjection{sourceName: sourceName}
 }
 
 func (p *SetOpProjection) Children() []sql.Expression {
+	if p.child == nil {
+		return nil
+	}
 	return []sql.Expression{p.child}
 }
 
@@ -60,11 +65,21 @@ func (p *SetOpProjection) String() string {
 	if p.child == nil {
 		return "unresolved"
 	}
+	if p.sourceName != "" {
+		return p.sourceName
+	}
 	return p.child.String()
 }
 
 func (p *SetOpProjection) Type(ctx *sql.Context) sql.Type {
-	if field, ok := p.child.(*gmsexpression.GetField); ok {
+	if p.typ != nil {
+		return p.typ
+	}
+	return setOpProjectionType(ctx, p.child)
+}
+
+func setOpProjectionType(ctx *sql.Context, child sql.Expression) sql.Type {
+	if field, ok := child.(*gmsexpression.GetField); ok {
 		switch field.Name() {
 		case "objid", "refobjid":
 			if field.Type(ctx).Equals(pgtypes.Int32) {
@@ -72,14 +87,21 @@ func (p *SetOpProjection) Type(ctx *sql.Context) sql.Type {
 			}
 		}
 	}
-	return p.child.Type(ctx)
+	return child.Type(ctx)
 }
 
 func (p *SetOpProjection) WithChildren(ctx *sql.Context, children ...sql.Expression) (sql.Expression, error) {
 	if len(children) != 1 {
 		return nil, sql.ErrInvalidChildrenNumber.New(p, len(children), 1)
 	}
-	return &SetOpProjection{child: children[0]}, nil
+	typ := p.typ
+	if typ == nil {
+		typ = setOpProjectionType(ctx, p.child)
+	}
+	if !setOpProjectionType(ctx, children[0]).Equals(typ) {
+		return p, nil
+	}
+	return &SetOpProjection{child: children[0], sourceName: p.sourceName, typ: typ}, nil
 }
 
 func (p *SetOpProjection) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
@@ -90,5 +112,5 @@ func (p *SetOpProjection) WithResolvedChildren(ctx context.Context, children []a
 	if !ok {
 		return nil, errors.Errorf("expected vitess child to be an expression but has type %T", children[0])
 	}
-	return &SetOpProjection{child: child}, nil
+	return &SetOpProjection{child: child, sourceName: p.sourceName, typ: setOpProjectionType(nil, child)}, nil
 }
