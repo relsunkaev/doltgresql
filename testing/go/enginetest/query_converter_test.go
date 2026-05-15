@@ -17,8 +17,22 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/types"
 )
 
+type queryConversionState struct {
+	mysqlFloatColumns map[string]map[string]struct{}
+}
+
+func newQueryConversionState() *queryConversionState {
+	return &queryConversionState{
+		mysqlFloatColumns: make(map[string]map[string]struct{}),
+	}
+}
+
 func convertQuery(query string) []string {
-	if queries, converted := transformAST(query); converted {
+	return newQueryConversionState().convertQuery(query)
+}
+
+func (s *queryConversionState) convertQuery(query string) []string {
+	if queries, converted := transformAST(query, s); converted {
 		return queries
 	}
 
@@ -27,7 +41,7 @@ func convertQuery(query string) []string {
 	return []string{query}
 }
 
-func transformAST(query string) ([]string, bool) {
+func transformAST(query string, state *queryConversionState) ([]string, bool) {
 	parser := sql.NewMysqlParser()
 	stmt, err := parser.ParseSimple(query)
 	if err != nil {
@@ -38,7 +52,7 @@ func transformAST(query string) ([]string, bool) {
 	case *sqlparser.DDL:
 		switch stmt.Action {
 		case "create":
-			return transformCreateTable(stmt)
+			return transformCreateTable(stmt, state)
 		case "drop":
 			return transformDrop(query, stmt)
 		case "rename":
@@ -47,7 +61,7 @@ func transformAST(query string) ([]string, bool) {
 	case *sqlparser.Set:
 		return transformSet(stmt)
 	case *sqlparser.Select:
-		return transformSelect(stmt)
+		return transformSelect(stmt, state)
 	case *sqlparser.Insert:
 		return transformInsert(stmt)
 	case *sqlparser.Update:
@@ -251,6 +265,47 @@ func translateTableName(table sqlparser.TableName) *tree.TableName {
 
 func mysqlColumnName(col sqlparser.ColIdent) tree.Name {
 	return tree.Name(col.Lowered())
+}
+
+func (s *queryConversionState) rememberColumnType(table sqlparser.TableName, col sqlparser.ColIdent, typ sqlparser.ColumnType) {
+	typeName := strings.ToLower(typ.Type)
+	if typeName != "float" && typeName != "real" {
+		return
+	}
+
+	tableName := strings.ToLower(table.Name.String())
+	if tableName == "" {
+		return
+	}
+
+	cols := s.mysqlFloatColumns[tableName]
+	if cols == nil {
+		cols = make(map[string]struct{})
+		s.mysqlFloatColumns[tableName] = cols
+	}
+	cols[col.Lowered()] = struct{}{}
+}
+
+func (s *queryConversionState) exprIsMysqlFloatColumn(expr sqlparser.Expr) bool {
+	col, ok := expr.(*sqlparser.ColName)
+	if !ok {
+		return false
+	}
+
+	colName := col.Name.Lowered()
+	if !col.Qualifier.IsEmpty() {
+		tableName := strings.ToLower(col.Qualifier.Name.String())
+		_, ok := s.mysqlFloatColumns[tableName][colName]
+		return ok
+	}
+
+	matches := 0
+	for _, cols := range s.mysqlFloatColumns {
+		if _, ok := cols[colName]; ok {
+			matches++
+		}
+	}
+	return matches == 1
 }
 
 func TableNameToUnresolvedObjectName(table sqlparser.TableName) *tree.UnresolvedObjectName {
@@ -752,16 +807,17 @@ func convertDdlStatement(statement *sqlparser.DDL) ([]string, bool) {
 
 // transformSelect converts a MySQL SELECT statement to a postgres-compatible SELECT statement.
 // This is a very broad surface area, so we do this very selectively
-func transformSelect(stmt *sqlparser.Select) ([]string, bool) {
-	if !shouldRewriteSelect(stmt) {
+func transformSelect(stmt *sqlparser.Select, state *queryConversionState) ([]string, bool) {
+	if !shouldRewriteSelect(stmt, state) {
 		return nil, false
 	}
-	return []string{formatNode(stmt)}, true
+	return []string{formatNodeWithConversionState(stmt, state)}, true
 }
 
-func shouldRewriteSelect(stmt *sqlparser.Select) bool {
+func shouldRewriteSelect(stmt *sqlparser.Select, state *queryConversionState) bool {
 	return containsUserVars(stmt) ||
-		containsBinaryConversion(stmt)
+		containsBinaryConversion(stmt) ||
+		containsMysqlFloatSum(stmt, state)
 }
 
 func containsBinaryConversion(stmt *sqlparser.Select) bool {
@@ -791,6 +847,37 @@ func containsBinaryConversion(stmt *sqlparser.Select) bool {
 	}
 
 	return foundBinaryConversionExpr
+}
+
+func containsMysqlFloatSum(stmt *sqlparser.Select, state *queryConversionState) bool {
+	if state == nil {
+		return false
+	}
+
+	foundMysqlFloatSum := false
+	findSum := func(node sqlparser.SQLNode) (bool, error) {
+		if fn, ok := node.(*sqlparser.FuncExpr); ok && strings.EqualFold(fn.Name.String(), "sum") && len(fn.Exprs) == 1 {
+			if aliased, ok := fn.Exprs[0].(*sqlparser.AliasedExpr); ok && state.exprIsMysqlFloatColumn(aliased.Expr) {
+				foundMysqlFloatSum = true
+				return false, nil
+			}
+		}
+		return true, nil
+	}
+
+	for _, sel := range stmt.SelectExprs {
+		sqlparser.Walk(findSum, sel)
+	}
+
+	if foundMysqlFloatSum {
+		return true
+	}
+
+	if stmt.Having != nil {
+		sqlparser.Walk(findSum, stmt.Having)
+	}
+
+	return foundMysqlFloatSum
 }
 
 func containsUserVars(stmt *sqlparser.Select) bool {
@@ -850,43 +937,61 @@ func transformSet(stmt *sqlparser.Set) ([]string, bool) {
 }
 
 func formatNode(node sqlparser.SQLNode) string {
-	buf := sqlparser.NewTrackedBuffer(PostgresNodeFormatter)
+	return formatNodeWithConversionState(node, nil)
+}
+
+func formatNodeWithConversionState(node sqlparser.SQLNode, state *queryConversionState) string {
+	buf := sqlparser.NewTrackedBuffer(postgresNodeFormatter(state))
 	node.Format(buf)
 	return buf.String()
 }
 
 func PostgresNodeFormatter(buf *sqlparser.TrackedBuffer, node sqlparser.SQLNode) {
-	switch node := node.(type) {
-	case sqlparser.ColIdent:
-		if strings.HasPrefix(node.String(), "@@") {
-			buf.Myprintf("current_setting('.%s')", strings.TrimLeft(node.String(), "@"))
-		} else if strings.HasPrefix(node.String(), "@") {
-			buf.Myprintf("current_setting('doltgres_enginetest.%s')", strings.TrimLeft(node.String(), "@"))
-		} else {
-			buf.Myprintf("%s", node.Lowered())
+	postgresNodeFormatter(nil)(buf, node)
+}
+
+func postgresNodeFormatter(state *queryConversionState) func(buf *sqlparser.TrackedBuffer, node sqlparser.SQLNode) {
+	return func(buf *sqlparser.TrackedBuffer, node sqlparser.SQLNode) {
+		switch node := node.(type) {
+		case sqlparser.ColIdent:
+			if strings.HasPrefix(node.String(), "@@") {
+				buf.Myprintf("current_setting('.%s')", strings.TrimLeft(node.String(), "@"))
+			} else if strings.HasPrefix(node.String(), "@") {
+				buf.Myprintf("current_setting('doltgres_enginetest.%s')", strings.TrimLeft(node.String(), "@"))
+			} else {
+				buf.Myprintf("%s", node.Lowered())
+			}
+		case *sqlparser.UnaryExpr:
+			if node.Operator == "binary " {
+				buf.Myprintf("%v::text::bytea", node.Expr)
+			} else {
+				buf.Myprintf("%v", node)
+			}
+		case *sqlparser.Limit:
+			if node == nil {
+				return
+			}
+			buf.Myprintf(" limit %v", node.Rowcount)
+			if node.Offset != nil {
+				buf.Myprintf(" offset %v", node.Offset)
+			}
+		case *sqlparser.FuncExpr:
+			if state != nil && strings.EqualFold(node.Name.String(), "sum") && len(node.Exprs) == 1 {
+				if aliased, ok := node.Exprs[0].(*sqlparser.AliasedExpr); ok && state.exprIsMysqlFloatColumn(aliased.Expr) {
+					buf.Myprintf("%s(%v::double precision)", node.Name.String(), aliased.Expr)
+					return
+				}
+			}
+			node.Format(buf)
+		default:
+			node.Format(buf)
 		}
-	case *sqlparser.UnaryExpr:
-		if node.Operator == "binary " {
-			buf.Myprintf("%v::text::bytea", node.Expr)
-		} else {
-			buf.Myprintf("%v", node)
-		}
-	case *sqlparser.Limit:
-		if node == nil {
-			return
-		}
-		buf.Myprintf(" limit %v", node.Rowcount)
-		if node.Offset != nil {
-			buf.Myprintf(" offset %v", node.Offset)
-		}
-	default:
-		node.Format(buf)
 	}
 }
 
 var sequenceNum int
 
-func transformCreateTable(stmt *sqlparser.DDL) ([]string, bool) {
+func transformCreateTable(stmt *sqlparser.DDL, state *queryConversionState) ([]string, bool) {
 	if stmt.TableSpec == nil {
 		return nil, false
 	}
@@ -899,6 +1004,10 @@ func transformCreateTable(stmt *sqlparser.DDL) ([]string, bool) {
 	var queries []string
 	var autoIncColumn string
 	for _, col := range stmt.TableSpec.Columns {
+		if state != nil {
+			state.rememberColumnType(stmt.Table, col.Name, col.Type)
+		}
+
 		defVal := convertExpr(col.Type.Default)
 
 		if col.Type.Autoincrement {
@@ -1766,6 +1875,20 @@ func TestConvertQuery(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestQueryConversionState(t *testing.T) {
+	state := newQueryConversionState()
+	state.convertQuery("CREATE TABLE float_table (id INT PRIMARY KEY, val2 FLOAT)")
+
+	require.Equal(t,
+		[]string{"select sum(val2::double precision) from float_table"},
+		state.convertQuery("SELECT sum(val2) FROM float_table"),
+	)
+	require.Equal(t,
+		[]string{"SELECT avg(val2) FROM float_table"},
+		state.convertQuery("SELECT avg(val2) FROM float_table"),
+	)
 }
 
 // TestBoolValSupport tests that query converter can handle boolean literals

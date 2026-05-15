@@ -616,6 +616,7 @@ type DoltgresQueryEngine struct {
 	harness    *DoltgresHarness
 	controller *svcs.Controller
 	conn       *pgx.Conn
+	converter  *queryConversionState
 }
 
 var _ enginetest.QueryEngine = &DoltgresQueryEngine{}
@@ -641,6 +642,7 @@ func NewDoltgresQueryEngine(t *testing.T, harness *DoltgresHarness) *DoltgresQue
 	return &DoltgresQueryEngine{
 		harness:    harness,
 		controller: ctrl,
+		converter:  newQueryConversionState(),
 	}
 }
 
@@ -661,7 +663,10 @@ func (d *DoltgresQueryEngine) Query(ctx *sql.Context, query string) (sql.Schema,
 		return nil, nil, nil, err
 	}
 
-	queries := convertQuery(query)
+	if d.converter == nil {
+		d.converter = newQueryConversionState()
+	}
+	queries := d.converter.convertQuery(query)
 
 	// convertQuery may return more than one query in the case of some DDL operations that can be represented as a single
 	// statement in MySQL but not in Postgres. We always return the result from only the first one, but execute all of
