@@ -300,13 +300,11 @@ func ReleaseSessionXactVars(ctx *sql.Context) error {
 
 func restoreXactVar(ctx *sql.Context, name string, snap xactVarSnapshot) error {
 	if snap.isUser {
-		// User variables are PostgreSQL-style namespaced GUCs
-		// (e.g. "app.user_id"). Doltgres has no public "unset"
-		// API for them, but storing the nil value makes
-		// current_setting()'s lookup fall through to the session-
-		// variable layer and return NULL with missing_ok=true,
-		// which matches what an unset GUC returns in PostgreSQL.
-		var val any
+		// User variables are PostgreSQL-style namespaced GUCs (e.g.
+		// "app.user_id"). PostgreSQL keeps a custom GUC placeholder after a
+		// transaction-local assignment has been reverted, so an absent prior
+		// value restores to the empty string rather than disappearing.
+		val := any("")
 		if snap.existed {
 			val = snap.value
 		}

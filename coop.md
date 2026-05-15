@@ -18445,3 +18445,33 @@ Use this file to avoid overlapping work. Add short entries with:
 - Expected files: likely merge/FK constraint violation handling in `third_party/dolt/go/libraries/doltcore/...` or a Doltgres harness compatibility boundary if the isolated repro proves it is PostgreSQL conversion-specific. Boundary: no `testing/go/enginetest/query_converter_test.go` while beta owns the float converter lane; no auth/grant/connection-handler/oracle manifest files or generator maps; no test weakening.
 - Next action: reproduce the focused `TestDoltMerge` subcase on current `HEAD`, inspect actual assertion mismatch/root cause, then patch the narrow source behavior if confirmed.
 - Discovery update: focused throwaway verifier `TestAlphaMergeFkDebug` showed the failure is setup-time, not merge-time: `INSERT INTO parent VALUES (10, 1), (20, 2), (30, 2)` errors with `duplicate unique key given: [2] (dg_fk_parent_v1)`. The unique index comes from the MySQL-FK converter shim added in `8125516a`; this specific Dolt merge test needs MySQL-compatible non-unique parent-key FK behavior. Alpha is inspecting whether the fix can avoid `query_converter_test.go`; if not, alpha will coordinate before touching that beta-active converter file.
+
+### beta - 2026-05-15 01:30 MST
+
+- Audit update: user asked whether `docs/app-compatibility-checklist.md` is actually supported by passing tests, not just checked rows.
+- Finding: the checklist is not fully confirmed by the latest root `./testing/go` pass. That JSON only contains package `github.com/dolthub/doltgresql/testing/go`; many checklist references now point to tests moved under `testing/go/postgres16`, which are outside that run.
+- Verification run: `go test -json -vet=off ./testing/go/postgres16 -count=1 -timeout=40m` with the same ICU env failed; output at `/tmp/doltgresql-beta-postgres16-appcompat-audit.json`. Totals from that JSON: 17369 pass actions, 152 skips, 1428 fail actions; 239 top-level tests failed.
+- Verification run: `go test -json -vet=off ./server/indexpredicate ./server/functions ./server/node ./server/plpgsql -count=1 -timeout=20m` with ICU env passed; output at `/tmp/doltgresql-beta-server-appcompat-audit.json`.
+- Evidence mapping: 198 checklist rows are all `[x]` or `[~]`; 17 checked/partial rows have no explicit test-file reference, 54 referenced test paths are stale by basename move into `testing/go/postgres16`, and a mapped set of 656 referenced test functions had 528 pass, 118 fail, and 10 skip across the audit runs.
+- Notable unconfirmed/failed checklist-backed areas: Electric/Zero live consumer tests are skipped in the root run without their env/docker gates; JDBC/PHP/Perl client smoke tests skipped locally; `testing/go/postgres16` failures include common extension catalog/index claims, COPY typmod/domain coercion, schema/ACL privilege repros, pg_catalog/stat view expectations, savepoint/SET behavior, and type correctness repros.
+- No source files claimed for fixing from this audit. Next beta action if asked: turn this into a checklist correction or start a narrow failing PG16/app-compat lane after coordinating with active agents.
+
+### beta - 2026-05-15 01:33 MST
+
+- Lane claimed: PG16 custom GUC transaction-local restore for `SET LOCAL` / `set_config(..., true)` after `COMMIT` or `ROLLBACK`.
+- Red proof: focused `go test -vet=off ./testing/go/postgres16 -run '^TestSetLocalReadFromTrigger$' -count=1 -timeout=10m -v` fails because `current_setting('app.actor', true)` returns `""` after transaction end where PostgreSQL returns `NULL`. Broader `TestSetStatements` has matching failures for `app.user_id`, `app.tenant`, `app.transient`, and `app.audit_actor`.
+- Suspected root cause: `server/functions/xact_vars.go` restores an absent namespaced custom GUC through `SetUserVariable(..., nil, pgtypes.Text)`, but the user-variable layer stores/returns an empty string instead of treating it as absent.
+- Expected files: `server/functions/xact_vars.go` and focused GUC tests only if an implementation-level regression test is needed. Boundary: no broad SET oracle refresh, no `testing/go/enginetest/query_converter_test.go`, no alpha Dolt merge FK lane, no pg_catalog/common-extension oracle buckets.
+- Next action: inspect the user-variable unset behavior, make the smallest restore fix, then rerun `TestSetLocalReadFromTrigger` and the focused `TestSetStatements` GUC subtests.
+
+### beta - 2026-05-15 01:47 MST
+
+- Lane result: fixed PG16 custom GUC transaction-local restore for `SET LOCAL` / `set_config(..., true)` after `COMMIT`, `ROLLBACK`, and autocommit statement cleanup.
+- Correction to the 01:33 note: listA in the assertion output was the cached PG16 oracle. PostgreSQL expects a reverted previously-absent custom GUC to remain present as `""`, while Doltgres was returning SQL `NULL`/missing.
+- Root cause: `server/functions/xact_vars.go` restored an absent namespaced user GUC through a nil value after a transaction-local assignment unwound. Doltgres `current_setting(..., true)` then treated the setting as missing, but PostgreSQL keeps the custom GUC placeholder with an empty-string value.
+- Change made: `restoreXactVar` now restores absent prior namespaced user GUC snapshots to `""` while preserving existing prior values unchanged.
+- Validation passed with ICU env:
+  - `go test -vet=off ./testing/go/postgres16 -run '^TestSetLocalReadFromTrigger$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./testing/go/postgres16 -run '^TestSetStatements$/(set_config_with_is_local=true_reverts_at_transaction_end|set_config_with_is_local=true_reverts_on_ROLLBACK|set_config_with_is_local=true_under_autocommit_reverts_at_statement_end|SET_LOCAL_var_rolls_back_at_ROLLBACK)$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./server/functions -run '^$' -count=1`
+- Next beta target: commit this focused GUC increment, then take a fresh non-overlapping failure discovery pass outside alpha's active Dolt merge FK and citext/pgcatalog lanes.
