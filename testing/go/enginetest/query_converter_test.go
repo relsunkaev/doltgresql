@@ -873,10 +873,11 @@ func transformCreateTable(stmt *sqlparser.DDL) ([]string, bool) {
 			}
 
 			createIndex := tree.CreateIndex{
-				Name:    tree.Name(index.Info.Name.String()),
-				Table:   tree.MakeTableNameWithSchema("", "", tree.Name(stmt.Table.Name.String())), // TODO: qualified
-				Unique:  index.Info.Unique,
-				Columns: make(tree.IndexElemList, len(index.Fields)),
+				Name:          tree.Name(index.Info.Name.String()),
+				Table:         tree.MakeTableNameWithSchema("", "", tree.Name(stmt.Table.Name.String())), // TODO: qualified
+				Unique:        index.Info.Unique,
+				NullsDistinct: index.Info.Unique,
+				Columns:       make(tree.IndexElemList, len(index.Fields)),
 			}
 
 			for i, col := range index.Fields {
@@ -1509,6 +1510,13 @@ func TestConvertQuery(t *testing.T) {
 			expected: []string{
 				"CREATE TABLE foo (a INTEGER NOT NULL PRIMARY KEY, b INTEGER NULL)",
 				"CREATE INDEX ON foo ( b ASC ) NULLS NOT DISTINCT ",
+			},
+		},
+		{
+			input: "CREATE TABLE foo (a INT primary key, b int, c int, unique key (b,c))",
+			expected: []string{
+				"CREATE TABLE foo (a INTEGER NOT NULL PRIMARY KEY, b INTEGER NULL, c INTEGER NULL)",
+				"CREATE UNIQUE INDEX ON foo ( b ASC, c ASC ) NULLS DISTINCT ",
 			},
 		},
 		{
