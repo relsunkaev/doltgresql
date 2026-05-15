@@ -99,7 +99,6 @@ const (
 	ruleId_ValidateCheckConstraints                                               // validateCheckConstraints
 	ruleId_AssignFetchWithTies                                                    // assignFetchWithTies
 	ruleId_ValidateUnionSchemasMatch                                              // validateUnionSchemasMatch
-	ruleId_PruneHiddenStarColumns                                                 // pruneHiddenStarColumns
 )
 
 // Init adds additional rules to the analyzer to handle Doltgres-specific functionality.
@@ -221,7 +220,6 @@ func Init() {
 		analyzer.Rule{Id: ruleId_PrioritizeUniqueFKInsert, Apply: PrioritizeUniqueForeignKeyInsertViolations},
 		analyzer.Rule{Id: ruleId_ApplyForeignKeyActionColumns, Apply: ApplyForeignKeyActionColumns},
 		analyzer.Rule{Id: ruleId_ValidateCreateOrReplaceView, Apply: ValidateCreateOrReplaceView},
-		analyzer.Rule{Id: ruleId_PruneHiddenStarColumns, Apply: PruneHiddenStarColumns},
 		analyzer.Rule{Id: ruleId_ReplaceNode, Apply: ReplaceNode},
 		analyzer.Rule{Id: ruleId_AssignRelationLocking, Apply: AssignRelationLocking},
 		analyzer.Rule{Id: ruleId_InsertContextRootFinalizer, Apply: InsertContextRootFinalizer},

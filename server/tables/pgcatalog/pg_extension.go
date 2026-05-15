@@ -103,5 +103,5 @@ var pgExtensionSchema = sql.Schema{
 	{Name: "extversion", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgExtensionName}, // TODO: collation C
 	{Name: "extconfig", Type: pgtypes.OidArray, Default: nil, Nullable: true, Source: PgExtensionName},
 	{Name: "extcondition", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgExtensionName}, // TODO: collation C
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgExtensionName, Hidden: true},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgExtensionName},
 }

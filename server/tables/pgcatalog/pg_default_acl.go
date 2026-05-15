@@ -83,7 +83,7 @@ var pgDefaultAclSchema = sql.Schema{
 	{Name: "defaclnamespace", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgDefaultAclName},
 	{Name: "defaclobjtype", Type: pgtypes.InternalChar, Default: nil, Nullable: false, Source: PgDefaultAclName},
 	{Name: "defaclacl", Type: pgtypes.TextArray, Default: nil, Nullable: false, Source: PgDefaultAclName}, // TODO: aclitem[] type
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgDefaultAclName, Hidden: true},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgDefaultAclName},
 }
 
 // pgDefaultAclRowIter is the sql.RowIter for the pg_default_acl table.

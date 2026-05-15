@@ -157,7 +157,12 @@ func (h *DoltgresHandler) ComBind(ctx context.Context, c *mysql.Conn, query stri
 		return nil, nil, err
 	}
 	queryPlan = wrapPostgresExplainPlan(queryPlan)
-	fields, err := schemaToFieldDescriptionsWithSource(sqlCtx, queryPlan.Schema(sqlCtx), queryPlan, formatCodes)
+	resultSchema, keep := hiddenStarSchema(queryPlan.Schema(sqlCtx), resultSelectHasStar(stmt) || querySelectHasTopLevelStar(query))
+	resultSourcePlan := queryPlan
+	if keep != nil {
+		resultSourcePlan = nil
+	}
+	fields, err := schemaToFieldDescriptionsWithSource(sqlCtx, resultSchema, resultSourcePlan, formatCodes)
 	return queryPlan, fields, err
 }
 
@@ -243,7 +248,12 @@ func (h *DoltgresHandler) ComPrepareParsed(ctx context.Context, c *mysql.Conn, q
 			},
 		}
 	} else {
-		fields, err = schemaToFieldDescriptionsWithSource(sqlCtx, analyzed.Schema(sqlCtx), analyzed, nil)
+		resultSchema, keep := hiddenStarSchema(analyzed.Schema(sqlCtx), resultSelectHasStar(parsed) || querySelectHasTopLevelStar(query))
+		resultSourcePlan := analyzed
+		if keep != nil {
+			resultSourcePlan = nil
+		}
+		fields, err = schemaToFieldDescriptionsWithSource(sqlCtx, resultSchema, resultSourcePlan, nil)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -573,6 +583,8 @@ func (h *DoltgresHandler) doQuery(ctx context.Context, c *mysql.Conn, query stri
 		sqlCtx.GetLogger().WithError(err).Warn("error running query")
 		return err
 	}
+	var filteredHiddenStarColumns bool
+	schema, rowIter, filteredHiddenStarColumns = filterHiddenStarColumns(schema, rowIter, qFlags, resultSelectHasStar(parsed) || querySelectHasTopLevelStar(query))
 
 	// create result before goroutines to avoid |ctx| racing
 	var r *Result
@@ -590,7 +602,11 @@ func (h *DoltgresHandler) doQuery(ctx context.Context, c *mysql.Conn, query stri
 			return err
 		}
 	} else if analyzer.FlagIsSet(qFlags, sql.QFlagMax1Row) {
-		resultFields, err := executionResultFields(sqlCtx, schema, analyzedPlan, formatCodes, suppliedResultFields)
+		resultSourcePlan := analyzedPlan
+		if filteredHiddenStarColumns {
+			resultSourcePlan = nil
+		}
+		resultFields, err := executionResultFields(sqlCtx, schema, resultSourcePlan, formatCodes, suppliedResultFields)
 		if err != nil {
 			return err
 		}
@@ -599,7 +615,11 @@ func (h *DoltgresHandler) doQuery(ctx context.Context, c *mysql.Conn, query stri
 			return err
 		}
 	} else {
-		resultFields, err := executionResultFields(sqlCtx, schema, analyzedPlan, formatCodes, suppliedResultFields)
+		resultSourcePlan := analyzedPlan
+		if filteredHiddenStarColumns {
+			resultSourcePlan = nil
+		}
+		resultFields, err := executionResultFields(sqlCtx, schema, resultSourcePlan, formatCodes, suppliedResultFields)
 		if err != nil {
 			return err
 		}
@@ -625,6 +645,103 @@ func executionResultFields(ctx *sql.Context, schema sql.Schema, analyzedPlan sql
 		return suppliedFields, nil
 	}
 	return schemaToFieldDescriptionsWithSource(ctx, schema, analyzedPlan, formatCodes)
+}
+
+func filterHiddenStarColumns(schema sql.Schema, iter sql.RowIter, qFlags *sql.QueryFlags, hasTopLevelStar bool) (sql.Schema, sql.RowIter, bool) {
+	if !hasTopLevelStar && (qFlags == nil || !qFlags.IsSet(sql.QFlagStar)) {
+		return schema, iter, false
+	}
+	filteredSchema, keep := hiddenStarSchema(schema, true)
+	if keep == nil {
+		return schema, iter, false
+	}
+	return filteredSchema, &hiddenStarRowIter{
+		iter:        iter,
+		keep:        keep,
+		originalLen: len(schema),
+	}, true
+}
+
+func hiddenStarSchema(schema sql.Schema, shouldFilter bool) (sql.Schema, []int) {
+	if !shouldFilter || len(schema) == 0 {
+		return schema, nil
+	}
+	keep := make([]int, 0, len(schema))
+	for i, col := range schema {
+		if shouldFilterHiddenStarColumn(col) {
+			continue
+		}
+		keep = append(keep, i)
+	}
+	if len(keep) == len(schema) {
+		return schema, nil
+	}
+	filteredSchema := make(sql.Schema, 0, len(keep))
+	for _, idx := range keep {
+		filteredSchema = append(filteredSchema, schema[idx])
+	}
+	return filteredSchema, keep
+}
+
+func shouldFilterHiddenStarColumn(col *sql.Column) bool {
+	if col.Hidden || col.HiddenSystem {
+		return true
+	}
+	return strings.EqualFold(col.Name, "tableoid") && col.Type == pgtypes.Oid
+}
+
+type hiddenStarRowIter struct {
+	iter        sql.RowIter
+	keep        []int
+	originalLen int
+}
+
+func (h *hiddenStarRowIter) Next(ctx *sql.Context) (sql.Row, error) {
+	row, err := h.iter.Next(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if types.IsOkResult(row) {
+		return row, nil
+	}
+	if len(row) < h.originalLen {
+		return nil, errors.Errorf("hidden star row length %d shorter than schema length %d", len(row), h.originalLen)
+	}
+	filtered := make(sql.Row, len(h.keep))
+	for outIdx, rowIdx := range h.keep {
+		filtered[outIdx] = row[rowIdx]
+	}
+	return filtered, nil
+}
+
+func (h *hiddenStarRowIter) Close(ctx *sql.Context) error {
+	return h.iter.Close(ctx)
+}
+
+func resultSelectHasStar(parsed sqlparser.Statement) bool {
+	selectStmt, ok := parsed.(*sqlparser.Select)
+	if !ok {
+		return false
+	}
+	for _, expr := range selectStmt.SelectExprs {
+		if _, ok := expr.(*sqlparser.StarExpr); ok {
+			return true
+		}
+	}
+	return false
+}
+
+func querySelectHasTopLevelStar(query string) bool {
+	query = strings.TrimSpace(query)
+	if len(query) < len("select") || !strings.EqualFold(query[:len("select")], "select") {
+		return false
+	}
+	lowerQuery := strings.ToLower(query)
+	fromIdx := strings.Index(lowerQuery, " from ")
+	if fromIdx < 0 {
+		return false
+	}
+	return strings.Contains(query[:fromIdx], "*")
 }
 
 func executionFormatCodes(fieldLength int, formatCodes []int16) ([]int16, error) {

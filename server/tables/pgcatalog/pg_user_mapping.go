@@ -76,5 +76,5 @@ var pgUserMappingSchema = sql.Schema{
 	{Name: "umuser", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgUserMappingName},
 	{Name: "umserver", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgUserMappingName},
 	{Name: "umoptions", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgUserMappingName}, // TODO: collation C
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgUserMappingName, Hidden: true},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgUserMappingName},
 }

@@ -86,7 +86,7 @@ var pgOpclassSchema = sql.Schema{
 	{Name: "opcintype", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgOpclassName},
 	{Name: "opcdefault", Type: pgtypes.Bool, Default: nil, Nullable: false, Source: PgOpclassName},
 	{Name: "opckeytype", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgOpclassName},
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgOpclassName, Hidden: true},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgOpclassName},
 }
 
 // pgOpclassRowIter is the sql.RowIter for the pg_opclass table.

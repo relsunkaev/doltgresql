@@ -93,7 +93,7 @@ var pgAttrdefSchema = sql.Schema{
 	{Name: "adrelid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgAttrdefName},
 	{Name: "adnum", Type: pgtypes.Int16, Default: nil, Nullable: false, Source: PgAttrdefName},
 	{Name: "adbin", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgAttrdefName}, // TODO: collation C, type pg_node_tree
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgAttrdefName, Hidden: true},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgAttrdefName},
 }
 
 // pgAttrdefRowIter is the sql.RowIter for the pg_attrdef table.

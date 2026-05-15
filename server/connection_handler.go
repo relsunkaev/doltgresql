@@ -1910,7 +1910,12 @@ func (h *ConnectionHandler) executeSQLStatement(stmt node.ExecuteStatement) erro
 		}
 		if cachedPlan, ok := h.cachedPreparedPlan(cacheCtx, preparedData); ok {
 			boundPlan = cachedPlan
-			fields, err = schemaToFieldDescriptionsWithSource(cacheCtx, boundPlan.Schema(cacheCtx), boundPlan, nil)
+			resultSchema, keep := hiddenStarSchema(boundPlan.Schema(cacheCtx), resultSelectHasStar(preparedData.Query.AST) || querySelectHasTopLevelStar(preparedData.Query.String))
+			resultSourcePlan := boundPlan
+			if keep != nil {
+				resultSourcePlan = nil
+			}
+			fields, err = schemaToFieldDescriptionsWithSource(cacheCtx, resultSchema, resultSourcePlan, nil)
 			if err != nil {
 				return err
 			}
@@ -2282,7 +2287,12 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 		}
 		if cachedPlan, ok := h.cachedPreparedPlan(cacheCtx, preparedData); ok {
 			boundPlan = cachedPlan
-			fields, err = schemaToFieldDescriptionsWithSource(cacheCtx, boundPlan.Schema(cacheCtx), boundPlan, message.ResultFormatCodes)
+			resultSchema, keep := hiddenStarSchema(boundPlan.Schema(cacheCtx), resultSelectHasStar(preparedData.Query.AST) || querySelectHasTopLevelStar(preparedData.Query.String))
+			resultSourcePlan := boundPlan
+			if keep != nil {
+				resultSourcePlan = nil
+			}
+			fields, err = schemaToFieldDescriptionsWithSource(cacheCtx, resultSchema, resultSourcePlan, message.ResultFormatCodes)
 			if err != nil {
 				return err
 			}

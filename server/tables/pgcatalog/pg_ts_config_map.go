@@ -61,7 +61,7 @@ var pgTsConfigMapSchema = sql.Schema{
 	{Name: "maptokentype", Type: pgtypes.Int32, Default: nil, Nullable: false, Source: PgTsConfigMapName},
 	{Name: "mapseqno", Type: pgtypes.Int32, Default: nil, Nullable: false, Source: PgTsConfigMapName},
 	{Name: "mapdict", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsConfigMapName},
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsConfigMapName, Hidden: true},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsConfigMapName},
 }
 
 // pgTsConfigMapRowIter is the sql.RowIter for the pg_ts_config_map table.

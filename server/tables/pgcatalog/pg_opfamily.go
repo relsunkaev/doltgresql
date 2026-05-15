@@ -82,7 +82,7 @@ var pgOpfamilySchema = sql.Schema{
 	{Name: "opfname", Type: pgtypes.Name, Default: nil, Nullable: false, Source: PgOpfamilyName},
 	{Name: "opfnamespace", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgOpfamilyName},
 	{Name: "opfowner", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgOpfamilyName},
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgOpfamilyName, Hidden: true},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgOpfamilyName},
 }
 
 // pgOpfamilyRowIter is the sql.RowIter for the pg_opfamily table.

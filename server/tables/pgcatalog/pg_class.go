@@ -593,7 +593,7 @@ var pgClassSchema = sql.Schema{
 	{Name: "relacl", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgClassName},     // TODO: type aclitem[]
 	{Name: "reloptions", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgClassName}, // TODO: collation C
 	{Name: "relpartbound", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgClassName},    // TODO: type pg_node_tree, collation C
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgClassName, Hidden: true},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgClassName},
 }
 
 // pgClass represents a row in the pg_class table.

@@ -67,7 +67,7 @@ var pgPublicationRelSchema = sql.Schema{
 	{Name: "prrelid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgPublicationRelName},
 	{Name: "prqual", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgPublicationRelName},        // TODO: pg_node_tree type, collation C
 	{Name: "prattrs", Type: pgtypes.Int16Array, Default: nil, Nullable: true, Source: PgPublicationRelName}, // TODO: int2vector type
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgPublicationRelName, Hidden: true},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgPublicationRelName},
 }
 
 // pgPublicationRelRowIter is the sql.RowIter for the pg_publication_rel table.

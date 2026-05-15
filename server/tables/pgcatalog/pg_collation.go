@@ -69,7 +69,7 @@ var PgCollationSchema = sql.Schema{
 	{Name: "collctype", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgCollationName},     // TODO: collation C
 	{Name: "colliculocale", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgCollationName}, // TODO: collation C
 	{Name: "collversion", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgCollationName},   // TODO: collation C
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgCollationName, Hidden: true},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgCollationName},
 }
 
 // pgCollationRowIter is the sql.RowIter for the pg_collation table.

@@ -71,7 +71,7 @@ var pgPublicationSchema = sql.Schema{
 	{Name: "pubdelete", Type: pgtypes.Bool, Default: nil, Nullable: false, Source: PgPublicationName},
 	{Name: "pubtruncate", Type: pgtypes.Bool, Default: nil, Nullable: false, Source: PgPublicationName},
 	{Name: "pubviaroot", Type: pgtypes.Bool, Default: nil, Nullable: false, Source: PgPublicationName},
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgPublicationName, Hidden: true},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgPublicationName},
 }
 
 // pgPublicationRowIter is the sql.RowIter for the pg_publication table.

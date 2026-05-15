@@ -737,7 +737,7 @@ var PgConstraintSchema = sql.Schema{
 	{Name: "confdelsetcols", Type: pgtypes.Int16Array, Default: nil, Nullable: true, Source: PgConstraintName},
 	{Name: "conexclop", Type: pgtypes.OidArray, Default: nil, Nullable: true, Source: PgConstraintName},
 	{Name: "conbin", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgConstraintName}, // TODO: type pg_node_tree, collation C
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgConstraintName, Hidden: true},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgConstraintName},
 }
 
 // pgConstraint is the struct for the pg_constraint table.
