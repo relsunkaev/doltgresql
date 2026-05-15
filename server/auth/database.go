@@ -351,8 +351,6 @@ func ensurePredefinedRoles() {
 		"pg_read_server_files",
 		"pg_write_server_files",
 		"pg_execute_server_program",
-		"pg_maintain",
-		"pg_signal_autovacuum_worker",
 		"pg_checkpoint",
 		"pg_create_subscription",
 		"pg_use_reserved_connections",

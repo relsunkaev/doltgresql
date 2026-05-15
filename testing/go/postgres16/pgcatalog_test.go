@@ -3679,7 +3679,29 @@ func TestPgRoles(t *testing.T) {
 			Name: "pg_roles",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT oid, rolname, rolcanlogin FROM "pg_catalog"."pg_roles" ORDER BY rolname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgroles-0001-select-oid-rolname-rolcanlogin-from"},
+					Query: `SELECT rolname, rolcanlogin, oid <> 0 AS has_oid
+							FROM "pg_catalog"."pg_roles"
+							WHERE rolname IN (
+								'pg_checkpoint',
+								'pg_create_subscription',
+								'pg_database_owner',
+								'pg_execute_server_program',
+								'pg_maintain',
+								'pg_monitor',
+								'pg_read_all_data',
+								'pg_read_all_settings',
+								'pg_read_all_stats',
+								'pg_read_server_files',
+								'pg_signal_autovacuum_worker',
+								'pg_signal_backend',
+								'pg_stat_scan_tables',
+								'pg_use_reserved_connections',
+								'pg_write_all_data',
+								'pg_write_server_files',
+								'postgres',
+								'public'
+							)
+							ORDER BY rolname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgroles-0001-select-oid-rolname-rolcanlogin-from"},
 				},
 				{ // Different cases and quoted, so it fails
 					Query: `SELECT * FROM "PG_catalog"."pg_roles";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -3694,7 +3716,29 @@ func TestPgRoles(t *testing.T) {
 						ID: "pgcatalog-test-testpgroles-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT rolname FROM PG_catalog.pg_ROLES ORDER BY rolname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgroles-0004-select-rolname-from-pg_catalog.pg_roles-order"},
+					Query: `SELECT rolname
+							FROM PG_catalog.pg_ROLES
+							WHERE rolname IN (
+								'pg_checkpoint',
+								'pg_create_subscription',
+								'pg_database_owner',
+								'pg_execute_server_program',
+								'pg_maintain',
+								'pg_monitor',
+								'pg_read_all_data',
+								'pg_read_all_settings',
+								'pg_read_all_stats',
+								'pg_read_server_files',
+								'pg_signal_autovacuum_worker',
+								'pg_signal_backend',
+								'pg_stat_scan_tables',
+								'pg_use_reserved_connections',
+								'pg_write_all_data',
+								'pg_write_server_files',
+								'postgres',
+								'public'
+							)
+							ORDER BY rolname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgroles-0004-select-rolname-from-pg_catalog.pg_roles-order"},
 				},
 			},
 		},

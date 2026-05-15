@@ -45,7 +45,7 @@ func (p PgAuthidHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgAuthidHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	roles := auth.GetAllRoles()
+	roles := pgCatalogRoles()
 	rows := make([]sql.Row, 0, len(roles))
 	for _, role := range roles {
 		rows = append(rows, sql.Row{
@@ -64,6 +64,18 @@ func (p PgAuthidHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql
 		})
 	}
 	return sql.RowsToRowIter(rows...), nil
+}
+
+func pgCatalogRoles() []auth.Role {
+	roles := auth.GetAllRoles()
+	catalogRoles := make([]auth.Role, 0, len(roles))
+	for _, role := range roles {
+		if role.Name == "public" {
+			continue
+		}
+		catalogRoles = append(catalogRoles, role)
+	}
+	return catalogRoles
 }
 
 func rolePasswordText(role auth.Role) any {

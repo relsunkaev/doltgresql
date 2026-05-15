@@ -20,7 +20,6 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
-	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -45,7 +44,7 @@ func (p PgRolesHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgRolesHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	roles := auth.GetAllRoles()
+	roles := pgCatalogRoles()
 	rows := make([]sql.Row, 0, len(roles))
 	for _, role := range roles {
 		rows = append(rows, sql.Row{
