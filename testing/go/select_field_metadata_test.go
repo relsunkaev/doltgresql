@@ -209,3 +209,52 @@ func TestSelectStarFieldMetadata(t *testing.T) {
 			"id attnum: column 2")
 	})
 }
+
+func TestProjectedCatalogColumnFieldNamesAreUnqualified(t *testing.T) {
+	port, err := gms.GetEmptyPort()
+	require.NoError(t, err)
+	ctx, defaultConn, controller := CreateServerWithPort(t, "postgres", port)
+	t.Cleanup(func() {
+		defaultConn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	})
+
+	conn, err := pgx.Connect(ctx, fmt.Sprintf(
+		"postgres://postgres:password@127.0.0.1:%d/postgres?sslmode=disable", port))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close(ctx) })
+
+	const pgDumpDependencyQuery = `SELECT classid, objid, refclassid, refobjid, deptype
+FROM pg_catalog.pg_depend
+WHERE false
+UNION ALL
+SELECT 'pg_opfamily'::pg_catalog.regclass AS classid, amopfamily AS objid, refclassid, refobjid, deptype
+FROM pg_catalog.pg_depend d, pg_catalog.pg_amop o
+WHERE false
+UNION ALL
+SELECT 'pg_opfamily'::pg_catalog.regclass AS classid, amprocfamily AS objid, refclassid, refobjid, deptype
+FROM pg_catalog.pg_depend d, pg_catalog.pg_amproc p
+WHERE false
+ORDER BY 1,2;`
+
+	assertFieldNames := func(t *testing.T, rows pgx.Rows) {
+		t.Helper()
+		defer rows.Close()
+		fields := rows.FieldDescriptions()
+		require.Len(t, fields, 5)
+		names := make([]string, len(fields))
+		for i, field := range fields {
+			names[i] = string(field.Name)
+		}
+		require.Equal(t, []string{"classid", "objid", "refclassid", "refobjid", "deptype"}, names)
+	}
+
+	rows, err := conn.Query(ctx, pgDumpDependencyQuery)
+	require.NoError(t, err)
+	assertFieldNames(t, rows)
+
+	rows, err = conn.Query(ctx, pgDumpDependencyQuery, pgx.QueryExecModeSimpleProtocol)
+	require.NoError(t, err)
+	assertFieldNames(t, rows)
+}

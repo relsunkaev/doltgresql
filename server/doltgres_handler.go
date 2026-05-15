@@ -913,6 +913,9 @@ func schemaToFieldDescriptionsWithSource(ctx *sql.Context, s sql.Schema, sourceN
 			colName = display
 		}
 		colName = core.DecodePhysicalColumnName(colName)
+		if unqualifiedName, ok := unqualifyPgCatalogGeneratedColumnName(colName); ok {
+			colName = unqualifiedName
+		}
 		columnType := c.Type
 		if i < len(projectionTypes) && projectionTypes[i] != nil {
 			columnType = projectionTypes[i]
@@ -982,6 +985,12 @@ func schemaToFieldDescriptionsWithSource(ctx *sql.Context, s sql.Schema, sourceN
 		var tableOID uint32
 		if sourceTable != "" {
 			meta := lookupSourceTableMeta(ctx, sourceTable, c.DatabaseSource, sourceSchemaCache)
+			if unqualifiedName, ok := generatedSourceQualifiedColumnName(sourceColumn, sourceTable, meta); ok {
+				if colName == core.DecodePhysicalColumnName(sourceColumn) {
+					colName = core.DecodePhysicalColumnName(unqualifiedName)
+				}
+				sourceColumn = unqualifiedName
+			}
 			if meta != nil {
 				tableOID = meta.tableOID
 				if attnum, ok := meta.attnumOf(sourceColumn); ok {
@@ -1006,6 +1015,31 @@ func schemaToFieldDescriptionsWithSource(ctx *sql.Context, s sql.Schema, sourceN
 	}
 
 	return fields, nil
+}
+
+func generatedSourceQualifiedColumnName(columnName string, sourceTable string, meta *sourceTableMeta) (string, bool) {
+	if sourceTable == "" {
+		return "", false
+	}
+	prefix := sourceTable + "."
+	if !strings.HasPrefix(columnName, prefix) {
+		return "", false
+	}
+	if meta != nil {
+		if _, ok := meta.attnumOf(columnName); ok {
+			return "", false
+		}
+	}
+	unqualified := strings.TrimPrefix(columnName, prefix)
+	return unqualified, unqualified != ""
+}
+
+func unqualifyPgCatalogGeneratedColumnName(columnName string) (string, bool) {
+	tableName, unqualifiedName, ok := strings.Cut(columnName, ".")
+	if !ok || unqualifiedName == "" || tableName == "pg_catalog" || !strings.HasPrefix(tableName, "pg_") {
+		return "", false
+	}
+	return unqualifiedName, true
 }
 
 func extractProjectionTypes(ctx *sql.Context, node sql.Node, columnCount int) []sql.Type {
