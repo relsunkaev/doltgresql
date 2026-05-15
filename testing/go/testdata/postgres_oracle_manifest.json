@@ -13995,66 +13995,6 @@
       ]
     },
     {
-      "id": "transaction-ddl-correctness-repro-test-testddlsavepointrollbackrestoresstateguard-0002-select-id-label-from-sp_drop_rollback_items",
-      "source": "testing/go/transaction_ddl_correctness_repro_test.go:TestDdlSavepointRollbackRestoresStateGuard",
-      "ordinal": 2,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE sp_drop_rollback_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tlabel TEXT\n\t\t\t\t);",
-        "INSERT INTO sp_drop_rollback_items VALUES (1, 'kept');",
-        "BEGIN;",
-        "SAVEPOINT ddl_sp;",
-        "DROP TABLE sp_drop_rollback_items;",
-        "ROLLBACK TO SAVEPOINT ddl_sp;",
-        "COMMIT;"
-      ],
-      "query": "SELECT id, label FROM sp_drop_rollback_items;",
-      "expectedRows": [
-        [
-          {
-            "value": "1"
-          },
-          {
-            "value": "kept"
-          }
-        ]
-      ],
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
-      "id": "transaction-ddl-correctness-repro-test-testddlsavepointrollbackrestoresstateguard-0004-select-count-*-from-pg_catalog.pg_class",
-      "source": "testing/go/transaction_ddl_correctness_repro_test.go:TestDdlSavepointRollbackRestoresStateGuard",
-      "ordinal": 4,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE sp_index_rollback_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tlabel TEXT\n\t\t\t\t);",
-        "BEGIN;",
-        "SAVEPOINT ddl_sp;",
-        "CREATE INDEX sp_index_rollback_items_label_idx\n\t\t\t\t\t\tON sp_index_rollback_items (label);",
-        "ROLLBACK TO SAVEPOINT ddl_sp;",
-        "COMMIT;"
-      ],
-      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relname = 'sp_index_rollback_items_label_idx';",
-      "expectedRows": [
-        [
-          {
-            "value": "0"
-          }
-        ]
-      ],
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
       "id": "transaction-error-repro-test-testtransactionerrorrollsbacktransactiononcommitrepro-0001-insert-into-transaction_error_items-values-1",
       "source": "testing/go/transaction_error_repro_test.go:TestTransactionErrorRollsBackTransactionOnCommitRepro",
       "ordinal": 1,

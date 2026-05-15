@@ -123,26 +123,6 @@ func TestDdlSavepointRollbackRestoresStateGuard(t *testing.T) {
 			},
 		},
 		{
-			Name: "DROP TABLE rolls back to savepoint",
-			SetUpScript: []string{
-				`CREATE TABLE sp_drop_rollback_items (
-					id INT PRIMARY KEY,
-					label TEXT
-				);`,
-				`INSERT INTO sp_drop_rollback_items VALUES (1, 'kept');`,
-			},
-			Assertions: []ScriptTestAssertion{
-				{Query: `BEGIN;`},
-				{Query: `SAVEPOINT ddl_sp;`},
-				{Query: `DROP TABLE sp_drop_rollback_items;`},
-				{Query: `ROLLBACK TO SAVEPOINT ddl_sp;`},
-				{Query: `COMMIT;`},
-				{
-					Query: `SELECT id, label FROM sp_drop_rollback_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-correctness-repro-test-testddlsavepointrollbackrestoresstateguard-0002-select-id-label-from-sp_drop_rollback_items"},
-				},
-			},
-		},
-		{
 			Name: "ALTER TABLE ADD COLUMN rolls back to savepoint",
 			SetUpScript: []string{
 				`CREATE TABLE sp_alter_rollback_items (
@@ -165,30 +145,6 @@ func TestDdlSavepointRollbackRestoresStateGuard(t *testing.T) {
 							AND table_name = 'sp_alter_rollback_items'
 							AND column_name = 'leaked';`,
 					Expected: []sql.Row{{int64(0)}},
-				},
-			},
-		},
-		{
-			Name: "CREATE INDEX rolls back to savepoint",
-			SetUpScript: []string{
-				`CREATE TABLE sp_index_rollback_items (
-					id INT PRIMARY KEY,
-					label TEXT
-				);`,
-			},
-			Assertions: []ScriptTestAssertion{
-				{Query: `BEGIN;`},
-				{Query: `SAVEPOINT ddl_sp;`},
-				{
-					Query: `CREATE INDEX sp_index_rollback_items_label_idx
-						ON sp_index_rollback_items (label);`,
-				},
-				{Query: `ROLLBACK TO SAVEPOINT ddl_sp;`},
-				{Query: `COMMIT;`},
-				{
-					Query: `SELECT count(*)
-						FROM pg_catalog.pg_class
-						WHERE relname = 'sp_index_rollback_items_label_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-correctness-repro-test-testddlsavepointrollbackrestoresstateguard-0004-select-count-*-from-pg_catalog.pg_class"},
 				},
 			},
 		},

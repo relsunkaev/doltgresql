@@ -361,7 +361,19 @@ func splitScriptSourceFile(sourcePath, targetDir string, moveScripts map[string]
 
 	targetPath := filepath.Join(targetDir, filepath.Base(sourcePath))
 	if _, err := os.Stat(targetPath); err == nil {
-		return fmt.Errorf("%s already exists", targetPath)
+		existing, err := os.ReadFile(targetPath)
+		if err != nil {
+			return err
+		}
+		combined := []byte(strings.TrimRight(string(existing), " \t\r\n") + "\n\n" + strings.Join(movedFuncs, "\n\n") + "\n")
+		combined, err = pruneAndFormat(combined)
+		if err != nil {
+			return fmt.Errorf("%s pg16 append rewrite: %w", sourcePath, err)
+		}
+		if err := os.WriteFile(sourcePath, topSrc, 0o644); err != nil {
+			return err
+		}
+		return os.WriteFile(targetPath, combined, 0o644)
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
@@ -756,7 +768,18 @@ func splitScriptMapFile(plan filePlan, targetMapDir string) error {
 	}
 	targetMap := filepath.Join(targetMapDir, filepath.Base(plan.mapPath))
 	if _, err := os.Stat(targetMap); err == nil {
-		return fmt.Errorf("%s already exists", targetMap)
+		data, err := os.ReadFile(targetMap)
+		if err != nil {
+			return err
+		}
+		var existing migrationFile
+		if err := json.Unmarshal(data, &existing); err != nil {
+			return fmt.Errorf("%s: %w", targetMap, err)
+		}
+		if existing.SourceFile != pgMap.SourceFile {
+			return fmt.Errorf("%s: sourceFile is %q, expected %q", targetMap, existing.SourceFile, pgMap.SourceFile)
+		}
+		pgMap.Assertions = renumberAssertions(append(existing.Assertions, pgMap.Assertions...))
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return err
 	}

@@ -78,31 +78,6 @@
       "key": "testing/go/transaction_ddl_correctness_repro_test.go:TestDdlSavepointRollbackRestoresStateGuard#0002",
       "source": "testing/go/transaction_ddl_correctness_repro_test.go:TestDdlSavepointRollbackRestoresStateGuard",
       "ordinal": 2,
-      "scriptName": "DROP TABLE rolls back to savepoint",
-      "oracle": "postgres",
-      "postgresId": "transaction-ddl-correctness-repro-test-testddlsavepointrollbackrestoresstateguard-0002-select-id-label-from-sp_drop_rollback_items",
-      "suggestedId": "transaction-ddl-correctness-repro-test-testddlsavepointrollbackrestoresstateguard-0002-select-id-label-from-sp_drop_rollback_items",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "SELECT id, label FROM sp_drop_rollback_items;",
-      "querySha256": "a4da7b13778d7b2f5940ee173a9c1570aeac754579d9c50ce6b73538a2094fc3",
-      "expectedRows": [
-        [
-          {
-            "value": "1"
-          },
-          {
-            "value": "kept"
-          }
-        ]
-      ],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/transaction_ddl_correctness_repro_test.go:TestDdlSavepointRollbackRestoresStateGuard#0003",
-      "source": "testing/go/transaction_ddl_correctness_repro_test.go:TestDdlSavepointRollbackRestoresStateGuard",
-      "ordinal": 3,
       "scriptName": "ALTER TABLE ADD COLUMN rolls back to savepoint",
       "oracle": "internal",
       "suggestedId": "transaction-ddl-correctness-repro-test-testddlsavepointrollbackrestoresstateguard-0003-select-count-*-from-information_schema.columns",
@@ -113,31 +88,6 @@
         "Expected"
       ],
       "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/transaction_ddl_correctness_repro_test.go:TestDdlSavepointRollbackRestoresStateGuard#0004",
-      "source": "testing/go/transaction_ddl_correctness_repro_test.go:TestDdlSavepointRollbackRestoresStateGuard",
-      "ordinal": 4,
-      "scriptName": "CREATE INDEX rolls back to savepoint",
-      "oracle": "postgres",
-      "postgresId": "transaction-ddl-correctness-repro-test-testddlsavepointrollbackrestoresstateguard-0004-select-count-*-from-pg_catalog.pg_class",
-      "suggestedId": "transaction-ddl-correctness-repro-test-testddlsavepointrollbackrestoresstateguard-0004-select-count-*-from-pg_catalog.pg_class",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relname = 'sp_index_rollback_items_label_idx';",
-      "querySha256": "e58544cf581155ef4dea971b1544e02f9a80844eac86bf365895488c35546716",
-      "expectedRows": [
-        [
-          {
-            "value": "0"
-          }
-        ]
-      ],
-      "nonLiteral": [
-        "Expected"
-      ],
-      "needsCleanup": false,
       "cleanupProvided": false
     }
   ]
