@@ -10,6 +10,18 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### beta - 2026-05-15 02:42 MST
+
+- Lane claimed: `TestDoltRevert/dolt_revert() --continue: multiple table conflicts/select \`table\` from dolt_conflicts order by \`table\`;`, specifically MySQL-backtick conversion for reserved identifiers.
+- Red proof: enginetest failfast `/tmp/doltgresql-beta-enginetest-failfast-0238.json` stops after the FK fix when the converter sends `select table from dolt_conflicts order by table asc nulls first`; PostgreSQL rejects `table` as an unquoted reserved identifier with SQLSTATE `42601`.
+- Expected files: likely `testing/go/enginetest/query_converter_test.go` only unless the failure proves an AST formatter/identifier helper gap. Boundary: no alpha partial-index metadata files and no Dolt revert implementation changes unless conversion is proven insufficient.
+- Root cause: `formatPostgresIdentifier` only checked identifier characters and emitted PostgreSQL reserved keywords bare. The Vitess AST no longer records whether `table` came from MySQL backticks, so any AST column identifier that is a PostgreSQL reserved keyword must be formatted as a quoted identifier.
+- Change made: added PostgreSQL keyword-category awareness to the enginetest converter identifier formatter and added converter coverage for `SELECT \`table\` FROM dolt_conflicts ORDER BY \`table\``.
+- Validation passed: `go test -vet=off ./testing/go/enginetest -run '^TestConvertQuery$' -count=1 -timeout=10m -v` and focused `go test -vet=off ./testing/go/enginetest -run '^TestDoltRevert$/^dolt_revert\(\)_--continue:_multiple_table_conflicts$' -count=1 -timeout=10m -v`, both with ICU env and `GOFLAGS=-p=1`.
+- Broader enginetest failfast result: `/tmp/doltgresql-beta-enginetest-failfast-0245.json` gets past the reserved-identifier failure and stops in `TestDoltMergeArtifacts/merge_error_lists_all_constraint_violations_when_table_has_multiple_violations/CALL_DOLT_MERGE('right');`.
+- New blocker: the assertion expects the MySQL/Dolt merge constraint-violation message, but Doltgres returns the same content with a PostgreSQL-wrapped suffix `(errno 1105) (sqlstate HY000) (SQLSTATE 23505)`. Counts before failfast stop: 1082 pass, 593 skip, 1 failing child.
+- Next action: commit the reserved-identifier converter increment, then claim the merge-artifact error-message normalization lane if still unowned.
+
 ### beta - 2026-05-15 02:29 MST
 
 - Lane claimed: `TestDoltMerge/ancestor_contains_fk,_main_parent_remove_with_backup,_other_child_add,_restrict`, specifically the setup insert into `parent` failing with duplicate key on converter-created `dg_fk_parent_v1`.

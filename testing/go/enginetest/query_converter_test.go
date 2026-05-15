@@ -12,6 +12,7 @@ import (
 	"github.com/lib/pq/oid"
 	"github.com/stretchr/testify/require"
 
+	"github.com/dolthub/doltgresql/postgres/parser/lex"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/postgres/parser/types"
@@ -1347,6 +1348,9 @@ func isBarePostgresIdentifier(name string) bool {
 	if name == "" {
 		return false
 	}
+	if lex.KeywordsCategories[name] == "R" {
+		return false
+	}
 	for i, r := range name {
 		if i == 0 {
 			if (r >= 'a' && r <= 'z') || r == '_' {
@@ -2214,6 +2218,12 @@ func TestConvertQuery(t *testing.T) {
 			input: "SELECT i AS `200`, `100` FROM t ORDER BY `200`",
 			expected: []string{
 				`select i as "200", "100" from t order by "200" asc nulls first`,
+			},
+		},
+		{
+			input: "SELECT `table` FROM dolt_conflicts ORDER BY `table`",
+			expected: []string{
+				`select "table" from dolt_conflicts order by "table" asc nulls first`,
 			},
 		},
 		{
