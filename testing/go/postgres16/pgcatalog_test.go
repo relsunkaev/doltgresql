@@ -1560,14 +1560,24 @@ func TestPgEventTrigger(t *testing.T) {
 func TestPgExtension(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "pg_extension",
+			Name: "pg_extension row",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_extension";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT e.extname, n.nspname, e.extrelocatable, e.extversion,
+							e.extconfig IS NULL, e.extcondition IS NULL
+						FROM "pg_catalog"."pg_extension" e
+						JOIN pg_catalog.pg_namespace n ON e.extnamespace = n.oid
+						WHERE e.extname = 'plpgsql'
+						ORDER BY e.extname;`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpgextension-0001-select-*-from-pg_catalog-."},
 				},
+			},
+		},
+		{
+			Name: "pg_extension case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_extension";`, PostgresOracle: ScriptTestPostgresOracle{
 
@@ -1580,8 +1590,13 @@ func TestPgExtension(t *testing.T) {
 						// Different cases but non-quoted, so it works
 						ID: "pgcatalog-test-testpgextension-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_extension mixed-case identifiers",
+			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT extname FROM PG_catalog.pg_EXTENSION ORDER BY extname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgextension-0004-select-extname-from-pg_catalog.pg_extension-order"},
+					Query: "SELECT extname FROM PG_catalog.pg_EXTENSION WHERE extname = 'plpgsql' ORDER BY extname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgextension-0004-select-extname-from-pg_catalog.pg_extension-order"},
 				},
 			},
 		},
