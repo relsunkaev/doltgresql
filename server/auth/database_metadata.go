@@ -71,7 +71,9 @@ func DefaultDatabaseMetadata() DatabaseMetadataValue {
 		AllowConnections: true,
 		ConnectionLimit:  -1,
 		IsTemplate:       false,
-		LocaleProvider:   "i",
+		LocaleProvider:   "c",
+		Collate:          "C",
+		CType:            "C",
 	}
 }
 

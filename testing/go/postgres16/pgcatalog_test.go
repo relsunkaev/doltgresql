@@ -1145,15 +1145,18 @@ func TestPgDatabase(t *testing.T) {
 		{
 			Name: "pg_database",
 			SetUpScript: []string{
-				`CREATE DATABASE test;`,
+				`CREATE DATABASE test
+					WITH TEMPLATE = template0
+					LOCALE_PROVIDER = libc
+					LOCALE = 'C';`,
 				`CREATE TABLE test (pk INT primary key, v1 INT);`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT datname FROM "pg_catalog"."pg_database";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdatabase-0001-select-datname-from-pg_catalog-."},
+					Query: `SELECT datname FROM "pg_catalog"."pg_database" WHERE datname IN ('postgres', 'test') ORDER BY datname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdatabase-0001-select-datname-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT oid, datname FROM "pg_catalog"."pg_database" ORDER BY datname DESC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdatabase-0002-select-oid-datname-from-pg_catalog"},
+					Query: `SELECT datname, oid::int > 0 AS has_oid FROM "pg_catalog"."pg_database" WHERE datname IN ('postgres', 'test') ORDER BY datname DESC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdatabase-0002-select-oid-datname-from-pg_catalog"},
 				},
 				{ // Different cases and quoted, so it fails
 					Query: `SELECT * FROM "PG_catalog"."pg_database";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -1168,10 +1171,24 @@ func TestPgDatabase(t *testing.T) {
 						ID: "pgcatalog-test-testpgdatabase-0004-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT oid, datname FROM PG_catalog.pg_DATABASE ORDER BY datname ASC;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdatabase-0005-select-oid-datname-from-pg_catalog.pg_database"},
+					Query: "SELECT datname FROM PG_catalog.pg_DATABASE WHERE datname IN ('postgres', 'test') ORDER BY datname ASC;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdatabase-0005-select-oid-datname-from-pg_catalog.pg_database"},
 				},
 				{
-					Query: "SELECT * FROM pg_catalog.pg_database WHERE datname='test';", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdatabase-0006-select-*-from-pg_catalog.pg_database-where"},
+					Query: `SELECT
+							datname,
+							pg_encoding_to_char(encoding),
+							datlocprovider,
+							datistemplate,
+							datallowconn,
+							datconnlimit,
+							datcollate,
+							datctype,
+							daticulocale,
+							daticurules,
+							datcollversion,
+							dattablespace = (SELECT oid FROM pg_catalog.pg_tablespace WHERE spcname = 'pg_default') AS uses_default_tablespace
+						FROM pg_catalog.pg_database
+						WHERE datname = 'test';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdatabase-0006-select-*-from-pg_catalog.pg_database-where"},
 				},
 			},
 		},

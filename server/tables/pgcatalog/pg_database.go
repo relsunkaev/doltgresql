@@ -95,7 +95,7 @@ var pgDatabaseSchema = sql.Schema{
 	{Name: "datcollate", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgDatabaseName},  // TODO: collation C
 	{Name: "datctype", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgDatabaseName},    // TODO: collation C
 	{Name: "daticulocale", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgDatabaseName}, // TODO: collation C
-	{Name: "daticurules", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgDatabaseName},
+	{Name: "daticurules", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgDatabaseName},
 	{Name: "datcollversion", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgDatabaseName}, // TODO: collation C
 	{Name: "datacl", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgDatabaseName},    // TODO: type aclitem[]
 }
@@ -134,11 +134,11 @@ func (iter *pgDatabaseRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 		metadata.ConnectionLimit,  // datconnlimit
 		uint32(0),                 // datfrozenxid
 		uint32(0),                 // datminmxid
-		id.Null,                   // dattablespace
+		id.NewOID(1663).AsId(),    // dattablespace
 		metadata.Collate,          // datcollate
 		metadata.CType,            // datctype
 		nullableCatalogString(metadata.IcuLocale),        // daticulocale
-		metadata.IcuRules,                                // daticurules
+		nullableCatalogString(metadata.IcuRules),         // daticurules
 		nullableCatalogString(metadata.CollationVersion), // datcollversion
 		aclTextArray(auth.DatabaseACLItems(db.Name())),   // datacl
 	}, nil
