@@ -4382,10 +4382,11 @@ func TestPgStatGssapi(t *testing.T) {
 			Name: "pg_stat_gssapi",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_stat_gssapi";`, PostgresOracle: ScriptTestPostgresOracle{ID:
-
-					// Different cases and quoted, so it fails
-					"pgcatalog-test-testpgstatgssapi-0001-select-*-from-pg_catalog-."},
+					Query: `SELECT count(*) = 1
+FROM "pg_catalog"."pg_stat_gssapi"
+WHERE gss_authenticated IS FALSE
+  AND encrypted IS FALSE
+  AND credentials_delegated IS FALSE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatgssapi-0001-select-count-1-from-pg_catalog.pg_stat_gssapi-where"},
 				},
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_stat_gssapi";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -4400,7 +4401,10 @@ func TestPgStatGssapi(t *testing.T) {
 						ID: "pgcatalog-test-testpgstatgssapi-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT pid FROM PG_catalog.pg_STAT_GSSAPI ORDER BY pid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatgssapi-0004-select-pid-from-pg_catalog.pg_stat_gssapi-order"},
+					Query: `SELECT count(*) = 1 FROM PG_catalog.pg_STAT_GSSAPI
+WHERE gss_authenticated IS FALSE
+  AND encrypted IS FALSE
+  AND credentials_delegated IS FALSE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatgssapi-0004-select-count-1-from-pg_catalog.pg_stat_gssapi-where"},
 				},
 			},
 		},
