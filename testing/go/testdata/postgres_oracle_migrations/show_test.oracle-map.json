@@ -47,7 +47,8 @@
       "query": "DESCRIBE t1",
       "querySha256": "5b356fa34074405076979288e106bd07fd4fed4717b53fd62639ae4baaede953",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -63,7 +64,8 @@
       "query": "DESC t1",
       "querySha256": "8d8c9791c42210366262457bb2262df5bf08bb785555647fe2ed2e203ee43ce2",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -79,7 +81,8 @@
       "query": "DESC public.t1",
       "querySha256": "e049d377032f9424ad870f8430cff1961682ae505ca69e02cea67fe5ae06e7c8",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -95,7 +98,8 @@
       "query": "DESC postgres.public.t1",
       "querySha256": "85793c253833084aa5e6ffea317ce65491e03703b05fe8140fe794984cd8c61d",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -111,7 +115,8 @@
       "query": "DESC t1",
       "querySha256": "8d8c9791c42210366262457bb2262df5bf08bb785555647fe2ed2e203ee43ce2",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -127,7 +132,8 @@
       "query": "EXPLAIN public.t1 AS OF 'HEAD'",
       "querySha256": "b329d6dfa56549d2e234659b346e7436d68ad871be331ae63db3b90c98c7dfe0",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -143,7 +149,8 @@
       "query": "DESCRIBE postgres.public.t1 AS OF 'HEAD~'",
       "querySha256": "116e3b7372365bce02ec0bf6dc0a82c692e6a68107c826bb992cb0cbfbf385a0",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -179,7 +186,8 @@
       "query": "DESC postgres.schema2.t2",
       "querySha256": "cce44f263d02ee1f81bd69e50d755bfe7bd2388bafd6ce0f0d4b6c7165ac4b9f",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -194,6 +202,9 @@
       "expectedKind": "error",
       "query": "DESC t2",
       "querySha256": "9f7f299a10c7604758e72903f2929a4cf4483a38334639908f2646b03eacd903",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -208,7 +219,8 @@
       "query": "DESC t2",
       "querySha256": "9f7f299a10c7604758e72903f2929a4cf4483a38334639908f2646b03eacd903",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -224,7 +236,8 @@
       "query": "DESC t2",
       "querySha256": "9f7f299a10c7604758e72903f2929a4cf4483a38334639908f2646b03eacd903",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -239,6 +252,9 @@
       "expectedKind": "rows",
       "query": "SHOW TABLES",
       "querySha256": "0911281e30125ba385272b96dee2f5e947201513bb6a06be34aa19b36958341c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -252,6 +268,9 @@
       "expectedKind": "rows",
       "query": "SHOW TABLES from public",
       "querySha256": "8931a17872540a1c7014269f0ce4a6d07d5e3ee98d774c0a2b83cff3a4277b08",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -265,6 +284,9 @@
       "expectedKind": "rows",
       "query": "SHOW TABLES from schema2",
       "querySha256": "6f2889500f2ac633305b50e4b1b325bdd544a37ea3d8d016a753d34aae46dce2",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -278,6 +300,9 @@
       "expectedKind": "rows",
       "query": "SHOW TABLES from postgres.public",
       "querySha256": "9b967886b45c5ad955abcb7e65caf4df395f806974f5dd314854aac2b4e960e1",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -291,6 +316,9 @@
       "expectedKind": "rows",
       "query": "SHOW TABLES from postgres.schema2",
       "querySha256": "0638ff9c50cec2fbbf267d4bd46c0dc254c0075e5b3fc508699f53f9a6e20973",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -304,6 +332,9 @@
       "expectedKind": "error",
       "query": "SHOW TABLES from db2",
       "querySha256": "713ff37551a60f78defd5f1f1410d125e2124fd68e246c8d0b6081360c8ad6c9",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -317,6 +348,9 @@
       "expectedKind": "rows",
       "query": "SHOW TABLES from db2.public",
       "querySha256": "36d4fabf5c6af84db2680c0a6543e7bf7cd279daf7bbe0dea61e84683f1f5156",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -330,6 +364,9 @@
       "expectedKind": "rows",
       "query": "SHOW TABLES from db2.schema3",
       "querySha256": "92b7f534eed29164289106210498adcd8a47320e1c30b489b16b2f95a21765cb",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -343,6 +380,9 @@
       "expectedKind": "rows",
       "query": "SHOW TABLES",
       "querySha256": "0911281e30125ba385272b96dee2f5e947201513bb6a06be34aa19b36958341c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -356,6 +396,9 @@
       "expectedKind": "rows",
       "query": "SHOW TABLES",
       "querySha256": "0911281e30125ba385272b96dee2f5e947201513bb6a06be34aa19b36958341c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -386,6 +429,9 @@
       "expectedKind": "rows",
       "query": "SHOW CREATE TABLE T2",
       "querySha256": "d2e5d64964419a13fc71c141295439bf85a02a618315565d4957b1d71169532b",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -399,6 +445,9 @@
       "expectedKind": "rows",
       "query": "SHOW CREATE TABLE t3",
       "querySha256": "27ff3aea8e259947376fae33d09c8791d3252b8e1a91accf91133878fd861c66",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -412,6 +461,9 @@
       "expectedKind": "error",
       "query": "SHOW CREATE TABLE dne",
       "querySha256": "97c256c3e0c54a5937ec21f01f0b7cd93fde1e286187808cad7c84026e3c3dff",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -442,6 +494,9 @@
       "expectedKind": "error",
       "query": "SHOW indexes FROM dne",
       "querySha256": "2b8d4fb5a6b664510824c4c83a6caeb686bd9b2d144ab7c40ab34f95203ec213",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -472,6 +527,9 @@
       "expectedKind": "rows",
       "query": "show SCHEMAS",
       "querySha256": "2dafaa3db946254f79a3d579ba08a87ed216f9a2958471e70a5628b108bba9d3",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -485,6 +543,9 @@
       "expectedKind": "rows",
       "query": "show SCHEMAS FROM postgres",
       "querySha256": "ba88feb62e3ce0ab2e4829985ecddd123417be70f3831d1793ded6707716223f",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -498,6 +559,9 @@
       "expectedKind": "rows",
       "query": "show SCHEMAS FROM db1",
       "querySha256": "595846a3ba74d738b8649c56d188b131c71e7bbd941116419d3faae7d246ff91",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -511,6 +575,9 @@
       "expectedKind": "error",
       "query": "show SCHEMAS FROM dne",
       "querySha256": "8e9f891f29d9eaa0959443c633fb0872f6698ca9233f0ed4a749592ed4c455fe",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -524,6 +591,9 @@
       "expectedKind": "rows",
       "query": "SHOW SEQUENCES",
       "querySha256": "735d6e567ac3e765e10eddc3a61882cae053f7e46292503d522f2fb7f51fd7ff",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -537,6 +607,9 @@
       "expectedKind": "rows",
       "query": "SHOW SEQUENCES from postgres",
       "querySha256": "1585f474e5bd32f936f1be8b2e596fde0747f2318555b87d1c1a26eecb9dd0b9",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -550,6 +623,9 @@
       "expectedKind": "rows",
       "query": "SHOW SEQUENCES FROM db1",
       "querySha256": "9cd7cd53150651b6f2671691fbd0cdcfcf98c8a921af589c3aa488e4ca1d3860",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -563,6 +639,9 @@
       "expectedKind": "error",
       "query": "SHOW SEQUENCES FROM dne",
       "querySha256": "552a13a8a9c0130ca19f4a9da6aa75d90fa20d890c5cc80c3cd936d7c443ab97",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     }

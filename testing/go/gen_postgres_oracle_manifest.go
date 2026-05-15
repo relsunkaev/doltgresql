@@ -1575,6 +1575,16 @@ func hasDoltSpecificWorkflowSource(source string) bool {
 	}
 }
 
+func hasDoltgresOnlySource(source string) bool {
+	sourceFile, _, _ := strings.Cut(source, ":")
+	switch sourceFile {
+	case "testing/go/show_test.go":
+		return true
+	default:
+		return false
+	}
+}
+
 func sqlCodeAndStringLiterals(statement string) (string, []string) {
 	var code strings.Builder
 	var literals []string
@@ -2429,6 +2439,9 @@ func migrationCandidatesFromScriptTestSlice(source string, ordinal *int, lit *as
 				candidate.NonLiteral = appendNonLiteral(candidate.NonLiteral, "DoltSpecific")
 			}
 			if candidate.Oracle == "internal" && hasDoltSpecificWorkflowSource(source) {
+				candidate.NonLiteral = appendNonLiteral(candidate.NonLiteral, "DoltSpecific")
+			}
+			if candidate.Oracle == "internal" && hasDoltgresOnlySource(source) {
 				candidate.NonLiteral = appendNonLiteral(candidate.NonLiteral, "DoltSpecific")
 			}
 			candidate.NonLiteral = append(candidate.NonLiteral, priorNonLiteral...)
