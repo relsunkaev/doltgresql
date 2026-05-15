@@ -124,6 +124,13 @@ func TestPostgresOracleCacheCoversManifestScriptEntries(t *testing.T) {
 	require.Greater(t, cachedEntries, 20)
 }
 
+func TestPostgresOracleStringRowsFormatsIntervals(t *testing.T) {
+	require.Equal(t, "-02:00:00", postgresOracleStringValue(pgtype.Interval{
+		Microseconds: -2 * 60 * 60 * 1000 * 1000,
+		Valid:        true,
+	}))
+}
+
 func TestPostgresOracleManifestGenerated(t *testing.T) {
 	expected, err := os.ReadFile("testdata/postgres_oracle_manifest.json")
 	require.NoError(t, err)
