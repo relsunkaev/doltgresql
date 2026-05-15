@@ -112,7 +112,7 @@
       "scriptName": "Expressions with tables",
       "oracle": "postgres",
       "postgresId": "prepared-statement-test-testpreparedstatements-0004-select-exists-select-1-from",
-      "suggestedId": "prepared-statement-test-testpreparedstatements-0004-select-exists-select-1-from",
+      "suggestedId": "postgres16/prepared-statement-test-testpreparedstatements-0004-select-exists-select-1-from",
       "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = $1);",
@@ -138,15 +138,27 @@
       "source": "testing/go/postgres16/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 5,
       "scriptName": "Expressions with tables",
-      "oracle": "internal",
-      "suggestedId": "prepared-statement-test-testpreparedstatements-0005-select-nspname-from-pg_namespace-limit",
+      "oracle": "postgres",
+      "postgresId": "postgres16/prepared-statement-test-testpreparedstatements-0005-select-nspname-from-pg_namespace-where",
+      "suggestedId": "postgres16/prepared-statement-test-testpreparedstatements-0005-select-nspname-from-pg_namespace-where",
+      "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT nspname FROM pg_namespace LIMIT $1;",
-      "querySha256": "4020a67fd4858da2434f18be579b9a5c1086b8e068779ceef720e2fe8fab02ee",
-      "nonLiteral": [
-        "BindVars"
+      "query": "SELECT nspname FROM pg_namespace WHERE nspname IN ('information_schema', 'pg_catalog', 'public') ORDER BY nspname LIMIT $1;",
+      "querySha256": "a2fa278994b683de3b8d1b5ab5f6053d0e7bcc9163f11c9a45b549ff80d35694",
+      "bindVars": [
+        {
+          "kind": "int",
+          "value": "1"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "information_schema"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -154,15 +166,32 @@
       "source": "testing/go/postgres16/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 6,
       "scriptName": "Expressions with tables",
-      "oracle": "internal",
-      "suggestedId": "prepared-statement-test-testpreparedstatements-0006-select-nspname-from-pg_namespace-offset",
+      "oracle": "postgres",
+      "postgresId": "postgres16/prepared-statement-test-testpreparedstatements-0006-select-nspname-from-pg_namespace-where",
+      "suggestedId": "postgres16/prepared-statement-test-testpreparedstatements-0006-select-nspname-from-pg_namespace-where",
+      "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT nspname FROM pg_namespace OFFSET $1;",
-      "querySha256": "1308288ea618d232104357893e9f6db5114ebcf089485006a01c8aab9e017ce2",
-      "nonLiteral": [
-        "BindVars"
+      "query": "SELECT nspname FROM pg_namespace WHERE nspname IN ('information_schema', 'pg_catalog', 'public') ORDER BY nspname OFFSET $1;",
+      "querySha256": "6a688becb95dcf1dd561855b2d4595868d9f9bbb2e79ebcda336642b10170fad",
+      "bindVars": [
+        {
+          "kind": "int",
+          "value": "1"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "pg_catalog"
+          }
+        ],
+        [
+          {
+            "value": "public"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

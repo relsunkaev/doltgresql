@@ -140,18 +140,12 @@ var preparedStatementTests = []ScriptTest{
 				BindVars: []any{"public"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0004-select-exists-select-1-from"},
 			},
 			{
-				Query:    "SELECT nspname FROM pg_namespace LIMIT $1;",
-				BindVars: []any{1},
-				Expected: []sql.Row{{"dolt"}},
+				Query:    "SELECT nspname FROM pg_namespace WHERE nspname IN ('information_schema', 'pg_catalog', 'public') ORDER BY nspname LIMIT $1;",
+				BindVars: []any{1}, PostgresOracle: ScriptTestPostgresOracle{ID: "postgres16/prepared-statement-test-testpreparedstatements-0005-select-nspname-from-pg_namespace-where"},
 			},
 			{
-				Query:    "SELECT nspname FROM pg_namespace OFFSET $1;",
-				BindVars: []any{1},
-				Expected: []sql.Row{
-					{"information_schema"},
-					{"pg_catalog"},
-					{"public"},
-				},
+				Query:    "SELECT nspname FROM pg_namespace WHERE nspname IN ('information_schema', 'pg_catalog', 'public') ORDER BY nspname OFFSET $1;",
+				BindVars: []any{1}, PostgresOracle: ScriptTestPostgresOracle{ID: "postgres16/prepared-statement-test-testpreparedstatements-0006-select-nspname-from-pg_namespace-where"},
 			},
 		},
 	},
