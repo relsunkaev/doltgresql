@@ -10,6 +10,16 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### beta - 2026-05-15 02:46 MST
+
+- Lane claimed: `TestDoltMergeArtifacts/merge_error_lists_all_constraint_violations_when_table_has_multiple_violations/CALL_DOLT_MERGE('right');`, specifically the merge constraint-violation error text mismatch.
+- Red proof: enginetest failfast `/tmp/doltgresql-beta-enginetest-failfast-0245.json` gets past the reserved-identifier converter fix and stops because the returned error contains `Name: t_col1_key` / `Name: t_col2_key` plus PostgreSQL error suffixes, while the enginetest assertion expects the MySQL/Dolt message with `Name: col1` / `Name: col2` and no SQLSTATE suffix.
+- Root cause: the converter translated inline MySQL `col1 int UNIQUE` / `col2 int UNIQUE` into unnamed PostgreSQL unique constraints. PostgreSQL auto-generated `t_col1_key` and `t_col2_key`, and Dolt merge violation reporting uses those names. MySQL/Dolt inline unique keys are named after the column, so the compatibility converter must preserve `col1` / `col2`.
+- Change made: `testing/go/enginetest/query_converter_test.go` now names inline unique column constraints after their column and adds converter coverage for `CREATE TABLE t (pk INT PRIMARY KEY, col1 INT UNIQUE, col2 INT UNIQUE)`.
+- Validation passed: `go test -vet=off ./testing/go/enginetest -run '^TestConvertQuery$' -count=1 -timeout=10m -v`, focused `go test -vet=off ./testing/go/enginetest -run '^TestDoltMergeArtifacts$/^merge_error_lists_all_constraint_violations_when_table_has_multiple_violations$' -count=1 -timeout=10m -v`, and broader `go test -json -vet=off ./testing/go/enginetest -count=1 -failfast -timeout=30m > /tmp/doltgresql-beta-enginetest-failfast-0249.json`, all with ICU env and `GOFLAGS=-p=1`.
+- Broader enginetest failfast result: `/tmp/doltgresql-beta-enginetest-failfast-0249.json` passed with 1383 pass, 715 skip, and 0 fail.
+- Next action: commit the inline-unique-name converter increment, then re-check `coop.md`/current failures for a non-overlapping next target.
+
 ### beta - 2026-05-15 02:42 MST
 
 - Lane claimed: `TestDoltRevert/dolt_revert() --continue: multiple table conflicts/select \`table\` from dolt_conflicts order by \`table\`;`, specifically MySQL-backtick conversion for reserved identifiers.

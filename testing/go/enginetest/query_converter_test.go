@@ -1396,6 +1396,10 @@ func transformCreateTable(stmt *sqlparser.DDL, state *queryConversionState) ([]s
 				},
 			}
 		}
+		var uniqueConstraintName tree.Name
+		if col.Type.KeyOpt == 3 { // unique key, unexported constant
+			uniqueConstraintName = mysqlColumnName(col.Name)
+		}
 
 		createTable.Defs = append(createTable.Defs, &tree.ColumnTableDef{
 			Name:      mysqlColumnName(col.Name),
@@ -1414,7 +1418,7 @@ func transformCreateTable(stmt *sqlparser.DDL, state *queryConversionState) ([]s
 				IsPrimaryKey: col.Type.KeyOpt == 1, // TODO: unexported const
 			},
 			Unique:               col.Type.KeyOpt == 3, // TODO: unexported const
-			UniqueConstraintName: "",                   // TODO
+			UniqueConstraintName: uniqueConstraintName,
 			DefaultExpr: struct {
 				Expr           tree.Expr
 				ConstraintName tree.Name
@@ -2117,6 +2121,12 @@ func TestConvertQuery(t *testing.T) {
 			expected: []string{
 				"CREATE TABLE foo (a INTEGER NOT NULL PRIMARY KEY, b INTEGER NULL, c INTEGER NULL)",
 				"CREATE UNIQUE INDEX ON foo ( b ASC, c ASC ) NULLS DISTINCT ",
+			},
+		},
+		{
+			input: "CREATE TABLE t (pk INT PRIMARY KEY, col1 INT UNIQUE, col2 INT UNIQUE)",
+			expected: []string{
+				"CREATE TABLE t (pk INTEGER NOT NULL PRIMARY KEY, col1 INTEGER NULL CONSTRAINT col1 UNIQUE, col2 INTEGER NULL CONSTRAINT col2 UNIQUE)",
 			},
 		},
 		{
