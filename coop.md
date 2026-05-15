@@ -10,6 +10,16 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 22:57 MST
+
+- Lane claimed: `TestPostgresOraclePromotedMap*` helper tests that still call generator fixtures as root files such as `expression_operator_repro_test.go` and `limit_test.go` after those fixtures moved under `testing/go/postgres16`.
+- Rationale: current focused repro for `TestPostgresOraclePromotedMapGenerated` fails before assertion with `open expression_operator_repro_test.go: no such file or directory`; beta's active catalog lane excludes oracle generator/manifest files.
+- Expected files: likely `testing/go/postgres_oracle_manifest_test.go` only, unless the generator needs path normalization for package-prefixed source files. Boundary: no catalog/index metadata, no PHP harness, no enginetest/analyzer files, no oracle cache semantic changes.
+- Next action: update helper-test fixture paths to the current `postgres16/` locations, preserve generated metadata assertions, and validate the failed oracle helper subset.
+- Result: updated helper tests to use current `postgres16/` fixture paths and the postgres16 manifest for cached entries now owned by that package; no generator behavior or cache contents changed.
+- Validation passed: `go test -vet=off ./testing/go -run '^(TestPostgresOraclePromotedMapGenerated|TestPostgresOraclePromotedMapSupportsLiteralBindVars|TestPostgresOraclePromotedMapSkipsPriorDoltSpecificSetup|TestPostgresOraclePromotedMapCountsGeneratedHelperScripts|TestPostgresOraclePromotedMapKeepsDoltNameFilters|TestPostgresOraclePromotedMapSkipsPriorNonLiteralSetup|TestPostgresOraclePromotedMapSupportsTestNameFilter|TestPostgresOraclePromotedMapSupportsScriptNameFilter|TestPostgresOraclePromotedMapSupportsPostgresIDFilter|TestPostgresOraclePromotedMapSupportsPackageScriptTestVariables|TestPostgresOracleReplicaIdentityCacheUsesCatalogCharText|TestPostgresOracleElectricInspectorArrayCacheUsesArrayText|TestPostgresOracleManifestCleansGeneratedObjects|TestPostgresOracleManifestInventory)$' -count=1 -timeout=10m -v` with ICU env and `GOFLAGS=-p=1`.
+- Claim status: closed after commit. Remaining full-run failures are outside this oracle-helper lane.
+
 ### alpha - 2026-05-14 22:50 MST
 
 - Lane claimed: `TestPHPPgSQLClientSmoke` Docker harness timeout/skip behavior after the full root `./testing/go` run reached the PHP container and stayed quiet for several minutes while `docker run php:8.4-cli` was still active.
