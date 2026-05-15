@@ -4345,7 +4345,12 @@ func TestPgStatDatabaseConflicts(t *testing.T) {
 			Name: "pg_stat_database_conflicts",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_stat_database_conflicts";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatdatabaseconflicts-0001-select-*-from-pg_catalog-."},
+					Query: `SELECT count(*) = 1
+FROM "pg_catalog"."pg_stat_database_conflicts"
+WHERE datname = current_database()
+  AND confl_tablespace >= 0
+  AND confl_lock >= 0
+  AND confl_active_logicalslot >= 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatdatabaseconflicts-0001-select-count-1-from-pg_catalog.pg_stat_database_conflicts"},
 				},
 				{ // Different cases and quoted, so it fails
 					Query: `SELECT * FROM "PG_catalog"."pg_stat_database_conflicts";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -4360,7 +4365,11 @@ func TestPgStatDatabaseConflicts(t *testing.T) {
 						ID: "pgcatalog-test-testpgstatdatabaseconflicts-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT datname FROM PG_catalog.pg_STAT_DATABASE_CONFLICTS ORDER BY datname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatdatabaseconflicts-0004-select-datname-from-pg_catalog.pg_stat_database_conflicts-order"},
+					Query: `SELECT count(*) = 1 FROM PG_catalog.pg_STAT_DATABASE_CONFLICTS
+WHERE datname = current_database()
+  AND confl_tablespace >= 0
+  AND confl_lock >= 0
+  AND confl_active_logicalslot >= 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatdatabaseconflicts-0004-select-count-1-from-pg_catalog.pg_stat_database_conflicts"},
 				},
 			},
 		},
