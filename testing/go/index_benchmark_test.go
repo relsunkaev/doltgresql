@@ -1920,13 +1920,17 @@ func queryBenchmarkString(tb testing.TB, ctx context.Context, conn *Connection, 
 func assertBenchmarkPlanShape(tb testing.TB, ctx context.Context, conn *Connection, query string, indexedPlan bool) {
 	tb.Helper()
 	plan := explainBenchmarkQuery(tb, ctx, conn, query)
-	hasIndexedAccess := strings.Contains(plan, "IndexedTableAccess")
+	hasIndexedAccess := benchmarkPlanUsesIndex(plan)
 	if indexedPlan && !hasIndexedAccess {
-		tb.Fatalf("expected benchmark query to use IndexedTableAccess\nplan:\n%s", plan)
+		tb.Fatalf("expected benchmark query to use an index\nplan:\n%s", plan)
 	}
 	if !indexedPlan && hasIndexedAccess {
 		tb.Fatalf("expected benchmark query to use table-scan fallback\nplan:\n%s", plan)
 	}
+}
+
+func benchmarkPlanUsesIndex(plan string) bool {
+	return strings.Contains(plan, "IndexedTableAccess") || strings.Contains(plan, "Index Scan using ")
 }
 
 func assertBenchmarkPlanContains(tb testing.TB, ctx context.Context, conn *Connection, query string, expected string) {
