@@ -273,6 +273,10 @@ func extensionMemberTypesByID(extensions []coreextensions.Extension) map[id.Type
 		}
 		memberTypes[id.NewType(schemaName, extName)] = extName
 		memberTypes[id.NewType(schemaName, "_"+extName)] = extName
+		if extName == "hstore" {
+			memberTypes[id.NewType(schemaName, "ghstore")] = extName
+			memberTypes[id.NewType(schemaName, "_ghstore")] = extName
+		}
 	}
 	return memberTypes
 }

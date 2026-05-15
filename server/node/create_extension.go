@@ -259,12 +259,35 @@ func (c *CreateExtension) installBuiltinExtensionObjects(ctx *sql.Context, names
 	case "citext":
 		return c.installTextCompatibleExtensionType(ctx, namespace, "citext", pgtypes.NewCitextType)
 	case "hstore":
-		return c.installTextCompatibleExtensionType(ctx, namespace, "hstore", pgtypes.NewHstoreType)
+		return c.installHstoreExtensionTypes(ctx, namespace)
 	case "vector":
 		return c.installTextCompatibleExtensionType(ctx, namespace, "vector", pgtypes.NewVectorExtensionType)
 	default:
 		return nil
 	}
+}
+
+func (c *CreateExtension) installHstoreExtensionTypes(ctx *sql.Context, namespace id.Namespace) error {
+	if err := c.installTextCompatibleExtensionType(ctx, namespace, "hstore", pgtypes.NewHstoreType); err != nil {
+		return err
+	}
+	typesCollection, err := core.GetTypesCollectionFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	typeID := id.NewType(namespace.SchemaName(), "ghstore")
+	arrayID := id.NewType(namespace.SchemaName(), "_ghstore")
+	if typesCollection.HasType(ctx, typeID) {
+		return nil
+	}
+	extensionType := pgtypes.NewGhstoreType(arrayID, typeID)
+	if err = typesCollection.CreateType(ctx, extensionType); err != nil {
+		return err
+	}
+	if err = typesCollection.CreateType(ctx, pgtypes.CreateArrayTypeFromBaseType(extensionType)); err != nil {
+		return err
+	}
+	return core.MarkTypesCollectionDirty(ctx, "")
 }
 
 func (c *CreateExtension) installTextCompatibleExtensionType(ctx *sql.Context, namespace id.Namespace, typeName string, newType func(arrayID, typeID id.Type) *pgtypes.DoltgresType) error {

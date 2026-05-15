@@ -28,6 +28,46 @@ func NewHstoreType(arrayID, typeID id.Type) *DoltgresType {
 	return &hstore
 }
 
+// NewGhstoreType returns the GiST storage type supplied by the hstore extension.
+func NewGhstoreType(arrayID, typeID id.Type) *DoltgresType {
+	return &DoltgresType{
+		ID:                  typeID,
+		TypLength:           int16(-1),
+		PassedByVal:         false,
+		TypType:             TypeType_Base,
+		TypCategory:         TypeCategory_UserDefinedTypes,
+		IsPreferred:         false,
+		IsDefined:           true,
+		Delimiter:           ",",
+		RelID:               id.Null,
+		SubscriptFunc:       toFuncID("-"),
+		Elem:                id.NullType,
+		Array:               arrayID,
+		InputFunc:           toFuncID("ghstore_in", toInternal("cstring")),
+		OutputFunc:          toFuncID("ghstore_out", typeID),
+		ReceiveFunc:         toFuncID("-"),
+		SendFunc:            toFuncID("-"),
+		ModInFunc:           toFuncID("-"),
+		ModOutFunc:          toFuncID("-"),
+		AnalyzeFunc:         toFuncID("-"),
+		Align:               TypeAlignment_Int,
+		Storage:             TypeStorage_Extended,
+		NotNull:             false,
+		BaseTypeID:          id.NullType,
+		TypMod:              -1,
+		NDims:               0,
+		TypCollation:        id.NullCollation,
+		DefaulBin:           "",
+		Default:             "",
+		Acl:                 nil,
+		Checks:              nil,
+		attTypMod:           -1,
+		InternalName:        "ghstore",
+		SerializationFunc:   serializeTypeText,
+		DeserializationFunc: deserializeTypeText,
+	}
+}
+
 // HstoreBuiltinEquivalent returns the canonical hstore type used by compiled
 // hstore functions for extension hstore types installed into any schema.
 func HstoreBuiltinEquivalent(typ *DoltgresType) (*DoltgresType, bool) {

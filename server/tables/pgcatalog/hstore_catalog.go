@@ -68,7 +68,7 @@ type hstoreCatalogOperator struct {
 var hstoreCatalogOpclasses = []hstoreCatalogOpclass{
 	{method: indexmetadata.AccessMethodBtree, name: "btree_hstore_ops", typeName: "hstore", isDefault: true},
 	{method: indexmetadata.AccessMethodGin, name: "gin_hstore_ops", typeName: "hstore", keyType: "text", isDefault: true},
-	{method: accessMethodGist, name: "gist_hstore_ops", typeName: "hstore", isDefault: true},
+	{method: accessMethodGist, name: "gist_hstore_ops", typeName: "hstore", keyType: "ghstore", isDefault: true},
 	{method: accessMethodHash, name: "hash_hstore_ops", typeName: "hstore", isDefault: true},
 }
 
