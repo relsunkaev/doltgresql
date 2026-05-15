@@ -164,11 +164,12 @@ func main() {
 	forcePostgresOracle := flag.Bool("force-postgres-oracle", false, "for --refresh-oracle-map, promote literal-query assertions to PostgreSQL even when expected fields are non-literal")
 	allowExplicitPublicSchema := flag.Bool("allow-explicit-public-schema", false, "for --refresh-oracle-map, replay explicit public-schema references without auto-isolated schema setup and store generated cleanup")
 	skipRefreshErrors := flag.Bool("skip-refresh-errors", false, "for --refresh-oracle-map, leave entries internal when PostgreSQL refresh fails and continue refreshing the rest")
+	batchRefreshOracleMap := flag.Bool("batch-refresh-oracle-map", false, "for --refresh-oracle-map, preserve existing PostgreSQL rows, refresh only newly promoted rows, and continue past blocked rows")
 	postgresDSN := flag.String("postgres-dsn", "", "PostgreSQL DSN for --refresh-oracle-map; defaults to DOLTGRES_POSTGRES_TEST_DSN, POSTGRES_TEST_DSN, or DOLTGRES_ORACLE default")
 	flag.Parse()
 
 	if *rewriteOracleSourcesFlag {
-		if *stdout || *migrationCandidatesDir != "" || *promoteOracleMap != "" || *refreshOracleMap != "" || *promoteOracleMapOutput != "" || *oracleTestName != "" || *oracleScriptName != "" || *oracleSkipScriptName != "" || *oraclePostgresID != "" || *forcePostgresOracle || *allowExplicitPublicSchema || *skipRefreshErrors || *postgresDSN != "" {
+		if *stdout || *migrationCandidatesDir != "" || *promoteOracleMap != "" || *refreshOracleMap != "" || *promoteOracleMapOutput != "" || *oracleTestName != "" || *oracleScriptName != "" || *oracleSkipScriptName != "" || *oraclePostgresID != "" || *forcePostgresOracle || *allowExplicitPublicSchema || *skipRefreshErrors || *batchRefreshOracleMap || *postgresDSN != "" {
 			fmt.Fprintln(os.Stderr, "--rewrite-oracle-sources cannot be combined with other generator modes or options")
 			os.Exit(1)
 		}
@@ -196,7 +197,8 @@ func main() {
 		scriptNames := parseOracleScriptNameFilter(*oracleScriptName)
 		skipScriptNames := parseOracleScriptNameFilter(*oracleSkipScriptName)
 		postgresIDs := parseOraclePostgresIDFilter(*oraclePostgresID)
-		if err := refreshPromotedOracleMap(*refreshOracleMap, *promoteOracleMapOutput, testNames, scriptNames, skipScriptNames, postgresIDs, dsn, *forcePostgresOracle, *allowExplicitPublicSchema, *skipRefreshErrors); err != nil {
+		skipErrors := *skipRefreshErrors || *batchRefreshOracleMap
+		if err := refreshPromotedOracleMap(*refreshOracleMap, *promoteOracleMapOutput, testNames, scriptNames, skipScriptNames, postgresIDs, dsn, *forcePostgresOracle, *allowExplicitPublicSchema, skipErrors, *batchRefreshOracleMap); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
@@ -206,6 +208,10 @@ func main() {
 	if *promoteOracleMap != "" {
 		if *skipRefreshErrors {
 			fmt.Fprintln(os.Stderr, "--skip-refresh-errors requires --refresh-oracle-map")
+			os.Exit(1)
+		}
+		if *batchRefreshOracleMap {
+			fmt.Fprintln(os.Stderr, "--batch-refresh-oracle-map requires --refresh-oracle-map")
 			os.Exit(1)
 		}
 		if *forcePostgresOracle {
@@ -234,6 +240,10 @@ func main() {
 	if *migrationCandidatesDir != "" {
 		if *forcePostgresOracle {
 			fmt.Fprintln(os.Stderr, "--force-postgres-oracle requires --refresh-oracle-map")
+			os.Exit(1)
+		}
+		if *batchRefreshOracleMap {
+			fmt.Fprintln(os.Stderr, "--batch-refresh-oracle-map requires --refresh-oracle-map")
 			os.Exit(1)
 		}
 		if *allowExplicitPublicSchema {
@@ -274,6 +284,10 @@ func main() {
 	}
 	if *skipRefreshErrors {
 		fmt.Fprintln(os.Stderr, "--skip-refresh-errors requires --refresh-oracle-map")
+		os.Exit(1)
+	}
+	if *batchRefreshOracleMap {
+		fmt.Fprintln(os.Stderr, "--batch-refresh-oracle-map requires --refresh-oracle-map")
 		os.Exit(1)
 	}
 
@@ -1128,7 +1142,7 @@ func writePromotedOracleMap(sourceFile string, outputPath string, testNameFilter
 	return os.WriteFile(outputPath, data, 0644)
 }
 
-func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilter map[string]struct{}, scriptNameFilter map[string]struct{}, skipScriptNameFilter map[string]struct{}, postgresIDFilter map[string]struct{}, dsn string, forcePostgresOracle bool, allowExplicitPublicSchema bool, skipRefreshErrors bool) error {
+func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilter map[string]struct{}, scriptNameFilter map[string]struct{}, skipScriptNameFilter map[string]struct{}, postgresIDFilter map[string]struct{}, dsn string, forcePostgresOracle bool, allowExplicitPublicSchema bool, skipRefreshErrors bool, batchRefreshOracleMap bool) error {
 	sourceFile = strings.TrimPrefix(sourceFile, "testing/go/")
 	if outputPath == "" {
 		outputPath = filepath.Join("testdata", "postgres_oracle_migrations", strings.TrimSuffix(sourceFile, ".go")+".oracle-map.json")
@@ -1169,9 +1183,13 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 	if err != nil {
 		return err
 	}
+	existingByKey := map[string]migrationAssertion{}
 	if ok {
-		if len(testNameFilter) > 0 || len(scriptNameFilter) > 0 || len(skipScriptNameFilter) > 0 || len(postgresIDFilter) > 0 {
-			mapped, err = mergeMigrationFiles(existing, mapped)
+		existingByKey = migrationAssertionsByKey(existing.Assertions)
+	}
+	if ok {
+		if batchRefreshOracleMap || len(testNameFilter) > 0 || len(scriptNameFilter) > 0 || len(skipScriptNameFilter) > 0 || len(postgresIDFilter) > 0 {
+			mapped, err = mergeMigrationFiles(existing, mapped, batchRefreshOracleMap)
 			if err != nil {
 				return err
 			}
@@ -1244,11 +1262,16 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 				continue
 			}
 		}
+		if batchRefreshOracleMap {
+			if existingAssertion, ok := existingByKey[key]; ok && existingAssertion.Oracle == "postgres" {
+				continue
+			}
+		}
 		if hasPostgresOracleBlockingNonLiteral(assertion.NonLiteral) {
 			err := fmt.Errorf("generated oracle entry depends on non-literal ScriptTest setup that the PostgreSQL refresh harness cannot replay")
 			if skipRefreshErrors {
 				fmt.Fprintf(os.Stderr, "skipping %s: %v\n", entry.ID, err)
-				markOracleAssertionInternal(assertion)
+				restoreExistingOrMarkOracleAssertionInternal(assertion, key, existingByKey, batchRefreshOracleMap)
 				continue
 			}
 			return fmt.Errorf("%s: %w", entry.ID, err)
@@ -1257,7 +1280,7 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 			err := fmt.Errorf("generated oracle entry references Dolt-specific SQL that PostgreSQL cannot be source-of-truth for")
 			if skipRefreshErrors {
 				fmt.Fprintf(os.Stderr, "skipping %s: %v\n", entry.ID, err)
-				markOracleAssertionInternal(assertion)
+				restoreExistingOrMarkOracleAssertionInternal(assertion, key, existingByKey, batchRefreshOracleMap)
 				continue
 			}
 			return fmt.Errorf("%s: %w", entry.ID, err)
@@ -1275,7 +1298,7 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 					err := fmt.Errorf("generated oracle entry uses an isolated schema but setup could not be converted to explicit public-schema cleanup")
 					if skipRefreshErrors {
 						fmt.Fprintf(os.Stderr, "skipping %s: %v\n", entry.ID, err)
-						markOracleAssertionInternal(assertion)
+						restoreExistingOrMarkOracleAssertionInternal(assertion, key, existingByKey, batchRefreshOracleMap)
 						continue
 					}
 					return fmt.Errorf("%s: %w", entry.ID, err)
@@ -1284,7 +1307,7 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 				err := fmt.Errorf("generated oracle entry uses an isolated schema but setup or query explicitly references public; add an explicit PostgresOracle override or skip this migration")
 				if skipRefreshErrors {
 					fmt.Fprintf(os.Stderr, "skipping %s: %v\n", entry.ID, err)
-					markOracleAssertionInternal(assertion)
+					restoreExistingOrMarkOracleAssertionInternal(assertion, key, existingByKey, batchRefreshOracleMap)
 					continue
 				}
 				return fmt.Errorf("%s: %w", entry.ID, err)
@@ -1302,7 +1325,7 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 		if err != nil {
 			if skipRefreshErrors {
 				fmt.Fprintf(os.Stderr, "skipping %s: %v\n", entry.ID, err)
-				markOracleAssertionInternal(assertion)
+				restoreExistingOrMarkOracleAssertionInternal(assertion, key, existingByKey, batchRefreshOracleMap)
 				if reconnectErr := reconnect(); reconnectErr != nil {
 					return fmt.Errorf("%s: reconnecting PostgreSQL oracle after refresh error: %w", entry.ID, reconnectErr)
 				}
@@ -1349,6 +1372,16 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 	return os.WriteFile(outputPath, refreshed, 0644)
 }
 
+func restoreExistingOrMarkOracleAssertionInternal(assertion *migrationAssertion, key string, existingByKey map[string]migrationAssertion, restoreExisting bool) {
+	if restoreExisting {
+		if existingAssertion, ok := existingByKey[key]; ok {
+			*assertion = existingAssertion
+			return
+		}
+	}
+	markOracleAssertionInternal(assertion)
+}
+
 func markOracleAssertionInternal(assertion *migrationAssertion) {
 	assertion.Oracle = "internal"
 	assertion.PostgresID = ""
@@ -1378,7 +1411,7 @@ func readExistingMigrationFile(path string) (migrationFile, bool, error) {
 	return mapped, true, nil
 }
 
-func mergeMigrationFiles(existing migrationFile, generated migrationFile) (migrationFile, error) {
+func mergeMigrationFiles(existing migrationFile, generated migrationFile, preserveExistingBatchRows bool) (migrationFile, error) {
 	if existing.SourceFile != "" && generated.SourceFile != "" && existing.SourceFile != generated.SourceFile {
 		return migrationFile{}, fmt.Errorf("cannot merge oracle maps for different source files: %s and %s", existing.SourceFile, generated.SourceFile)
 	}
@@ -1390,6 +1423,11 @@ func mergeMigrationFiles(existing migrationFile, generated migrationFile) (migra
 	replaced := make(map[string]struct{}, len(generated.Assertions))
 	for _, assertion := range existing.Assertions {
 		if replacement, ok := replacementByKey[assertion.Key]; ok {
+			if preserveExistingBatchRows && (assertion.Oracle == "postgres" || replacement.Oracle != "postgres") {
+				merged = append(merged, assertion)
+				replaced[assertion.Key] = struct{}{}
+				continue
+			}
 			preserveCachedExpectation(&replacement, assertion)
 			merged = append(merged, replacement)
 			replaced[assertion.Key] = struct{}{}
@@ -1422,11 +1460,16 @@ func mergeMigrationFiles(existing migrationFile, generated migrationFile) (migra
 	return existing, nil
 }
 
-func preserveGeneratedCachedExpectations(generated *migrationFile, existing migrationFile) {
-	existingByKey := make(map[string]migrationAssertion, len(existing.Assertions))
-	for _, assertion := range existing.Assertions {
-		existingByKey[assertion.Key] = assertion
+func migrationAssertionsByKey(assertions []migrationAssertion) map[string]migrationAssertion {
+	byKey := make(map[string]migrationAssertion, len(assertions))
+	for _, assertion := range assertions {
+		byKey[assertion.Key] = assertion
 	}
+	return byKey
+}
+
+func preserveGeneratedCachedExpectations(generated *migrationFile, existing migrationFile) {
+	existingByKey := migrationAssertionsByKey(existing.Assertions)
 	for i := range generated.Assertions {
 		if existingAssertion, ok := existingByKey[generated.Assertions[i].Key]; ok {
 			preserveCachedExpectation(&generated.Assertions[i], existingAssertion)
