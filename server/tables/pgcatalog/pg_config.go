@@ -62,6 +62,28 @@ var pgConfigSchema = sql.Schema{
 
 var pgConfigRows = []sql.Row{
 	{"BINDIR", "/usr/bin"},
+	{"CC", ""},
+	{"CFLAGS", ""},
+	{"CFLAGS_SL", ""},
+	{"CONFIGURE", ""},
+	{"CPPFLAGS", ""},
+	{"DOCDIR", "/usr/share/doc/doltgresql"},
+	{"HTMLDIR", "/usr/share/doc/doltgresql"},
+	{"INCLUDEDIR", "/usr/include"},
+	{"INCLUDEDIR-SERVER", "/usr/include/server"},
+	{"LDFLAGS", ""},
+	{"LDFLAGS_EX", ""},
+	{"LDFLAGS_SL", ""},
+	{"LIBDIR", "/usr/lib"},
+	{"LIBS", ""},
+	{"LOCALEDIR", "/usr/share/locale"},
+	{"MANDIR", "/usr/share/man"},
+	{"PGXS", "/usr/lib/pgxs/src/makefiles/pgxs.mk"},
+	{"PKGINCLUDEDIR", "/usr/include/doltgresql"},
+	{"PKGLIBDIR", "/usr/lib/doltgresql"},
+	{"SHAREDIR", "/usr/share/doltgresql"},
+	{"SYSCONFDIR", "/etc/doltgresql"},
+	{"VERSION", "DoltgreSQL"},
 }
 
 // pgConfigRowIter is the sql.RowIter for the pg_config table.
