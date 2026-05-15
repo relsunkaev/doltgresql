@@ -1736,14 +1736,26 @@ func TestPgForeignTable(t *testing.T) {
 func TestPgGroup(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "pg_group",
+			Name: "pg_group membership row",
+			SetUpScript: []string{
+				`CREATE ROLE catalog_group_parent;`,
+				`CREATE ROLE catalog_group_member LOGIN;`,
+				`GRANT catalog_group_parent TO catalog_group_member;`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_group";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT groname, pg_get_userbyid(grosysid), pg_get_userbyid(grolist[1])
+						FROM "pg_catalog"."pg_group"
+						WHERE groname = 'catalog_group_parent';`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpggroup-0001-select-*-from-pg_catalog-."},
 				},
+			},
+		},
+		{
+			Name: "pg_group case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_group";`, PostgresOracle: ScriptTestPostgresOracle{
 
@@ -1756,8 +1768,16 @@ func TestPgGroup(t *testing.T) {
 						// Different cases but non-quoted, so it works
 						ID: "pgcatalog-test-testpggroup-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_group mixed-case identifiers",
+			SetUpScript: []string{
+				`CREATE ROLE catalog_group_parent;`,
+			},
+			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT groname FROM PG_catalog.pg_GROUP ORDER BY groname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpggroup-0004-select-groname-from-pg_catalog.pg_group-order"},
+					Query: "SELECT groname FROM PG_catalog.pg_GROUP WHERE groname = 'catalog_group_parent' ORDER BY groname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpggroup-0004-select-groname-from-pg_catalog.pg_group-order"},
 				},
 			},
 		},

@@ -16,9 +16,12 @@ package pgcatalog
 
 import (
 	"io"
+	"sort"
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +46,34 @@ func (p PgGroupHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgGroupHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_group row iter
-	return emptyRowIter()
+	membersByGroup := make(map[auth.RoleID][]auth.Role)
+	for _, membership := range auth.GetAllRoleMemberships() {
+		membersByGroup[membership.Group.ID()] = append(membersByGroup[membership.Group.ID()], membership.Member)
+	}
+	for groupID := range membersByGroup {
+		sort.Slice(membersByGroup[groupID], func(i, j int) bool {
+			return membersByGroup[groupID][i].Name < membersByGroup[groupID][j].Name
+		})
+	}
+
+	roles := auth.GetAllRoles()
+	rows := make([]sql.Row, 0, len(roles))
+	for _, role := range roles {
+		if role.CanLogin || role.Name == "public" {
+			continue
+		}
+		members := membersByGroup[role.ID()]
+		memberOIDs := make([]any, len(members))
+		for i, member := range members {
+			memberOIDs[i] = id.NewId(id.Section_User, member.Name)
+		}
+		rows = append(rows, sql.Row{
+			role.Name,
+			id.NewId(id.Section_User, role.Name),
+			memberOIDs,
+		})
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
