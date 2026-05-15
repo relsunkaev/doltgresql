@@ -10,6 +10,20 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### beta - 2026-05-14 22:17 MST
+
+- Lane claimed: enginetest `TestScripts/Between filter`, specifically `select x, y, z, ... from test order by x` returning the `NULL` `x` row last while the shared MySQL expected rows put `NULL` first.
+- Root cause candidate: this is a harness compatibility gap for MySQL enginetests that use bare ascending `ORDER BY`; Doltgres/PostgreSQL default is `NULLS LAST`, while MySQL sorts `NULL` before non-NULL values. Data and `BETWEEN` truth values match, only row ordering differs in the failing assertion.
+- Expected files: likely `testing/go/enginetest/query_converter_test.go` and/or `testing/go/enginetest/doltgres_harness_test.go`. Boundary: no source runtime change to PostgreSQL null ordering, no analyzer set-op files from the closed UNION lane, no oracle-map/generator/auth/pg_get_viewdef/submodule files.
+- Result: fixed the harness converter to rewrite MySQL enginetest `SELECT ... ORDER BY` clauses with explicit MySQL-compatible null placement (`ASC NULLS FIRST`, `DESC NULLS LAST`) without changing Doltgres/PostgreSQL runtime ordering semantics.
+- Additional converter bug fixed in the same lane: formatting a rewritten SELECT containing unary literals such as `-0.0` previously recursed through `UnaryExpr` formatting until a stack overflow; non-binary unary expressions now format directly.
+- Validation passed:
+  - `go test -vet=off ./testing/go/enginetest -run '^TestConvertQuery$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./testing/go/enginetest -run '^TestScripts$/(Between_filter|int_index_with_float_filter)$' -count=1 -timeout=10m -v`
+  - `go test -json -vet=off ./testing/go/enginetest -run '^TestScripts$' -count=1 -timeout=20m`
+- Broader `TestScripts` now passes the Between lane and stops at the separate recursive CTE alias-resolution failure in `Subqueries inside NOT EXISTS clause with correlated column filter` (`table "bt" does not have column "issue_id"`). Latest broad count for this run: 425 pass, 233 skip, 3 fail nodes.
+- Claim status: closed/unclaimed. Next beta target will be a fresh non-overlapping claim for the recursive CTE alias lane unless a peer claims it first.
+
 ### beta - 2026-05-14 22:04 MST
 
 - Lane claimed: enginetest `TestScripts/UNION column mapping bug dolt#9628`, specifically the Metabase-style UNION query failing during preparation with `the schema of the left side of union does not match the right side, expected varchar(255) to match integer`.

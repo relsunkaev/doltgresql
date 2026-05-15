@@ -817,7 +817,12 @@ func transformSelect(stmt *sqlparser.Select, state *queryConversionState) ([]str
 func shouldRewriteSelect(stmt *sqlparser.Select, state *queryConversionState) bool {
 	return containsUserVars(stmt) ||
 		containsBinaryConversion(stmt) ||
-		containsMysqlFloatSum(stmt, state)
+		containsMysqlFloatSum(stmt, state) ||
+		containsMysqlOrderBy(stmt)
+}
+
+func containsMysqlOrderBy(stmt *sqlparser.Select) bool {
+	return len(stmt.OrderBy) > 0
 }
 
 func containsBinaryConversion(stmt *sqlparser.Select) bool {
@@ -959,13 +964,15 @@ func postgresNodeFormatter(state *queryConversionState) func(buf *sqlparser.Trac
 			} else if strings.HasPrefix(node.String(), "@") {
 				buf.Myprintf("current_setting('doltgres_enginetest.%s')", strings.TrimLeft(node.String(), "@"))
 			} else {
-				buf.Myprintf("%s", node.Lowered())
+				buf.Myprintf("%s", formatPostgresIdentifier(node))
 			}
 		case *sqlparser.UnaryExpr:
 			if node.Operator == "binary " {
 				buf.Myprintf("%v::text::bytea", node.Expr)
+			} else if _, unary := node.Expr.(*sqlparser.UnaryExpr); unary {
+				buf.Myprintf("%s %v", node.Operator, node.Expr)
 			} else {
-				buf.Myprintf("%v", node)
+				buf.Myprintf("%s%v", node.Operator, node.Expr)
 			}
 		case *sqlparser.Limit:
 			if node == nil {
@@ -974,6 +981,26 @@ func postgresNodeFormatter(state *queryConversionState) func(buf *sqlparser.Trac
 			buf.Myprintf(" limit %v", node.Rowcount)
 			if node.Offset != nil {
 				buf.Myprintf(" offset %v", node.Offset)
+			}
+		case *sqlparser.Order:
+			if _, ok := node.Expr.(*sqlparser.NullVal); ok {
+				buf.Myprintf("%v", node.Expr)
+				return
+			}
+			if fn, ok := node.Expr.(*sqlparser.FuncExpr); ok && fn.Name.Lowered() == "rand" {
+				buf.Myprintf("%v", node.Expr)
+				return
+			}
+
+			direction := strings.ToLower(strings.TrimSpace(node.Direction))
+			buf.Myprintf("%v", node.Expr)
+			if direction != "" {
+				buf.Myprintf(" %s", direction)
+			}
+			if direction == sqlparser.DescScr {
+				buf.Myprintf(" nulls last")
+			} else {
+				buf.Myprintf(" nulls first")
 			}
 		case *sqlparser.FuncExpr:
 			if state != nil && strings.EqualFold(node.Name.String(), "sum") && len(node.Exprs) == 1 {
@@ -987,6 +1014,33 @@ func postgresNodeFormatter(state *queryConversionState) func(buf *sqlparser.Trac
 			node.Format(buf)
 		}
 	}
+}
+
+func formatPostgresIdentifier(ident sqlparser.ColIdent) string {
+	name := ident.Lowered()
+	if isBarePostgresIdentifier(name) {
+		return name
+	}
+	return `"` + strings.ReplaceAll(ident.String(), `"`, `""`) + `"`
+}
+
+func isBarePostgresIdentifier(name string) bool {
+	if name == "" {
+		return false
+	}
+	for i, r := range name {
+		if i == 0 {
+			if (r >= 'a' && r <= 'z') || r == '_' {
+				continue
+			}
+			return false
+		}
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '_' {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 var sequenceNum int
@@ -1850,6 +1904,30 @@ func TestConvertQuery(t *testing.T) {
 			input: "UPDATE floattable SET f32 = 5, f32 = 4 WHERE i = 1",
 			expected: []string{
 				"update floattable set f32 = 4 where i = 1",
+			},
+		},
+		{
+			input: "SELECT x FROM test ORDER BY x",
+			expected: []string{
+				"select x from test order by x asc nulls first",
+			},
+		},
+		{
+			input: "SELECT x, y FROM test ORDER BY x ASC, y DESC",
+			expected: []string{
+				"select x, y from test order by x asc nulls first, y desc nulls last",
+			},
+		},
+		{
+			input: "SELECT * FROM t0 WHERE i > -0.0 ORDER BY i",
+			expected: []string{
+				"select * from t0 where i > -0.0 order by i asc nulls first",
+			},
+		},
+		{
+			input: "SELECT i AS `200`, `100` FROM t ORDER BY `200`",
+			expected: []string{
+				`select i as "200", "100" from t order by "200" asc nulls first`,
 			},
 		},
 		{
