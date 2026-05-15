@@ -26,16 +26,7 @@
       "username": "info_schema_schema_viewer",
       "query": "SELECT schema_name\n\t\t\t\t\t\tFROM information_schema.schemata\n\t\t\t\t\t\tWHERE schema_name = 'info_schema_private_schema';",
       "querySha256": "4d7286e02ff7f157be51213e1e6522e4925f6281c7237d66fb6cd1e14a478d76",
-      "expectedRows": [
-        [
-          {
-            "value": "info_schema_routine_grant_target"
-          },
-          {
-            "value": "EXECUTE"
-          }
-        ]
-      ],
+      "expectedRows": [],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -69,7 +60,16 @@
       "username": "info_schema_routine_grantee",
       "query": "SELECT routine_name, privilege_type\n\t\t\t\t\t\tFROM information_schema.routine_privileges\n\t\t\t\t\t\tWHERE routine_schema = 'public'\n\t\t\t\t\t\t\tAND routine_name = 'info_schema_routine_grant_target'\n\t\t\t\t\t\t\tAND grantee = current_user\n\t\t\t\t\t\tORDER BY routine_name, privilege_type;",
       "querySha256": "3ccbe203989bffea823a9307302fcb68e9c53aae31219783081df7996601553a",
-      "expectedRows": [],
+      "expectedRows": [
+        [
+          {
+            "value": "info_schema_routine_grant_target"
+          },
+          {
+            "value": "EXECUTE"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
