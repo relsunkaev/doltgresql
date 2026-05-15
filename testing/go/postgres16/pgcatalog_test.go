@@ -3990,12 +3990,20 @@ func TestPgShdepend(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "pg_shdepend",
+			SetUpScript: []string{
+				`CREATE ROLE shdepend_generic_owner;`,
+				`CREATE TABLE shdepend_generic_items (id INT);`,
+				`ALTER TABLE shdepend_generic_items OWNER TO shdepend_generic_owner;`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_shdepend";`, PostgresOracle: ScriptTestPostgresOracle{ID:
-
-					// Different cases and quoted, so it fails
-					"pgcatalog-test-testpgshdepend-0001-select-*-from-pg_catalog-."},
+					Query: `SELECT r.rolname, c.relname, d.deptype
+						FROM "pg_catalog"."pg_shdepend" d
+						JOIN "pg_catalog"."pg_class" c ON d.objid = c.oid
+						JOIN "pg_catalog"."pg_roles" r ON d.refobjid = r.oid
+						WHERE c.relname = 'shdepend_generic_items'
+							AND r.rolname = 'shdepend_generic_owner'
+						ORDER BY r.rolname, c.relname, d.deptype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgshdepend-0001-select-r.rolname-c.relname-d.deptype-from-pg_catalog.pg_shdepend-d"},
 				},
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_shdepend";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -4010,7 +4018,13 @@ func TestPgShdepend(t *testing.T) {
 						ID: "pgcatalog-test-testpgshdepend-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT dbid FROM PG_catalog.pg_SHDEPEND ORDER BY dbid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgshdepend-0004-select-dbid-from-pg_catalog.pg_shdepend-order"},
+					Query: `SELECT d.deptype
+						FROM PG_catalog.pg_SHDEPEND d
+						JOIN PG_catalog.pg_CLASS c ON d.objid = c.oid
+						JOIN PG_catalog.pg_ROLES r ON d.refobjid = r.oid
+						WHERE c.relname = 'shdepend_generic_items'
+							AND r.rolname = 'shdepend_generic_owner'
+						ORDER BY d.deptype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgshdepend-0004-select-d.deptype-from-pg_catalog.pg_shdepend-d"},
 				},
 			},
 		},
