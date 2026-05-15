@@ -102,6 +102,12 @@ type ConnectionHandler struct {
 	// transactionSnapshotAllowed tracks whether SET TRANSACTION SNAPSHOT is
 	// valid for the current explicit transaction's isolation mode.
 	transactionSnapshotAllowed bool
+	// transactionFailed tracks PostgreSQL's aborted transaction state after a
+	// statement error in an explicit transaction.
+	transactionFailed bool
+	// transactionBeginSavepoint is an internal savepoint used to restore DML
+	// state for full ROLLBACK and failed-transaction COMMIT-as-rollback.
+	transactionBeginSavepoint string
 	// pendingReplicationCaptures stores row changes produced inside an explicit transaction until COMMIT.
 	pendingReplicationCaptures []*replicationChangeCapture
 	// pendingReplicationAdvance records a row-producing transaction without an active logical sender.
@@ -741,8 +747,12 @@ func (h *ConnectionHandler) handleQuery(message *pgproto3.Query) (endOfMessages 
 		if err = h.rejectLockTableOutsideTransaction(queries[0]); err != nil {
 			return true, err
 		}
+		if err = h.rejectFailedTransaction(queries[0]); err != nil {
+			return true, err
+		}
 		handled, endOfMessages, err = h.handleQueryOutsideEngine(queries[0])
 		if handled {
+			h.markTransactionFailed(queries[0], err)
 			h.releaseXactAdvisoryLocksIfOutsideTransaction()
 			return endOfMessages, err
 		}
@@ -754,7 +764,10 @@ func (h *ConnectionHandler) handleQuery(message *pgproto3.Query) (endOfMessages 
 			err = h.applyXactVarSavepointHook(queries[0])
 		}
 		if err == nil {
+			h.clearTransactionFailedIfRecovered(queries[0])
 			h.markTransactionStatement(queries[0])
+		} else {
+			h.markTransactionFailed(queries[0], err)
 		}
 		h.releaseXactAdvisoryLocksIfOutsideTransaction()
 		return true, err
@@ -764,8 +777,12 @@ func (h *ConnectionHandler) handleQuery(message *pgproto3.Query) (endOfMessages 
 		if err = h.rejectLockTableOutsideTransaction(query); err != nil {
 			return true, err
 		}
+		if err = h.rejectFailedTransaction(query); err != nil {
+			return true, err
+		}
 		handled, _, err = h.handleQueryOutsideEngine(query)
 		if err != nil {
+			h.markTransactionFailed(query, err)
 			return true, err
 		}
 		if handled {
@@ -779,7 +796,10 @@ func (h *ConnectionHandler) handleQuery(message *pgproto3.Query) (endOfMessages 
 			err = h.applyXactVarSavepointHook(query)
 		}
 		if err == nil {
+			h.clearTransactionFailedIfRecovered(query)
 			h.markTransactionStatement(query)
+		} else {
+			h.markTransactionFailed(query, err)
 		}
 		h.releaseXactAdvisoryLocksIfOutsideTransaction()
 		if err != nil {
@@ -1069,16 +1089,20 @@ func (h *ConnectionHandler) handleQueryOutsideEngine(query ConvertedQuery) (hand
 		h.inTransaction = true
 		h.transactionStatementCount = 0
 		h.transactionSnapshotAllowed = query.UsesExplicitTransactionIsolation
+		h.transactionFailed = false
 		return true, true, h.beginTransaction(query, transactionCharacteristic)
 	case *sqlparser.Commit:
-		h.inTransaction = false
-		h.transactionStatementCount = 0
-		h.transactionSnapshotAllowed = false
+		if !h.transactionFailed {
+			h.inTransaction = false
+			h.transactionStatementCount = 0
+			h.transactionSnapshotAllowed = false
+		}
 		h.closeNonHoldCursors()
 	case *sqlparser.Rollback:
 		h.inTransaction = false
 		h.transactionStatementCount = 0
 		h.transactionSnapshotAllowed = false
+		h.transactionFailed = false
 		h.closeNonHoldCursors()
 	case *sqlparser.Deallocate:
 		return true, true, h.deallocatePreparedStatement(stmt.Name, h.preparedStatements, query)
@@ -1160,6 +1184,10 @@ func (h *ConnectionHandler) beginTransaction(query ConvertedQuery, transactionCh
 		}
 		sqlCtx.SetTransaction(transaction)
 		sqlCtx.SetIgnoreAutoCommit(true)
+		h.transactionBeginSavepoint = fmt.Sprintf("__doltgresql_tx_begin_%d", h.mysqlConn.ConnectionID)
+		if err = h.executeInternalTransactionControl("SAVEPOINT " + h.transactionBeginSavepoint); err != nil {
+			return err
+		}
 	}
 	h.sendBuffered(makeCommandComplete(query.StatementTag, 0))
 	return h.finishNotifications(query)
@@ -1384,6 +1412,33 @@ func (h *ConnectionHandler) markTransactionStatement(query ConvertedQuery) {
 	h.transactionStatementCount++
 }
 
+func (h *ConnectionHandler) rejectFailedTransaction(query ConvertedQuery) error {
+	if !h.inTransaction || !h.transactionFailed || isTransactionFailureRecoveryQuery(query) {
+		return nil
+	}
+	return pgerror.New(pgcode.InFailedSQLTransaction, "current transaction is aborted, commands ignored until end of transaction block")
+}
+
+func (h *ConnectionHandler) markTransactionFailed(query ConvertedQuery, err error) {
+	if err == nil || !h.inTransaction || isTransactionControlQuery(query) {
+		return
+	}
+	if pgerror.GetPGCode(err) == pgcode.InFailedSQLTransaction {
+		return
+	}
+	h.transactionFailed = true
+	if len(h.pendingReplicationSavepoints) == 0 {
+		_ = h.rollbackOpenTransactionAfterFailedCommit()
+		h.transactionBeginSavepoint = ""
+	}
+}
+
+func (h *ConnectionHandler) clearTransactionFailedIfRecovered(query ConvertedQuery) {
+	if _, ok := query.AST.(*sqlparser.RollbackSavepoint); ok {
+		h.transactionFailed = false
+	}
+}
+
 func isTransactionControlQuery(query ConvertedQuery) bool {
 	switch query.AST.(type) {
 	case *sqlparser.Begin, *sqlparser.Commit, *sqlparser.Rollback,
@@ -1397,6 +1452,15 @@ func isTransactionControlQuery(query ConvertedQuery) bool {
 		}
 	}
 	return false
+}
+
+func isTransactionFailureRecoveryQuery(query ConvertedQuery) bool {
+	switch query.AST.(type) {
+	case *sqlparser.Commit, *sqlparser.Rollback, *sqlparser.RollbackSavepoint:
+		return true
+	default:
+		return false
+	}
 }
 
 func (h *ConnectionHandler) listen(stmt node.ListenStatement, query ConvertedQuery) error {
@@ -3838,11 +3902,40 @@ func fieldDataTypeOIDs(fields []pgproto3.FieldDescription) []uint32 {
 
 // query runs the given query and sends a CommandComplete message to the client
 func (h *ConnectionHandler) query(query ConvertedQuery) error {
+	if isCommitQuery(query) && h.transactionFailed {
+		h.transactionFailed = false
+		deferrable.Rollback(h.mysqlConn.ConnectionID)
+		h.clearPendingReplication()
+		functions.RollbackSessionLogicalDecodingMessages(h.mysqlConn.ConnectionID)
+		if err := h.rollbackToTransactionBeginSavepoint(); err != nil {
+			return err
+		}
+		if err := h.rollbackOpenTransactionAfterFailedCommit(); err != nil {
+			return err
+		}
+		h.inTransaction = false
+		h.transactionStatementCount = 0
+		h.transactionSnapshotAllowed = false
+		h.transactionBeginSavepoint = ""
+		if err := h.finishNotifications(asRollbackQuery(query)); err != nil {
+			return err
+		}
+		h.sendBuffered(makeCommandComplete("ROLLBACK", 0))
+		return nil
+	}
+	if isRollbackQuery(query) {
+		if err := h.rollbackToTransactionBeginSavepoint(); err != nil {
+			return err
+		}
+	}
 	if isCommitQuery(query) {
 		if err := h.validateDeferredConstraints(); err != nil {
 			deferrable.Rollback(h.mysqlConn.ConnectionID)
 			h.clearPendingReplication()
 			functions.RollbackSessionLogicalDecodingMessages(h.mysqlConn.ConnectionID)
+			if rollbackSavepointErr := h.rollbackToTransactionBeginSavepoint(); rollbackSavepointErr != nil {
+				return fmt.Errorf("%v; rollback to transaction start failed: %w", err, rollbackSavepointErr)
+			}
 			if rollbackErr := h.rollbackOpenTransactionAfterFailedCommit(); rollbackErr != nil {
 				return fmt.Errorf("%v; rollback failed: %w", err, rollbackErr)
 			}
@@ -4029,6 +4122,12 @@ func isRollbackQuery(query ConvertedQuery) bool {
 	return ok
 }
 
+func asRollbackQuery(query ConvertedQuery) ConvertedQuery {
+	query.AST = &sqlparser.Rollback{}
+	query.StatementTag = "ROLLBACK"
+	return query
+}
+
 func isTruncateQuery(query ConvertedQuery) bool {
 	capture, ok := replicationChangeCaptureFromStatement(query.AST)
 	return ok && capture.action == replicationChangeTruncate
@@ -4086,15 +4185,46 @@ func (h *ConnectionHandler) validateDeferredConstraints() error {
 }
 
 func (h *ConnectionHandler) rollbackOpenTransactionAfterFailedCommit() error {
-	rollbackQueries, err := h.convertQuery("ROLLBACK")
+	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, "ROLLBACK")
 	if err != nil {
 		return err
 	}
-	if len(rollbackQueries) != 1 {
-		return errors.Errorf("expected one rollback query, got %d", len(rollbackQueries))
+	ts, ok := sqlCtx.Session.(sql.TransactionSession)
+	if !ok {
+		return nil
 	}
-	rollbackQuery := rollbackQueries[0]
-	return h.doltgresHandler.ComQuery(context.Background(), h.mysqlConn, rollbackQuery.String, rollbackQuery.AST, func(ctx *sql.Context, res *Result) error {
+	currentTx := sqlCtx.GetTransaction()
+	if currentTx == nil {
+		return nil
+	}
+	if err = ts.Rollback(sqlCtx, currentTx); err != nil {
+		return err
+	}
+	sqlCtx.SetTransaction(nil)
+	return nil
+}
+
+func (h *ConnectionHandler) rollbackToTransactionBeginSavepoint() error {
+	if h.transactionBeginSavepoint == "" {
+		return nil
+	}
+	if err := h.executeInternalTransactionControl("ROLLBACK TO SAVEPOINT " + h.transactionBeginSavepoint); err != nil {
+		return err
+	}
+	h.transactionBeginSavepoint = ""
+	return nil
+}
+
+func (h *ConnectionHandler) executeInternalTransactionControl(query string) error {
+	queries, err := h.convertQuery(query)
+	if err != nil {
+		return err
+	}
+	if len(queries) != 1 {
+		return errors.Errorf("expected one internal transaction control query, got %d", len(queries))
+	}
+	converted := queries[0]
+	return h.doltgresHandler.ComQuery(context.Background(), h.mysqlConn, converted.String, converted.AST, func(ctx *sql.Context, res *Result) error {
 		return nil
 	})
 }
@@ -4110,6 +4240,7 @@ func (h *ConnectionHandler) finishNotifications(query ConvertedQuery) error {
 		rowsecurity.BeginTransaction(connectionID)
 		notifications.Begin(connectionID)
 	case isCommitQuery(query):
+		h.transactionBeginSavepoint = ""
 		functions.EndSessionTxid(connectionID)
 		deferrable.Commit(connectionID)
 		auth.CommitTransaction(connectionID)
@@ -4123,6 +4254,7 @@ func (h *ConnectionHandler) finishNotifications(query ConvertedQuery) error {
 		}
 		return notifications.Commit(connectionID)
 	case isRollbackQuery(query):
+		h.transactionBeginSavepoint = ""
 		functions.EndSessionTxid(connectionID)
 		deferrable.Rollback(connectionID)
 		if err := auth.RollbackTransaction(connectionID); err != nil {
