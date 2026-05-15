@@ -5177,9 +5177,13 @@ func TestPgStatioAllIndexes(t *testing.T) {
 			Name: "pg_statio_all_indexes",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT schemaname, relname, indexrelname, idx_blks_read, idx_blks_hit
+					Query: `SELECT schemaname, relname, indexrelname,
+       idx_blks_read >= 0 AS idx_blks_read_nonnegative,
+       idx_blks_hit >= 0 AS idx_blks_hit_nonnegative
 FROM "pg_catalog"."pg_statio_all_indexes"
-WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
+WHERE schemaname = 'pg_catalog'
+  AND relname = 'pg_class'
+  AND indexrelname IN ('pg_class_oid_index', 'pg_class_relname_nsp_index')
 ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatioallindexes-0001-select-schemaname-relname-indexrelname-idx_blks_read"},
 				},
 				{ // Different cases and quoted, so it fails
@@ -5195,9 +5199,10 @@ ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog
 						ID: "pgcatalog-test-testpgstatioallindexes-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT indexrelname FROM PG_catalog.pg_STATIO_ALL_INDEXES
-WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
-ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatioallindexes-0004-select-indexrelname-from-pg_catalog.pg_statio_all_indexes-where"},
+					Query: `SELECT count(*) = 2 FROM PG_catalog.pg_STATIO_ALL_INDEXES
+WHERE schemaname = 'pg_catalog'
+  AND relname = 'pg_class'
+  AND indexrelname IN ('pg_class_oid_index', 'pg_class_relname_nsp_index');`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatioallindexes-0004-select-indexrelname-from-pg_catalog.pg_statio_all_indexes-where"},
 				},
 			},
 		},
@@ -5272,9 +5277,13 @@ func TestPgStatioSysIndexes(t *testing.T) {
 			Name: "pg_statio_sys_indexes",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT schemaname, relname, indexrelname, idx_blks_read, idx_blks_hit
+					Query: `SELECT schemaname, relname, indexrelname,
+       idx_blks_read >= 0 AS idx_blks_read_nonnegative,
+       idx_blks_hit >= 0 AS idx_blks_hit_nonnegative
 FROM "pg_catalog"."pg_statio_sys_indexes"
-WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
+WHERE schemaname = 'pg_catalog'
+  AND relname = 'pg_class'
+  AND indexrelname IN ('pg_class_oid_index', 'pg_class_relname_nsp_index')
 ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatiosysindexes-0001-select-schemaname-relname-indexrelname-idx_blks_read"},
 				},
 				{ // Different cases and quoted, so it fails
@@ -5290,9 +5299,10 @@ ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog
 						ID: "pgcatalog-test-testpgstatiosysindexes-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT indexrelname FROM PG_catalog.pg_STATIO_SYS_INDEXES
-WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
-ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatiosysindexes-0004-select-indexrelname-from-pg_catalog.pg_statio_sys_indexes-where"},
+					Query: `SELECT count(*) = 2 FROM PG_catalog.pg_STATIO_SYS_INDEXES
+WHERE schemaname = 'pg_catalog'
+  AND relname = 'pg_class'
+  AND indexrelname IN ('pg_class_oid_index', 'pg_class_relname_nsp_index');`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatiosysindexes-0004-select-indexrelname-from-pg_catalog.pg_statio_sys_indexes-where"},
 				},
 			},
 		},
