@@ -6446,7 +6446,17 @@ explain_stmt:
 describe_table_stmt:
   // DELETE, UPDATE, etc. are non-reserved words in the grammar, so we can't use a table_name here, as it causes 
   // conflicts with EXPLAIN UPDATE ... etc.
-  explain_verb db_object_name_no_keywords opt_as_of_clause
+  EXPLAIN db_object_name_no_keywords opt_as_of_clause
+  {
+    asOf := $3.asOfClause()
+    $$.val = &tree.Explain{ExplainOptions: tree.ExplainOptions{}, TableName: $2.unresolvedObjectName(), TableNameAsExplain: true, AsOf: &asOf}
+  }
+| DESCRIBE db_object_name_no_keywords opt_as_of_clause
+  {
+    asOf := $3.asOfClause()
+    $$.val = &tree.Explain{ExplainOptions: tree.ExplainOptions{}, TableName: $2.unresolvedObjectName(), AsOf: &asOf}
+  }
+| DESC db_object_name_no_keywords opt_as_of_clause
   {
     asOf := $3.asOfClause()
     $$.val = &tree.Explain{ExplainOptions: tree.ExplainOptions{}, TableName: $2.unresolvedObjectName(), AsOf: &asOf}

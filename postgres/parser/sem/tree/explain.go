@@ -46,6 +46,10 @@ type Explain struct {
 	// TableName is the alternate form of EXPLAIN, which describes the schema of a table
 	TableName *UnresolvedObjectName
 
+	// TableNameAsExplain is true when TableName was introduced with EXPLAIN
+	// instead of DESCRIBE or DESC.
+	TableNameAsExplain bool
+
 	// AsOf is the point in time for EXPLAIN, only valid for TableName
 	AsOf *AsOfClause
 }

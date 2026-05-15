@@ -19,6 +19,8 @@ import (
 
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 )
 
@@ -33,12 +35,23 @@ func nodeExplain(ctx *Context, node *tree.Explain) (vitess.Statement, error) {
 		if err != nil {
 			return nil, err
 		}
+		hasAsOf := node.AsOf != nil && node.AsOf.Expr != nil
+		if node.TableNameAsExplain && !hasAsOf {
+			return nil, pgerror.New(pgcode.Syntax, "syntax error at or near table name")
+		}
+		if tableName.DbQualifier.IsEmpty() && !tableName.SchemaQualifier.IsEmpty() &&
+			tableName.SchemaQualifier.String() != "public" && tableName.SchemaQualifier.String() != "dolt" {
+			return nil, pgerror.New(pgcode.Syntax, "syntax error at or near table name")
+		}
 
 		var showTableOpts *vitess.ShowTablesOpt
-		if node.AsOf != nil {
-			asOf, err := nodeExpr(ctx, node.AsOf.Expr)
-			if err != nil {
-				return nil, err
+		if hasAsOf || !tableName.SchemaQualifier.IsEmpty() || !tableName.DbQualifier.IsEmpty() {
+			var asOf vitess.Expr
+			if hasAsOf {
+				asOf, err = nodeExpr(ctx, node.AsOf.Expr)
+				if err != nil {
+					return nil, err
+				}
 			}
 			showTableOpts = &vitess.ShowTablesOpt{
 				AsOf:       asOf,
