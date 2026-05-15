@@ -23,36 +23,6 @@ import (
 func TestPsqlCommands(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			// Many of the psql commands use the OPERATOR(pg_catalog.+) syntax, testing it here directly in a simpler context
-			Name: "operator keyword",
-			Assertions: []ScriptTestAssertion{
-				{
-					Query: "select 1 OPERATOR(pg_catalog.+) 1", PostgresOracle: ScriptTestPostgresOracle{ID: "psql-test-testpsqlcommands-0001-select-1-operator-pg_catalog.+-1"},
-				},
-				{
-					Query: "select 1 OPERATOR(PG_CATALOG.+) 1", PostgresOracle: ScriptTestPostgresOracle{ID: "psql-test-testpsqlcommands-0002-select-1-operator-pg_catalog.+-1"},
-				},
-				{
-					Query: "select 1 OPERATOR(myschema.+) 1", PostgresOracle: ScriptTestPostgresOracle{ID: "psql-test-testpsqlcommands-0003-select-1-operator-myschema.+-1", Compare: "sqlstate"},
-				},
-				{
-					Query: "select 1 OPERATOR(pg_catalog.<) 1", PostgresOracle: ScriptTestPostgresOracle{ID: "psql-test-testpsqlcommands-0004-select-1-operator-pg_catalog.<-1"},
-				},
-				{
-					Query: "select 1 OPERATOR(myschema.<) 1", PostgresOracle: ScriptTestPostgresOracle{ID: "psql-test-testpsqlcommands-0005-select-1-operator-myschema.<-1", Compare: "sqlstate"},
-				},
-				{
-					Query: "select 1 OPERATOR(pg_catalog.<=) 1", PostgresOracle: ScriptTestPostgresOracle{ID: "psql-test-testpsqlcommands-0006-select-1-operator-pg_catalog.<=-1"},
-				},
-				{
-					Query: "select 1 OPERATOR(pg_catalog.=) 1", PostgresOracle: ScriptTestPostgresOracle{ID: "psql-test-testpsqlcommands-0007-select-1-operator-pg_catalog.=-1"},
-				},
-				{
-					Query: "select 'hello' OPERATOR(pg_catalog.~) 'hello';", PostgresOracle: ScriptTestPostgresOracle{ID: "psql-test-testpsqlcommands-0008-select-hello-operator-pg_catalog.~-hello"},
-				},
-			},
-		},
-		{
 			Name: `\dt tablename`,
 			SetUpScript: []string{
 				"CREATE TABLE test_table (id INT PRIMARY KEY, name TEXT);",

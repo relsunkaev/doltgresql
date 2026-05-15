@@ -1,0 +1,155 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map pgdog_compat_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/pgdog_compat_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0001",
+      "source": "testing/go/postgres16/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 1,
+      "scriptName": "PgDog schema split catalog and qualified DML",
+      "oracle": "postgres",
+      "postgresId": "pgdog-compat-test-testpgdogcompatibilityboundary-0016-select-label-from-shared.accounts-where",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0016-select-label-from-shared.accounts-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM shared.accounts WHERE id = 1;",
+      "querySha256": "5276c465159187dbb98476b5b702a6ac28a97e6bca66f743f00b418b1b0b8f9a",
+      "expectedRows": [
+        [
+          {
+            "value": "shared-one"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0002",
+      "source": "testing/go/postgres16/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 2,
+      "scriptName": "PgDog schema split catalog and qualified DML",
+      "oracle": "postgres",
+      "postgresId": "pgdog-compat-test-testpgdogcompatibilityboundary-0017-select-status-amount-from-customer.orders",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0017-select-status-amount-from-customer.orders",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT status, amount FROM customer.orders WHERE customer_id = 42 AND order_id = 1;",
+      "querySha256": "2858cc8850450d800ea6c108404e3cc31254372c2cdc40284c2f39214f653879",
+      "expectedRows": [
+        [
+          {
+            "value": "updated"
+          },
+          {
+            "value": "421"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0003",
+      "source": "testing/go/postgres16/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 3,
+      "scriptName": "PgDog schema split catalog and qualified DML",
+      "oracle": "postgres",
+      "postgresId": "pgdog-compat-test-testpgdogcompatibilityboundary-0018-select-table_schema-table_name-from-information_schema.tables",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0018-select-table_schema-table_name-from-information_schema.tables",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT table_schema, table_name\nFROM information_schema.tables\nWHERE table_schema IN ('shared', 'customer')\nORDER BY table_schema, table_name;",
+      "querySha256": "c9e5fa1da334a5f8c3f00f4d06b5d4824387400c542f4c779405464455629eb9",
+      "expectedRows": [
+        [
+          {
+            "value": "customer"
+          },
+          {
+            "value": "orders"
+          }
+        ],
+        [
+          {
+            "value": "shared"
+          },
+          {
+            "value": "accounts"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0004",
+      "source": "testing/go/postgres16/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 4,
+      "scriptName": "PgDog schema split catalog and qualified DML",
+      "oracle": "postgres",
+      "postgresId": "pgdog-compat-test-testpgdogcompatibilityboundary-0019-select-n.nspname-c.relname-from-pg_catalog.pg_class",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0019-select-n.nspname-c.relname-from-pg_catalog.pg_class",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT n.nspname, c.relname\nFROM pg_catalog.pg_class c\nJOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\nWHERE n.nspname IN ('shared', 'customer') AND c.relkind = 'r' AND c.relname NOT LIKE 'dolt_%'\nORDER BY n.nspname, c.relname;",
+      "querySha256": "e87929f2844ca3385618baafd472ee32f2f20cecd45c0e43a19ff9aabee30363",
+      "expectedRows": [
+        [
+          {
+            "value": "customer"
+          },
+          {
+            "value": "orders"
+          }
+        ],
+        [
+          {
+            "value": "shared"
+          },
+          {
+            "value": "accounts"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0005",
+      "source": "testing/go/postgres16/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 5,
+      "scriptName": "PgDog schema split catalog and qualified DML",
+      "oracle": "postgres",
+      "postgresId": "pgdog-compat-test-testpgdogcompatibilityboundary-0020-select-customer.orders-::regclass::text-shared.accounts-::regclass::text",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0020-select-customer.orders-::regclass::text-shared.accounts-::regclass::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 'customer.orders'::regclass::text, 'shared.accounts'::regclass::text;",
+      "querySha256": "1d112f5ab99dc570d33a1b25126facd6880caf423c94dec61414ff2b0c3af6be",
+      "expectedRows": [
+        [
+          {
+            "value": "customer.orders"
+          },
+          {
+            "value": "shared.accounts"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

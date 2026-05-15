@@ -103,37 +103,6 @@ func TestPreparedTransactions(t *testing.T) {
 				},
 			},
 		},
-		{
-			Name: "prepared transaction errors",
-			SetUpScript: []string{
-				"CREATE TABLE prepared_tx_items (id INT PRIMARY KEY, label TEXT);",
-			},
-			Assertions: []ScriptTestAssertion{
-				{
-					Query: "PREPARE TRANSACTION 'dg_no_transaction';", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-transaction-test-testpreparedtransactions-0008-prepare-transaction-dg_no_transaction"},
-				},
-				{
-					Query: "COMMIT PREPARED 'dg_missing';", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-transaction-test-testpreparedtransactions-0009-commit-prepared-dg_missing", Compare: "sqlstate"},
-				},
-				{
-					Query: "ROLLBACK PREPARED 'dg_missing';", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-transaction-test-testpreparedtransactions-0010-rollback-prepared-dg_missing", Compare: "sqlstate"},
-				},
-				{
-					Query: "BEGIN;",
-				},
-				{
-					Query: "COMMIT PREPARED 'dg_missing';", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-transaction-test-testpreparedtransactions-0011-commit-prepared-dg_missing",
-
-						// TestCommitPreparedRequiresTransactionOwnerRepro reproduces a security bug:
-						// Doltgres lets a role commit a prepared transaction that was prepared by a
-						// different role.
-						Compare: "sqlstate"},
-				},
-				{
-					Query: "ROLLBACK;",
-				},
-			},
-		},
 	})
 }
 

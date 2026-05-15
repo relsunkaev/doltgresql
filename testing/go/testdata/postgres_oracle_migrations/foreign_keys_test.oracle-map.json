@@ -2,7 +2,7 @@
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map foreign_keys_test.go --force-postgres-oracle",
   "sourceFile": "testing/go/foreign_keys_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -17,626 +17,6 @@
       "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0001",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
       "ordinal": 1,
-      "scriptName": "simple foreign key",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0001-insert-into-child-values-2",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0001-insert-into-child-values-2",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "23505",
-      "errorSeverity": "ERROR",
-      "query": "INSERT INTO child VALUES (2, 2)",
-      "querySha256": "8bbc3071d5547f5cecc4769891fa97244ea765ae8d6476c9593e49e0e7f02ccc",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0002",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 2,
-      "scriptName": "named constraint",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0002-insert-into-child-values-2",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0002-insert-into-child-values-2",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "23505",
-      "errorSeverity": "ERROR",
-      "query": "INSERT INTO child VALUES (2, 2)",
-      "querySha256": "8bbc3071d5547f5cecc4769891fa97244ea765ae8d6476c9593e49e0e7f02ccc",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0003",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 3,
-      "scriptName": "unnamed constraint",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0003-insert-into-child-values-2",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0003-insert-into-child-values-2",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "23505",
-      "errorSeverity": "ERROR",
-      "query": "INSERT INTO child VALUES (2, 2)",
-      "querySha256": "8bbc3071d5547f5cecc4769891fa97244ea765ae8d6476c9593e49e0e7f02ccc",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0004",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 4,
-      "scriptName": "text foreign key",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0004-insert-into-child-values-3",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0004-insert-into-child-values-3",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "23503",
-      "errorSeverity": "ERROR",
-      "query": "INSERT INTO child VALUES (3, 'b')",
-      "querySha256": "29622d533c4cab8f2b205afa3a2a5522e3cfb4ad07dd62a411d040d548f04a46",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0005",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 5,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0005-alter-table-child-add-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0005-alter-table-child-add-constraint",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42804",
-      "errorSeverity": "ERROR",
-      "query": "alter table child add constraint fi2v foreign key (i2) references parent(v);",
-      "querySha256": "4a922d1101e4cec6362a1bd98e5c601b4d9a499870b932506caac0973d9c8356",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0006",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 6,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0006-alter-table-child-add-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0006-alter-table-child-add-constraint",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42804",
-      "errorSeverity": "ERROR",
-      "query": "alter table child add constraint fi2vl foreign key (i2) references parent(vl);",
-      "querySha256": "9118784ebffb0e27f63b09bacac088b22b6c9a211987a3d58b43b85eae9b5e22",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0007",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 7,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0007-alter-table-child-add-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0007-alter-table-child-add-constraint",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42804",
-      "errorSeverity": "ERROR",
-      "query": "alter table child add constraint fi2t foreign key (i2) references parent(t);",
-      "querySha256": "65f41657cec1b2c795f86dca48ccd5fc247a55b00796de3d51dc473e2546e781",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0008",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 8,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0008-alter-table-child-add-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0008-alter-table-child-add-constraint",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42804",
-      "errorSeverity": "ERROR",
-      "query": "alter table child add constraint fi2ts foreign key (i2) references parent(ts);",
-      "querySha256": "19a5baaa57eb7b2fb12f0c8c7397fac8bbb7f23ddd386218429087189a818568",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0009",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 9,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0009-alter-table-child-add-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0009-alter-table-child-add-constraint",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42804",
-      "errorSeverity": "ERROR",
-      "query": "alter table child add constraint fi8t foreign key (i8) references parent(t);",
-      "querySha256": "5ac28d08eb246924b7f4227bd0f3d689e10a06cb40ead3132983c0c3a78d4f93",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0010",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 10,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0010-alter-table-child-add-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0010-alter-table-child-add-constraint",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42804",
-      "errorSeverity": "ERROR",
-      "query": "alter table child add constraint ffi2 foreign key (f) references parent(i2);",
-      "querySha256": "f0514215bf125ab6a3cfe9b663d13081626a2a931c128aaa1e16cd7c043c8970",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0011",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 11,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0011-alter-table-child-add-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0011-alter-table-child-add-constraint",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42804",
-      "errorSeverity": "ERROR",
-      "query": "alter table child add constraint ffi4 foreign key (f) references parent(i4);",
-      "querySha256": "17b442da7b2b39c49451003f7a0f188164d2229c3f4a89042747131f06b2ed73",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0012",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 12,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0012-alter-table-child-add-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0012-alter-table-child-add-constraint",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42804",
-      "errorSeverity": "ERROR",
-      "query": "alter table child add constraint ffi8 foreign key (f) references parent(i8);",
-      "querySha256": "7e1747bfadc4730b461a81eca2599ec0c6c1716282d93962324b2a7c863f6af1",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0013",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 13,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0013-alter-table-child-add-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0013-alter-table-child-add-constraint",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42804",
-      "errorSeverity": "ERROR",
-      "query": "alter table child add constraint fft foreign key (f) references parent(t);",
-      "querySha256": "6aa41f46cc6a2fdf41b387bd85bc444c81602f0c410f003cd819f040e526990b",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0014",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 14,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0014-alter-table-child-add-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0014-alter-table-child-add-constraint",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42804",
-      "errorSeverity": "ERROR",
-      "query": "alter table child add constraint ffv foreign key (f) references parent(v);",
-      "querySha256": "6a96fb96e438aa1245687afd4ab4a2fa80659c8b25f4946d978d60baf6f0a149",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0015",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 15,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0015-alter-table-child-add-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0015-alter-table-child-add-constraint",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42804",
-      "errorSeverity": "ERROR",
-      "query": "alter table child add constraint fvi8 foreign key (v) references parent(i8);",
-      "querySha256": "b53637954756438d1a0089af36e4220bda5d9ae65267427fcf5fc918e07719ac",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0016",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 16,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0016-alter-table-child-add-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0016-alter-table-child-add-constraint",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42804",
-      "errorSeverity": "ERROR",
-      "query": "alter table child add constraint fvf foreign key (v) references parent(f);",
-      "querySha256": "132e4cc62f56f88fc890e94c5bff598ea3fa25a5456ce14c9340bc6d2a8af7cf",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0017",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 17,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0017-alter-table-child-add-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0017-alter-table-child-add-constraint",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42804",
-      "errorSeverity": "ERROR",
-      "query": "alter table child add constraint fvts foreign key (v) references parent(ts);",
-      "querySha256": "092c14f6242d38c8ae02946da3857c29ceb20ae24ef65258cbdbaea062062e45",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0018",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 18,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0018-alter-table-child-add-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0018-alter-table-child-add-constraint",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42830",
-      "errorSeverity": "ERROR",
-      "query": "alter table child add constraint fvj foreign key (v) references parent(j);",
-      "querySha256": "b341192f3e4fdb046be8bca372df3f61929323902791e0891b7e33acdcefd08f",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0019",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 19,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0019-alter-table-child-add-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0019-alter-table-child-add-constraint",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42804",
-      "errorSeverity": "ERROR",
-      "query": "alter table child add constraint fti8 foreign key (t) references parent(i8);",
-      "querySha256": "d56eabb76d0a63462160189449cf3c481d593a6b0c5b77f262ca526ba35ebe17",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0020",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 20,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0020-alter-table-child-add-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0020-alter-table-child-add-constraint",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42804",
-      "errorSeverity": "ERROR",
-      "query": "alter table child add constraint ftst foreign key (ts) references parent(t);",
-      "querySha256": "e6cdd2d8b32256205f45465ce99222eb1c5a759e6f4ec798e17c2bae189f3caf",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0021",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 21,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0021-alter-table-child-add-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0021-alter-table-child-add-constraint",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42804",
-      "errorSeverity": "ERROR",
-      "query": "alter table child add constraint ftsi8 foreign key (ts) references parent(i8);",
-      "querySha256": "47c09305e891840431d8436858a715a932e990311d16e05324f440b49df01f66",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0022",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 22,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0022-insert-into-child-values-1",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0022-insert-into-child-values-1",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "23503",
-      "errorSeverity": "ERROR",
-      "query": "insert into child values (1, 2, 1, 1.0, 1.0, 'a', 'a', 'a', '{\"a\": 1}', '2021-01-01 00:00:00');",
-      "querySha256": "82d74a13561d9ee085d9132133a01ac114faf410dcd2a1c481efeecdaabb2955",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0023",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 23,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0023-insert-into-child-values-1",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0023-insert-into-child-values-1",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "23503",
-      "errorSeverity": "ERROR",
-      "query": "insert into child values (1, 1, 1, 2.0, 1.0, 'a', 'a', 'a', '{\"a\": 1}', '2021-01-01 00:00:00');",
-      "querySha256": "7ffc74900dc2c9aef6ebdf858ed20c602437554b510d0d02e90fa5159cee3cfb",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0024",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 24,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0024-insert-into-child-values-1",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0024-insert-into-child-values-1",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "23503",
-      "errorSeverity": "ERROR",
-      "query": "insert into child values (1, 1, 1, 1.0, 1.0, 'a', 'a', 'b', '{\"a\": 1}', '2021-01-01 00:00:00');",
-      "querySha256": "b2a2f1784e4487ca779e38900e64369b6d6a03e0c2f8c232457f765bca110adf",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0025",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 25,
-      "scriptName": "type compatibility",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0025-insert-into-child-values-1",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0025-insert-into-child-values-1",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "23503",
-      "errorSeverity": "ERROR",
-      "query": "insert into child values (1, 1, 1, 1.0, 1.0, 'a', 'a', 'a', '{\"a\": 1}', '2021-01-01 00:00:01');",
-      "querySha256": "65c0e196c76e0bc74f2f029e5875e6ca120d10e77e61b527ff70d027ea676907",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0026",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 26,
-      "scriptName": "type conversion: text to varchar",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0026-insert-into-child-values-2",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0026-insert-into-child-values-2",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "23503",
-      "errorSeverity": "ERROR",
-      "query": "insert into child values (2, 'xyz')",
-      "querySha256": "f03f94b2a7bc096f17a436c87141f30382353dd341e70a9190c92c651d3f1e58",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0027",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 27,
-      "scriptName": "type conversion: text to varchar",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0027-delete-from-parent-where-b",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0027-delete-from-parent-where-b",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "23503",
-      "errorSeverity": "ERROR",
-      "query": "delete from parent where b = 'abc'",
-      "querySha256": "47c15696ea1117918e99d5bd582989b7e0ee4406c4a9afce7f980210c3412ca4",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0028",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 28,
-      "scriptName": "type conversion: integer to double",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0028-select-*-from-parent-where",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0028-select-*-from-parent-where",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "select * from parent where b = 1.0",
-      "querySha256": "ab55e019642c14768b46bea9d34ca9ffef629118818d34ad7fc39c10a1d40b89",
-      "expectedRows": [
-        [
-          {
-            "value": "1"
-          },
-          {
-            "value": "1"
-          }
-        ]
-      ],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0029",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 29,
-      "scriptName": "type conversion: integer to double",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0029-insert-into-child-values-2",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0029-insert-into-child-values-2",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "23505",
-      "errorSeverity": "ERROR",
-      "query": "insert into child values (2, 2)",
-      "querySha256": "7e2beb3770959f1d8974661d60041a67c1b14dbbbfe10c24d9c8be81e44fb666",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0030",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 30,
-      "scriptName": "type conversion: integer to double",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0030-delete-from-parent-where-b",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0030-delete-from-parent-where-b",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "23503",
-      "errorSeverity": "ERROR",
-      "query": "delete from parent where b = 1.0",
-      "querySha256": "e1eda3c6ae3faeea1eff7fe85b5d327ac2c2bfbf1cb0ecbde76277b0cfa03e60",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0031",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 31,
-      "scriptName": "type conversion: value out of bounds, child larger",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0031-insert-into-child-values-2",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0031-insert-into-child-values-2",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "23503",
-      "errorSeverity": "ERROR",
-      "query": "insert into child values (2, 2)",
-      "querySha256": "7e2beb3770959f1d8974661d60041a67c1b14dbbbfe10c24d9c8be81e44fb666",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0032",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 32,
-      "scriptName": "type conversion: value out of bounds, child larger",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0032-insert-into-child-values-2",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0032-insert-into-child-values-2",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "23503",
-      "errorSeverity": "ERROR",
-      "query": "insert into child values (2, 65536)",
-      "querySha256": "3e8e758f545d46f40cd5adacc827c3d5a656968840f4e57d2f04837fea013e63",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0033",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 33,
-      "scriptName": "type conversion: value out of bounds, child larger",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0033-delete-from-parent-where-b",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0033-delete-from-parent-where-b",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "23503",
-      "errorSeverity": "ERROR",
-      "query": "delete from parent where b = 1",
-      "querySha256": "63435eb0cf7f53f72e8ddd3d7405c0aa44fa49f4868007a2425ba390c480a9fd",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0034",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 34,
-      "scriptName": "type conversion: value out of bound, parent larger",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0034-insert-into-child-values-2",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0034-insert-into-child-values-2",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "23503",
-      "errorSeverity": "ERROR",
-      "query": "insert into child values (2, 2)",
-      "querySha256": "7e2beb3770959f1d8974661d60041a67c1b14dbbbfe10c24d9c8be81e44fb666",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0035",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 35,
-      "scriptName": "type conversion: value out of bound, parent larger",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0035-insert-into-child-values-2",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0035-insert-into-child-values-2",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "22003",
-      "errorSeverity": "ERROR",
-      "query": "insert into child values (2, 65536)",
-      "querySha256": "3e8e758f545d46f40cd5adacc827c3d5a656968840f4e57d2f04837fea013e63",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0036",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 36,
-      "scriptName": "type conversion: value out of bound, parent larger",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0036-delete-from-parent-where-b",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0036-delete-from-parent-where-b",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "23503",
-      "errorSeverity": "ERROR",
-      "query": "delete from parent where b = 1",
-      "querySha256": "63435eb0cf7f53f72e8ddd3d7405c0aa44fa49f4868007a2425ba390c480a9fd",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0037",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 37,
       "scriptName": "foreign key with dolt_add, dolt_commit",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0037-select-*-from-dolt.status",
@@ -650,9 +30,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0038",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0002",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 38,
+      "ordinal": 2,
       "scriptName": "foreign key with dolt_add, dolt_commit",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0038-select-*-from-dolt.status",
@@ -666,9 +46,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0039",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0003",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 39,
+      "ordinal": 3,
       "scriptName": "foreign key with dolt_add, dolt_commit",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0039-select-*-from-dolt_schema_diff-head",
@@ -682,9 +62,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0040",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0004",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 40,
+      "ordinal": 4,
       "scriptName": "foreign key with dolt_add, dolt_commit",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0040-insert-into-test_info-values-2",
@@ -695,9 +75,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0041",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0005",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 41,
+      "ordinal": 5,
       "scriptName": "foreign key with dolt_add, dolt_commit",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0041-insert-into-test_info-values-3",
@@ -708,9 +88,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0042",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0006",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 42,
+      "ordinal": 6,
       "scriptName": "foreign key with dolt_add, dolt_commit",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0042-select-*-from-test_info",
@@ -721,9 +101,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0043",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0007",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 43,
+      "ordinal": 7,
       "scriptName": "foreign key with explicit schema",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0043-select-*-from-dolt.status",
@@ -737,9 +117,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0044",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0008",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 44,
+      "ordinal": 8,
       "scriptName": "foreign key with explicit schema",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0044-select-*-from-dolt.status",
@@ -753,9 +133,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0045",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0009",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 45,
+      "ordinal": 9,
       "scriptName": "foreign key with explicit schema",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0045-select-*-from-dolt_schema_diff-head",
@@ -769,9 +149,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0046",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0010",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 46,
+      "ordinal": 10,
       "scriptName": "foreign key with explicit schema",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0046-insert-into-child-values-2",
@@ -782,9 +162,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0047",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0011",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 47,
+      "ordinal": 11,
       "scriptName": "foreign key with explicit schema",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0047-insert-into-child-values-3",
@@ -795,9 +175,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0048",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0012",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 48,
+      "ordinal": 12,
       "scriptName": "foreign key with explicit schema",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0048-select-*-from-child",
@@ -808,9 +188,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0049",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0013",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 49,
+      "ordinal": 13,
       "scriptName": "foreign key in another schema with search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0049-select-*-from-dolt_status",
@@ -824,9 +204,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0050",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0014",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 50,
+      "ordinal": 14,
       "scriptName": "foreign key in another schema with search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0050-select-*-from-dolt_status",
@@ -840,9 +220,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0051",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0015",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 51,
+      "ordinal": 15,
       "scriptName": "foreign key in another schema with search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0051-select-*-from-dolt_schema_diff-head",
@@ -856,9 +236,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0052",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0016",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 52,
+      "ordinal": 16,
       "scriptName": "foreign key in another schema with search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0052-insert-into-child-values-2",
@@ -869,9 +249,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0053",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0017",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 53,
+      "ordinal": 17,
       "scriptName": "foreign key in another schema with search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0053-insert-into-child-values-3",
@@ -882,9 +262,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0054",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0018",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 54,
+      "ordinal": 18,
       "scriptName": "foreign key in another schema with search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0054-select-*-from-child.child",
@@ -895,9 +275,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0055",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0019",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 55,
+      "ordinal": 19,
       "scriptName": "foreign key in another schema with search path, parent table not on search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0055-select-*-from-dolt.status",
@@ -911,9 +291,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0056",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0020",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 56,
+      "ordinal": 20,
       "scriptName": "foreign key in another schema with search path, parent table not on search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0056-select-*-from-dolt_status",
@@ -927,9 +307,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0057",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0021",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 57,
+      "ordinal": 21,
       "scriptName": "foreign key in another schema with search path, parent table not on search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0057-select-*-from-dolt_schema_diff-head",
@@ -943,9 +323,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0058",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0022",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 58,
+      "ordinal": 22,
       "scriptName": "foreign key in another schema with search path, parent table not on search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0058-insert-into-child-values-2",
@@ -956,9 +336,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0059",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0023",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 59,
+      "ordinal": 23,
       "scriptName": "foreign key in another schema with search path, parent table not on search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0059-insert-into-child-values-3",
@@ -969,9 +349,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0060",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0024",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 60,
+      "ordinal": 24,
       "scriptName": "foreign key in another schema with search path, parent table not on search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0060-select-*-from-child.child",
@@ -982,9 +362,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0061",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0025",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 61,
+      "ordinal": 25,
       "scriptName": "foreign key in another schema, no search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0061-select-*-from-dolt_status",
@@ -998,9 +378,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0062",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0026",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 62,
+      "ordinal": 26,
       "scriptName": "foreign key in another schema, no search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0062-select-*-from-dolt.status",
@@ -1014,9 +394,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0063",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0027",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 63,
+      "ordinal": 27,
       "scriptName": "foreign key in another schema, no search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0063-select-*-from-dolt_schema_diff-head",
@@ -1030,9 +410,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0064",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0028",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 64,
+      "ordinal": 28,
       "scriptName": "foreign key in another schema, no search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0064-insert-into-child.child-values-2",
@@ -1043,9 +423,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0065",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0029",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 65,
+      "ordinal": 29,
       "scriptName": "foreign key in another schema, no search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0065-insert-into-child.child-values-3",
@@ -1056,9 +436,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0066",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0030",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 66,
+      "ordinal": 30,
       "scriptName": "foreign key in another schema, no search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0066-select-*-from-child.child",
@@ -1069,9 +449,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0067",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0031",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 67,
+      "ordinal": 31,
       "scriptName": "add foreign key in another schema on search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0067-insert-into-child.child-values-2",
@@ -1082,9 +462,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0068",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0032",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 68,
+      "ordinal": 32,
       "scriptName": "add foreign key in another schema on search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0068-insert-into-child-values-3",
@@ -1095,9 +475,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0069",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0033",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 69,
+      "ordinal": 33,
       "scriptName": "add foreign key in another schema on search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0069-select-*-from-child",
@@ -1108,9 +488,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0070",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0034",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 70,
+      "ordinal": 34,
       "scriptName": "add foreign key in another schema, parent table not on search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0070-insert-into-child.child-values-2",
@@ -1121,9 +501,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0071",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0035",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 71,
+      "ordinal": 35,
       "scriptName": "add foreign key in another schema, parent table not on search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0071-insert-into-child-values-3",
@@ -1134,9 +514,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0072",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0036",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 72,
+      "ordinal": 36,
       "scriptName": "add foreign key in another schema, parent table not on search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0072-select-*-from-child",
@@ -1147,9 +527,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0073",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0037",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 73,
+      "ordinal": 37,
       "scriptName": "add foreign key in another schema, no search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0073-insert-into-child.child-values-2",
@@ -1160,9 +540,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0074",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0038",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 74,
+      "ordinal": 38,
       "scriptName": "add foreign key in another schema, no search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0074-insert-into-child.child-values-3",
@@ -1173,9 +553,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0075",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0039",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 75,
+      "ordinal": 39,
       "scriptName": "add foreign key in another schema, no search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0075-select-*-from-child.child",
@@ -1186,9 +566,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0076",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0040",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 76,
+      "ordinal": 40,
       "scriptName": "drop foreign key in another schema, on search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0076-insert-into-child.child-values-3",
@@ -1199,9 +579,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0077",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0041",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 77,
+      "ordinal": 41,
       "scriptName": "drop foreign key in another schema, on search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0077-insert-into-child.child-values-3",
@@ -1212,9 +592,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0078",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0042",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 78,
+      "ordinal": 42,
       "scriptName": "drop foreign key in another schema, no search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0078-insert-into-child.child-values-3",
@@ -1225,9 +605,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0079",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0043",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 79,
+      "ordinal": 43,
       "scriptName": "drop foreign key in another schema, no search path",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0079-insert-into-child.child-values-3",
@@ -1238,204 +618,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0080",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0044",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 80,
-      "scriptName": "foreign key default naming",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0080-select-conname-as-constraint_name-from",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0080-select-conname-as-constraint_name-from",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "SELECT conname AS constraint_name FROM pg_constraint WHERE conrelid = 't33'::regclass  AND contype = 'f';",
-      "querySha256": "b4591c51bf1d8d306c8b254d3f854f77a2ffdaf56dcd311d3256dad473e2ea3c",
-      "expectedRows": [
-        [
-          {
-            "value": "t33_webhook_id_fk_fkey"
-          }
-        ],
-        [
-          {
-            "value": "t33_webhook_id_fk_webhook_id2_fk_fkey"
-          }
-        ]
-      ],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0081",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 81,
-      "scriptName": "foreign key default naming",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0081-alter-table-t33-drop-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0081-alter-table-t33-drop-constraint",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "ALTER TABLE t33 DROP CONSTRAINT t33_webhook_id_fk_fkey;",
-      "querySha256": "8868b08a072251ec21959241547eaedde363363d8f7aa6815dd72ea860eea6aa",
-      "expectedRows": [],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0082",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 82,
-      "scriptName": "foreign key default naming, name collision ",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0082-select-conname-as-constraint_name-from",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0082-select-conname-as-constraint_name-from",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "SELECT conname AS constraint_name FROM pg_constraint WHERE conrelid = 't33'::regclass  AND contype = 'f';",
-      "querySha256": "b4591c51bf1d8d306c8b254d3f854f77a2ffdaf56dcd311d3256dad473e2ea3c",
-      "expectedRows": [
-        [
-          {
-            "value": "t33_webhook_id_fk_fkey1"
-          }
-        ]
-      ],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0083",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 83,
-      "scriptName": "foreign key default naming, name collision ",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0083-alter-table-t33-drop-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0083-alter-table-t33-drop-constraint",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "ALTER TABLE t33 DROP CONSTRAINT t33_webhook_id_fk_fkey1;",
-      "querySha256": "995ecc2d0d31d5a0804d921e8f0ee0f950945327855f35af5d85245594902d2b",
-      "expectedRows": [],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0084",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 84,
-      "scriptName": "foreign key default naming, in column definition",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0084-select-conname-as-constraint_name-from",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0084-select-conname-as-constraint_name-from",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "SELECT conname AS constraint_name FROM pg_constraint WHERE conrelid = 't33'::regclass  AND contype = 'f';",
-      "querySha256": "b4591c51bf1d8d306c8b254d3f854f77a2ffdaf56dcd311d3256dad473e2ea3c",
-      "expectedRows": [
-        [
-          {
-            "value": "t33_webhook_id_fk_fkey"
-          }
-        ]
-      ],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0085",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 85,
-      "scriptName": "foreign key default naming, in column definition",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0085-alter-table-t33-drop-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0085-alter-table-t33-drop-constraint",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "ALTER TABLE t33 DROP CONSTRAINT t33_webhook_id_fk_fkey;",
-      "querySha256": "8868b08a072251ec21959241547eaedde363363d8f7aa6815dd72ea860eea6aa",
-      "expectedRows": [],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0086",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 86,
-      "scriptName": "foreign key custom naming",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0086-select-conname-as-constraint_name-from",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0086-select-conname-as-constraint_name-from",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "SELECT conname AS constraint_name FROM pg_constraint WHERE conrelid = 't33'::regclass AND contype = 'f';",
-      "querySha256": "d8347dbea1eb6af6342bb8834a89b4e6538452db0dd6ff891de398cf9ad8fcd3",
-      "expectedRows": [
-        [
-          {
-            "value": "foo1"
-          }
-        ]
-      ],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0087",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 87,
-      "scriptName": "foreign key custom naming",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0087-alter-table-t33-drop-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0087-alter-table-t33-drop-constraint",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "ALTER TABLE t33 DROP CONSTRAINT foo1;",
-      "querySha256": "8d97d7a9c4a25d87b0145725f6a9fafa930f4fdc65a39851433f2b44bb8dd0d8",
-      "expectedRows": [],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0088",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 88,
-      "scriptName": "foreign key default naming, added through alter table",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0088-select-conname-as-constraint_name-from",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0088-select-conname-as-constraint_name-from",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "SELECT conname AS constraint_name FROM pg_constraint WHERE conrelid = 't33'::regclass  AND contype = 'f';",
-      "querySha256": "b4591c51bf1d8d306c8b254d3f854f77a2ffdaf56dcd311d3256dad473e2ea3c",
-      "expectedRows": [
-        [
-          {
-            "value": "t33_webhook_id_fk_fkey"
-          }
-        ]
-      ],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0089",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 89,
-      "scriptName": "foreign key default naming, added through alter table",
-      "oracle": "postgres",
-      "postgresId": "foreign-keys-test-testforeignkeys-0089-alter-table-t33-drop-constraint",
-      "suggestedId": "foreign-keys-test-testforeignkeys-0089-alter-table-t33-drop-constraint",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "ALTER TABLE t33 DROP CONSTRAINT t33_webhook_id_fk_fkey;",
-      "querySha256": "8868b08a072251ec21959241547eaedde363363d8f7aa6815dd72ea860eea6aa",
-      "expectedRows": [],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0090",
-      "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 90,
+      "ordinal": 44,
       "scriptName": "ON DELETE ... SET DEFAULT",
       "oracle": "postgres",
       "postgresId": "foreign-keys-test-testforeignkeys-0090-alter-table-only-public.hn_stories-add",
@@ -1453,9 +638,9 @@
       "cleanupProvided": true
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0091",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0045",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 91,
+      "ordinal": 45,
       "scriptName": "ON DELETE ... SET DEFAULT",
       "oracle": "postgres",
       "postgresId": "foreign-keys-test-testforeignkeys-0091-select-*-from-public.hn_stories-where",
@@ -1482,9 +667,9 @@
       "cleanupProvided": true
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0092",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0046",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 92,
+      "ordinal": 46,
       "scriptName": "ON DELETE ... SET DEFAULT",
       "oracle": "postgres",
       "postgresId": "foreign-keys-test-testforeignkeys-0092-alter-table-hn_stories-alter-column",
@@ -1503,9 +688,9 @@
       "cleanupProvided": true
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0093",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0047",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 93,
+      "ordinal": 47,
       "scriptName": "ON DELETE ... SET DEFAULT",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0093-select-*-from-public.hn_stories-where",
@@ -1516,9 +701,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0094",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0048",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 94,
+      "ordinal": 48,
       "scriptName": "ON UPDATE ... SET DEFAULT",
       "oracle": "postgres",
       "postgresId": "foreign-keys-test-testforeignkeys-0094-alter-table-only-public.hn_stories-add",
@@ -1536,9 +721,9 @@
       "cleanupProvided": true
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0095",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0049",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 95,
+      "ordinal": 49,
       "scriptName": "ON UPDATE ... SET DEFAULT",
       "oracle": "postgres",
       "postgresId": "foreign-keys-test-testforeignkeys-0095-select-*-from-public.hn_stories-where",
@@ -1565,9 +750,9 @@
       "cleanupProvided": true
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0096",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0050",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 96,
+      "ordinal": 50,
       "scriptName": "ON UPDATE ... SET DEFAULT",
       "oracle": "postgres",
       "postgresId": "foreign-keys-test-testforeignkeys-0096-alter-table-hn_stories-alter-column",
@@ -1586,9 +771,9 @@
       "cleanupProvided": true
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0097",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0051",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 97,
+      "ordinal": 51,
       "scriptName": "ON UPDATE ... SET DEFAULT",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0097-select-*-from-public.hn_stories-where",
@@ -1599,14 +784,14 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0098",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0052",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 98,
+      "ordinal": 52,
       "scriptName": "merging",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0098-select-strpos-dolt_merge-main-::text",
       "expectedKind": "rows",
-      "query": "select strpos(dolt_merge('main')::text, 'merge successful') > 1;",
+      "query": "select strpos(dolt_merge('main')::text, 'merge successful') \u003e 1;",
       "querySha256": "9cb17da886a968430f858e37c6d4ea4b6394a9d5d204e2a12ff01b88af1b3c82",
       "nonLiteral": [
         "DoltSpecific"
@@ -1615,9 +800,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0099",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0053",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 99,
+      "ordinal": 53,
       "scriptName": "merge with constraint violations",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0099-select-dolt_merge-main",
@@ -1631,9 +816,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0100",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0054",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 100,
+      "ordinal": 54,
       "scriptName": "merge with constraint violations",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0100-select-*-from-dolt_constraint_violations-order",
@@ -1648,9 +833,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0101",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0055",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 101,
+      "ordinal": 55,
       "scriptName": "merge with constraint violations",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0101-select-violation_type-c-d-violation_info",
@@ -1664,14 +849,14 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0102",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0056",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 102,
+      "ordinal": 56,
       "scriptName": "foreign keys in drizzle migration and merge",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0102-select-strpos-dolt_merge-main-::text",
       "expectedKind": "rows",
-      "query": "select strpos(dolt_merge('main')::text, 'merge successful') > 0;",
+      "query": "select strpos(dolt_merge('main')::text, 'merge successful') \u003e 0;",
       "querySha256": "043e0df3857bcd8b22a4b8b5e5452675d60bd8469cb25ad4c86c4cb080732e06",
       "nonLiteral": [
         "DoltSpecific"
@@ -1680,14 +865,14 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0103",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0057",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 103,
-      "scriptName": "Merge foreign keys across types, text -> varchar",
+      "ordinal": 57,
+      "scriptName": "Merge foreign keys across types, text -\u003e varchar",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0103-select-strpos-dolt_merge-main-::text",
       "expectedKind": "rows",
-      "query": "select strpos(dolt_merge('main')::text, 'merge successful') > 0;",
+      "query": "select strpos(dolt_merge('main')::text, 'merge successful') \u003e 0;",
       "querySha256": "043e0df3857bcd8b22a4b8b5e5452675d60bd8469cb25ad4c86c4cb080732e06",
       "nonLiteral": [
         "DoltSpecific"
@@ -1696,14 +881,14 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0104",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0058",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 104,
-      "scriptName": "Merge foreign keys across types, varchar -> text",
+      "ordinal": 58,
+      "scriptName": "Merge foreign keys across types, varchar -\u003e text",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0104-select-strpos-dolt_merge-main-::text",
       "expectedKind": "rows",
-      "query": "select strpos(dolt_merge('main')::text, 'merge successful') > 0;",
+      "query": "select strpos(dolt_merge('main')::text, 'merge successful') \u003e 0;",
       "querySha256": "043e0df3857bcd8b22a4b8b5e5452675d60bd8469cb25ad4c86c4cb080732e06",
       "nonLiteral": [
         "DoltSpecific"
@@ -1712,14 +897,14 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0105",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0059",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 105,
-      "scriptName": "Merge foreign keys across types, varchar -> text, violation",
+      "ordinal": 59,
+      "scriptName": "Merge foreign keys across types, varchar -\u003e text, violation",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0105-select-strpos-dolt_merge-main-::text",
       "expectedKind": "rows",
-      "query": "select strpos(dolt_merge('main')::text, 'merge successful') > 0;",
+      "query": "select strpos(dolt_merge('main')::text, 'merge successful') \u003e 0;",
       "querySha256": "043e0df3857bcd8b22a4b8b5e5452675d60bd8469cb25ad4c86c4cb080732e06",
       "nonLiteral": [
         "DoltSpecific"
@@ -1728,10 +913,10 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0106",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0060",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 106,
-      "scriptName": "Merge foreign keys across types, varchar -> text, violation",
+      "ordinal": 60,
+      "scriptName": "Merge foreign keys across types, varchar -\u003e text, violation",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0106-select-violation_type-b-c-from",
       "expectedKind": "rows",
@@ -1744,14 +929,14 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0107",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0061",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 107,
-      "scriptName": "Merge foreign keys across types, varchar -> text 2 column key, violation",
+      "ordinal": 61,
+      "scriptName": "Merge foreign keys across types, varchar -\u003e text 2 column key, violation",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0107-select-strpos-dolt_merge-main-::text",
       "expectedKind": "rows",
-      "query": "select strpos(dolt_merge('main')::text, 'merge successful') > 0;",
+      "query": "select strpos(dolt_merge('main')::text, 'merge successful') \u003e 0;",
       "querySha256": "043e0df3857bcd8b22a4b8b5e5452675d60bd8469cb25ad4c86c4cb080732e06",
       "nonLiteral": [
         "DoltSpecific"
@@ -1760,10 +945,10 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0108",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0062",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 108,
-      "scriptName": "Merge foreign keys across types, varchar -> text 2 column key, violation",
+      "ordinal": 62,
+      "scriptName": "Merge foreign keys across types, varchar -\u003e text 2 column key, violation",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0108-select-violation_type-d-e-f",
       "expectedKind": "rows",
@@ -1776,14 +961,14 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0109",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0063",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 109,
-      "scriptName": "Merge foreign keys across types, varchar -> text 2 column key, no violation",
+      "ordinal": 63,
+      "scriptName": "Merge foreign keys across types, varchar -\u003e text 2 column key, no violation",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0109-select-strpos-dolt_merge-main-::text",
       "expectedKind": "rows",
-      "query": "select strpos(dolt_merge('main')::text, 'merge successful') > 0;",
+      "query": "select strpos(dolt_merge('main')::text, 'merge successful') \u003e 0;",
       "querySha256": "043e0df3857bcd8b22a4b8b5e5452675d60bd8469cb25ad4c86c4cb080732e06",
       "nonLiteral": [
         "DoltSpecific"
@@ -1792,10 +977,10 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0110",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0064",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 110,
-      "scriptName": "Merge foreign keys across types, varchar -> text 2 column key, no violation",
+      "ordinal": 64,
+      "scriptName": "Merge foreign keys across types, varchar -\u003e text 2 column key, no violation",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0110-select-violation_type-d-e-f",
       "expectedKind": "rows",
@@ -1808,14 +993,14 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0111",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0065",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 111,
-      "scriptName": "Merge foreign keys across types, varchar -> text 2 column key, parent primary index, violation",
+      "ordinal": 65,
+      "scriptName": "Merge foreign keys across types, varchar -\u003e text 2 column key, parent primary index, violation",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0111-select-strpos-dolt_merge-main-::text",
       "expectedKind": "rows",
-      "query": "select strpos(dolt_merge('main')::text, 'merge successful') > 0;",
+      "query": "select strpos(dolt_merge('main')::text, 'merge successful') \u003e 0;",
       "querySha256": "043e0df3857bcd8b22a4b8b5e5452675d60bd8469cb25ad4c86c4cb080732e06",
       "nonLiteral": [
         "DoltSpecific"
@@ -1824,10 +1009,10 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0112",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0066",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 112,
-      "scriptName": "Merge foreign keys across types, varchar -> text 2 column key, parent primary index, violation",
+      "ordinal": 66,
+      "scriptName": "Merge foreign keys across types, varchar -\u003e text 2 column key, parent primary index, violation",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0112-select-violation_type-d-e-f",
       "expectedKind": "rows",
@@ -1840,14 +1025,14 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0113",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0067",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 113,
-      "scriptName": "Merge foreign keys across types, varchar -> text 2 column key, parent primary index, no violation",
+      "ordinal": 67,
+      "scriptName": "Merge foreign keys across types, varchar -\u003e text 2 column key, parent primary index, no violation",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0113-select-strpos-dolt_merge-main-::text",
       "expectedKind": "rows",
-      "query": "select strpos(dolt_merge('main')::text, 'merge successful') > 0;",
+      "query": "select strpos(dolt_merge('main')::text, 'merge successful') \u003e 0;",
       "querySha256": "043e0df3857bcd8b22a4b8b5e5452675d60bd8469cb25ad4c86c4cb080732e06",
       "nonLiteral": [
         "DoltSpecific"
@@ -1856,10 +1041,10 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0114",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0068",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 114,
-      "scriptName": "Merge foreign keys across types, varchar -> text 2 column key, parent primary index, no violation",
+      "ordinal": 68,
+      "scriptName": "Merge foreign keys across types, varchar -\u003e text 2 column key, parent primary index, no violation",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0114-select-violation_type-d-e-f",
       "expectedKind": "rows",
@@ -1872,14 +1057,14 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0115",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0069",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 115,
-      "scriptName": "Merge foreign keys across types, varchar -> text 2 column key, child primary index, violation",
+      "ordinal": 69,
+      "scriptName": "Merge foreign keys across types, varchar -\u003e text 2 column key, child primary index, violation",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0115-select-strpos-dolt_merge-main-::text",
       "expectedKind": "rows",
-      "query": "select strpos(dolt_merge('main')::text, 'merge successful') > 0;",
+      "query": "select strpos(dolt_merge('main')::text, 'merge successful') \u003e 0;",
       "querySha256": "043e0df3857bcd8b22a4b8b5e5452675d60bd8469cb25ad4c86c4cb080732e06",
       "nonLiteral": [
         "DoltSpecific"
@@ -1888,10 +1073,10 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0116",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0070",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 116,
-      "scriptName": "Merge foreign keys across types, varchar -> text 2 column key, child primary index, violation",
+      "ordinal": 70,
+      "scriptName": "Merge foreign keys across types, varchar -\u003e text 2 column key, child primary index, violation",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0116-select-violation_type-d-e-f",
       "expectedKind": "rows",
@@ -1904,14 +1089,14 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0117",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0071",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 117,
-      "scriptName": "Merge foreign keys across types, varchar -> text 2 column key, child secondary index, violation",
+      "ordinal": 71,
+      "scriptName": "Merge foreign keys across types, varchar -\u003e text 2 column key, child secondary index, violation",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0117-select-strpos-dolt_merge-main-::text",
       "expectedKind": "rows",
-      "query": "select strpos(dolt_merge('main')::text, 'merge successful') > 0;",
+      "query": "select strpos(dolt_merge('main')::text, 'merge successful') \u003e 0;",
       "querySha256": "043e0df3857bcd8b22a4b8b5e5452675d60bd8469cb25ad4c86c4cb080732e06",
       "nonLiteral": [
         "DoltSpecific"
@@ -1920,10 +1105,10 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0118",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0072",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 118,
-      "scriptName": "Merge foreign keys across types, varchar -> text 2 column key, child secondary index, violation",
+      "ordinal": 72,
+      "scriptName": "Merge foreign keys across types, varchar -\u003e text 2 column key, child secondary index, violation",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0118-select-violation_type-d-e-f",
       "expectedKind": "rows",
@@ -1936,14 +1121,14 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0119",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0073",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 119,
-      "scriptName": "Merge foreign keys across types, varchar -> text 3 column key, violation",
+      "ordinal": 73,
+      "scriptName": "Merge foreign keys across types, varchar -\u003e text 3 column key, violation",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0119-select-strpos-dolt_merge-main-::text",
       "expectedKind": "rows",
-      "query": "select strpos(dolt_merge('main')::text, 'merge successful') > 0;",
+      "query": "select strpos(dolt_merge('main')::text, 'merge successful') \u003e 0;",
       "querySha256": "043e0df3857bcd8b22a4b8b5e5452675d60bd8469cb25ad4c86c4cb080732e06",
       "nonLiteral": [
         "DoltSpecific"
@@ -1952,10 +1137,10 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0120",
+      "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0074",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
-      "ordinal": 120,
-      "scriptName": "Merge foreign keys across types, varchar -> text 3 column key, violation",
+      "ordinal": 74,
+      "scriptName": "Merge foreign keys across types, varchar -\u003e text 3 column key, violation",
       "oracle": "internal",
       "suggestedId": "foreign-keys-test-testforeignkeys-0120-select-violation_type-table2_col1-table2_col2-table2_col3",
       "expectedKind": "rows",

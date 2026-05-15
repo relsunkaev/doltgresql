@@ -1,0 +1,183 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map psql_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/psql_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/psql_test.go:TestPsqlCommands#0001",
+      "source": "testing/go/postgres16/psql_test.go:TestPsqlCommands",
+      "ordinal": 1,
+      "scriptName": "operator keyword",
+      "oracle": "postgres",
+      "postgresId": "psql-test-testpsqlcommands-0001-select-1-operator-pg_catalog.+-1",
+      "suggestedId": "psql-test-testpsqlcommands-0001-select-1-operator-pg_catalog.+-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select 1 OPERATOR(pg_catalog.+) 1",
+      "querySha256": "d4ef121434483b888786e65fb100455d4a83c07c5056b8b7063c154a135fe97b",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/psql_test.go:TestPsqlCommands#0002",
+      "source": "testing/go/postgres16/psql_test.go:TestPsqlCommands",
+      "ordinal": 2,
+      "scriptName": "operator keyword",
+      "oracle": "postgres",
+      "postgresId": "psql-test-testpsqlcommands-0002-select-1-operator-pg_catalog.+-1",
+      "suggestedId": "psql-test-testpsqlcommands-0002-select-1-operator-pg_catalog.+-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select 1 OPERATOR(PG_CATALOG.+) 1",
+      "querySha256": "c8dbbf0a53893e633ba3870b10c4169aa82f332ff211454714f61e3e3ae1dcc4",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/psql_test.go:TestPsqlCommands#0003",
+      "source": "testing/go/postgres16/psql_test.go:TestPsqlCommands",
+      "ordinal": 3,
+      "scriptName": "operator keyword",
+      "oracle": "postgres",
+      "postgresId": "psql-test-testpsqlcommands-0003-select-1-operator-myschema.+-1",
+      "suggestedId": "psql-test-testpsqlcommands-0003-select-1-operator-myschema.+-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "3F000",
+      "errorSeverity": "ERROR",
+      "query": "select 1 OPERATOR(myschema.+) 1",
+      "querySha256": "46f10132698ac52de25229421d6e60a750da7a92c38bccd00eeb61475089c74c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/psql_test.go:TestPsqlCommands#0004",
+      "source": "testing/go/postgres16/psql_test.go:TestPsqlCommands",
+      "ordinal": 4,
+      "scriptName": "operator keyword",
+      "oracle": "postgres",
+      "postgresId": "psql-test-testpsqlcommands-0004-select-1-operator-pg_catalog.\u003c-1",
+      "suggestedId": "psql-test-testpsqlcommands-0004-select-1-operator-pg_catalog.\u003c-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select 1 OPERATOR(pg_catalog.\u003c) 1",
+      "querySha256": "c2f10f19e9cfaf6f07042cc3963de662c8fa8229230c45be301f1266d88033a1",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/psql_test.go:TestPsqlCommands#0005",
+      "source": "testing/go/postgres16/psql_test.go:TestPsqlCommands",
+      "ordinal": 5,
+      "scriptName": "operator keyword",
+      "oracle": "postgres",
+      "postgresId": "psql-test-testpsqlcommands-0005-select-1-operator-myschema.\u003c-1",
+      "suggestedId": "psql-test-testpsqlcommands-0005-select-1-operator-myschema.\u003c-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "3F000",
+      "errorSeverity": "ERROR",
+      "query": "select 1 OPERATOR(myschema.\u003c) 1",
+      "querySha256": "7275d59808f5ac9f633c382cfb412287acbe768877d46099ec7a257a0b09f9d4",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/psql_test.go:TestPsqlCommands#0006",
+      "source": "testing/go/postgres16/psql_test.go:TestPsqlCommands",
+      "ordinal": 6,
+      "scriptName": "operator keyword",
+      "oracle": "postgres",
+      "postgresId": "psql-test-testpsqlcommands-0006-select-1-operator-pg_catalog.\u003c=-1",
+      "suggestedId": "psql-test-testpsqlcommands-0006-select-1-operator-pg_catalog.\u003c=-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select 1 OPERATOR(pg_catalog.\u003c=) 1",
+      "querySha256": "fd8d1d3f95ffc6441afece6e64002bbee9b7cdb51883bc0c6e9e2efef452d083",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/psql_test.go:TestPsqlCommands#0007",
+      "source": "testing/go/postgres16/psql_test.go:TestPsqlCommands",
+      "ordinal": 7,
+      "scriptName": "operator keyword",
+      "oracle": "postgres",
+      "postgresId": "psql-test-testpsqlcommands-0007-select-1-operator-pg_catalog.=-1",
+      "suggestedId": "psql-test-testpsqlcommands-0007-select-1-operator-pg_catalog.=-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select 1 OPERATOR(pg_catalog.=) 1",
+      "querySha256": "03687d781f8f68bf3b33a1ce02c713b845b879eb9cc337e56d42a7622e2a4ced",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/psql_test.go:TestPsqlCommands#0008",
+      "source": "testing/go/postgres16/psql_test.go:TestPsqlCommands",
+      "ordinal": 8,
+      "scriptName": "operator keyword",
+      "oracle": "postgres",
+      "postgresId": "psql-test-testpsqlcommands-0008-select-hello-operator-pg_catalog.~-hello",
+      "suggestedId": "psql-test-testpsqlcommands-0008-select-hello-operator-pg_catalog.~-hello",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select 'hello' OPERATOR(pg_catalog.~) 'hello';",
+      "querySha256": "eff1317ebb94536684c29fc9da4c417da278e548a65440f275405a3c4eb5d063",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}
