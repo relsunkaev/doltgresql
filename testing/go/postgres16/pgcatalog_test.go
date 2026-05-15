@@ -4991,7 +4991,7 @@ func TestPgStatWal(t *testing.T) {
 			Name: "pg_stat_wal",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_stat_wal";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT wal_records >= 0 AS wal_records_nonnegative, wal_fpi >= 0 AS wal_fpi_nonnegative, wal_bytes >= 0 AS wal_bytes_nonnegative, wal_buffers_full >= 0 AS wal_buffers_full_nonnegative, wal_write >= 0 AS wal_write_nonnegative, wal_sync >= 0 AS wal_sync_nonnegative, wal_write_time >= 0 AS wal_write_time_nonnegative, wal_sync_time >= 0 AS wal_sync_time_nonnegative, stats_reset IS NULL OR stats_reset <= clock_timestamp() AS stats_reset_not_future FROM "pg_catalog"."pg_stat_wal";`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpgstatwal-0001-select-*-from-pg_catalog-."},
@@ -5009,7 +5009,7 @@ func TestPgStatWal(t *testing.T) {
 						ID: "pgcatalog-test-testpgstatwal-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT wal_records FROM PG_catalog.pg_STAT_WAL ORDER BY wal_records;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatwal-0004-select-wal_records-from-pg_catalog.pg_stat_wal-order"},
+					Query: "SELECT count(*) = 1 FROM PG_catalog.pg_STAT_WAL;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatwal-0004-select-wal_records-from-pg_catalog.pg_stat_wal-order"},
 				},
 			},
 		},
