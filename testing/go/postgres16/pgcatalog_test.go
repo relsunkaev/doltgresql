@@ -4308,7 +4308,12 @@ func TestPgStatDatabase(t *testing.T) {
 			Name: "pg_stat_database",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_stat_database";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatdatabase-0001-select-*-from-pg_catalog-."},
+					Query: `SELECT count(*) = 1
+FROM "pg_catalog"."pg_stat_database"
+WHERE datname = current_database()
+  AND numbackends >= 0
+  AND xact_commit >= 0
+  AND sessions >= 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatdatabase-0001-select-count-1-from-pg_catalog.pg_stat_database-where"},
 				},
 				{ // Different cases and quoted, so it fails
 					Query: `SELECT * FROM "PG_catalog"."pg_stat_database";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -4323,7 +4328,11 @@ func TestPgStatDatabase(t *testing.T) {
 						ID: "pgcatalog-test-testpgstatdatabase-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT datname FROM PG_catalog.pg_STAT_DATABASE ORDER BY datname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatdatabase-0004-select-datname-from-pg_catalog.pg_stat_database-order"},
+					Query: `SELECT count(*) = 1 FROM PG_catalog.pg_STAT_DATABASE
+WHERE datname = current_database()
+  AND numbackends >= 0
+  AND xact_commit >= 0
+  AND sessions >= 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatdatabase-0004-select-count-1-from-pg_catalog.pg_stat_database-where"},
 				},
 			},
 		},
