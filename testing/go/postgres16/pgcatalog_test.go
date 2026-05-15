@@ -1867,11 +1867,33 @@ func TestPgIndex(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT i.* from pg_class c
-						JOIN pg_index i ON c.oid = i.indexrelid
-						JOIN pg_namespace n ON c.relnamespace = n.oid
+					Query: `SELECT c.relname AS index_name,
+							t.relname AS table_name,
+							i.indnatts,
+							i.indnkeyatts,
+							i.indisunique,
+							i.indnullsnotdistinct,
+							i.indisprimary,
+							i.indisexclusion,
+							i.indimmediate,
+							i.indisclustered,
+							i.indisvalid,
+							i.indcheckxmin,
+							i.indisready,
+							i.indislive,
+							i.indisreplident,
+							i.indkey::text,
+							i.indcollation::text,
+							i.indclass::text,
+							i.indoption::text,
+							i.indexprs IS NULL AS indexprs_is_null,
+							i.indpred IS NULL AS indpred_is_null
+						FROM pg_catalog.pg_class c
+						JOIN pg_catalog.pg_index i ON c.oid = i.indexrelid
+						JOIN pg_catalog.pg_class t ON t.oid = i.indrelid
+						JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
 						WHERE n.nspname = 'testschema' and left(c.relname, 5) <> 'dolt_'
-						ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindex-0001-select-i.*-from-pg_class-c"},
+						ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindex-0001-select-i.*-from-pg_class-c"},
 				},
 				{ // Different cases and quoted, so it fails
 					Query: `SELECT * FROM "PG_catalog"."pg_index";`, PostgresOracle: ScriptTestPostgresOracle{
