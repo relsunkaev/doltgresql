@@ -808,10 +808,268 @@ func convertDdlStatement(statement *sqlparser.DDL) ([]string, bool) {
 // transformSelect converts a MySQL SELECT statement to a postgres-compatible SELECT statement.
 // This is a very broad surface area, so we do this very selectively
 func transformSelect(stmt *sqlparser.Select, state *queryConversionState) ([]string, bool) {
-	if !shouldRewriteSelect(stmt, state) {
+	rewriteOuterSelectAliases := rewriteOuterSelectAliasesInSubqueries(stmt)
+	if !rewriteOuterSelectAliases && !shouldRewriteSelect(stmt, state) {
 		return nil, false
 	}
 	return []string{formatNodeWithConversionState(stmt, state)}, true
+}
+
+func rewriteOuterSelectAliasesInSubqueries(stmt *sqlparser.Select) bool {
+	aliases := explicitSelectAliases(stmt.SelectExprs)
+	if len(aliases) == 0 {
+		return false
+	}
+
+	changed := false
+	for _, selectExpr := range stmt.SelectExprs {
+		aliased, ok := selectExpr.(*sqlparser.AliasedExpr)
+		if !ok {
+			continue
+		}
+		rewritten, exprChanged := rewriteSubqueriesWithOuterAliases(aliased.Expr, aliases)
+		if exprChanged {
+			aliased.Expr = rewritten
+			changed = true
+		}
+	}
+	if stmt.Where != nil {
+		rewritten, exprChanged := rewriteSubqueriesWithOuterAliases(stmt.Where.Expr, aliases)
+		if exprChanged {
+			stmt.Where.Expr = rewritten
+			changed = true
+		}
+	}
+	if stmt.Having != nil {
+		rewritten, exprChanged := rewriteSubqueriesWithOuterAliases(stmt.Having.Expr, aliases)
+		if exprChanged {
+			stmt.Having.Expr = rewritten
+			changed = true
+		}
+	}
+	for i, expr := range stmt.GroupBy {
+		rewritten, exprChanged := rewriteSubqueriesWithOuterAliases(expr, aliases)
+		if exprChanged {
+			stmt.GroupBy[i] = rewritten
+			changed = true
+		}
+	}
+	for _, order := range stmt.OrderBy {
+		rewritten, exprChanged := rewriteSubqueriesWithOuterAliases(order.Expr, aliases)
+		if exprChanged {
+			order.Expr = rewritten
+			changed = true
+		}
+	}
+	return changed
+}
+
+func explicitSelectAliases(exprs sqlparser.SelectExprs) map[string]sqlparser.Expr {
+	aliases := make(map[string]sqlparser.Expr)
+	for _, selectExpr := range exprs {
+		aliased, ok := selectExpr.(*sqlparser.AliasedExpr)
+		if !ok || aliased.As.IsEmpty() {
+			continue
+		}
+		aliases[aliased.As.Lowered()] = aliased.Expr
+	}
+	return aliases
+}
+
+func rewriteSubqueriesWithOuterAliases(expr sqlparser.Expr, aliases map[string]sqlparser.Expr) (sqlparser.Expr, bool) {
+	return rewriteExprWithOuterAliases(expr, aliases, nil, false)
+}
+
+func rewriteSelectStatementOuterAliasRefs(sel sqlparser.SelectStatement, aliases map[string]sqlparser.Expr) bool {
+	switch sel := sel.(type) {
+	case *sqlparser.Select:
+		return rewriteSelectOuterAliasRefs(sel, aliases)
+	case *sqlparser.ParenSelect:
+		return rewriteSelectStatementOuterAliasRefs(sel.Select, aliases)
+	case *sqlparser.SetOp:
+		leftChanged := rewriteSelectStatementOuterAliasRefs(sel.Left, aliases)
+		rightChanged := rewriteSelectStatementOuterAliasRefs(sel.Right, aliases)
+		return leftChanged || rightChanged
+	default:
+		return false
+	}
+}
+
+func rewriteSelectOuterAliasRefs(sel *sqlparser.Select, aliases map[string]sqlparser.Expr) bool {
+	// MySQL lets no-FROM scalar subqueries reference explicit aliases from an
+	// outer SELECT list. PostgreSQL does not, so inline the outer expression only
+	// where the subquery has no local table scope that could own the same name.
+	if len(sel.From) > 0 {
+		return false
+	}
+
+	shadowed := explicitSelectAliases(sel.SelectExprs)
+	changed := false
+	for _, selectExpr := range sel.SelectExprs {
+		aliased, ok := selectExpr.(*sqlparser.AliasedExpr)
+		if !ok {
+			continue
+		}
+		rewritten, exprChanged := rewriteOuterAliasRefs(aliased.Expr, aliases, shadowed)
+		if exprChanged {
+			aliased.Expr = rewritten
+			changed = true
+		}
+	}
+	if sel.Where != nil {
+		rewritten, exprChanged := rewriteOuterAliasRefs(sel.Where.Expr, aliases, shadowed)
+		if exprChanged {
+			sel.Where.Expr = rewritten
+			changed = true
+		}
+	}
+	if sel.Having != nil {
+		rewritten, exprChanged := rewriteOuterAliasRefs(sel.Having.Expr, aliases, shadowed)
+		if exprChanged {
+			sel.Having.Expr = rewritten
+			changed = true
+		}
+	}
+	for i, expr := range sel.GroupBy {
+		rewritten, exprChanged := rewriteOuterAliasRefs(expr, aliases, shadowed)
+		if exprChanged {
+			sel.GroupBy[i] = rewritten
+			changed = true
+		}
+	}
+	for _, order := range sel.OrderBy {
+		rewritten, exprChanged := rewriteOuterAliasRefs(order.Expr, aliases, shadowed)
+		if exprChanged {
+			order.Expr = rewritten
+			changed = true
+		}
+	}
+	return changed
+}
+
+func rewriteOuterAliasRefs(expr sqlparser.Expr, aliases map[string]sqlparser.Expr, shadowed map[string]sqlparser.Expr) (sqlparser.Expr, bool) {
+	return rewriteExprWithOuterAliases(expr, aliases, shadowed, true)
+}
+
+func rewriteExprWithOuterAliases(expr sqlparser.Expr, aliases map[string]sqlparser.Expr, shadowed map[string]sqlparser.Expr, replaceAliases bool) (sqlparser.Expr, bool) {
+	switch expr := expr.(type) {
+	case *sqlparser.ColName:
+		if !replaceAliases {
+			return expr, false
+		}
+		if !expr.Qualifier.IsEmpty() {
+			return expr, false
+		}
+		name := expr.Name.Lowered()
+		if shadowed != nil {
+			if _, ok := shadowed[name]; ok {
+				return expr, false
+			}
+		}
+		aliased, ok := aliases[name]
+		if !ok {
+			return expr, false
+		}
+		return &sqlparser.ParenExpr{Expr: aliased}, true
+	case *sqlparser.Subquery:
+		return expr, rewriteSelectStatementOuterAliasRefs(expr.Select, aliases)
+	case *sqlparser.ExistsExpr:
+		if expr.Subquery == nil {
+			return expr, false
+		}
+		return expr, rewriteSelectStatementOuterAliasRefs(expr.Subquery.Select, aliases)
+	case *sqlparser.AndExpr:
+		left, leftChanged := rewriteExprWithOuterAliases(expr.Left, aliases, shadowed, replaceAliases)
+		right, rightChanged := rewriteExprWithOuterAliases(expr.Right, aliases, shadowed, replaceAliases)
+		if leftChanged || rightChanged {
+			expr.Left = left
+			expr.Right = right
+			return expr, true
+		}
+	case *sqlparser.OrExpr:
+		left, leftChanged := rewriteExprWithOuterAliases(expr.Left, aliases, shadowed, replaceAliases)
+		right, rightChanged := rewriteExprWithOuterAliases(expr.Right, aliases, shadowed, replaceAliases)
+		if leftChanged || rightChanged {
+			expr.Left = left
+			expr.Right = right
+			return expr, true
+		}
+	case *sqlparser.XorExpr:
+		left, leftChanged := rewriteExprWithOuterAliases(expr.Left, aliases, shadowed, replaceAliases)
+		right, rightChanged := rewriteExprWithOuterAliases(expr.Right, aliases, shadowed, replaceAliases)
+		if leftChanged || rightChanged {
+			expr.Left = left
+			expr.Right = right
+			return expr, true
+		}
+	case *sqlparser.NotExpr:
+		inner, innerChanged := rewriteExprWithOuterAliases(expr.Expr, aliases, shadowed, replaceAliases)
+		if innerChanged {
+			expr.Expr = inner
+			return expr, true
+		}
+	case *sqlparser.BinaryExpr:
+		left, leftChanged := rewriteExprWithOuterAliases(expr.Left, aliases, shadowed, replaceAliases)
+		right, rightChanged := rewriteExprWithOuterAliases(expr.Right, aliases, shadowed, replaceAliases)
+		if leftChanged || rightChanged {
+			expr.Left = left
+			expr.Right = right
+			return expr, true
+		}
+	case *sqlparser.ComparisonExpr:
+		left, leftChanged := rewriteExprWithOuterAliases(expr.Left, aliases, shadowed, replaceAliases)
+		right, rightChanged := rewriteExprWithOuterAliases(expr.Right, aliases, shadowed, replaceAliases)
+		if leftChanged || rightChanged {
+			expr.Left = left
+			expr.Right = right
+			return expr, true
+		}
+	case *sqlparser.RangeCond:
+		left, leftChanged := rewriteExprWithOuterAliases(expr.Left, aliases, shadowed, replaceAliases)
+		from, fromChanged := rewriteExprWithOuterAliases(expr.From, aliases, shadowed, replaceAliases)
+		to, toChanged := rewriteExprWithOuterAliases(expr.To, aliases, shadowed, replaceAliases)
+		if leftChanged || fromChanged || toChanged {
+			expr.Left = left
+			expr.From = from
+			expr.To = to
+			return expr, true
+		}
+	case *sqlparser.IsExpr:
+		inner, innerChanged := rewriteExprWithOuterAliases(expr.Expr, aliases, shadowed, replaceAliases)
+		if innerChanged {
+			expr.Expr = inner
+			return expr, true
+		}
+	case *sqlparser.ParenExpr:
+		inner, innerChanged := rewriteExprWithOuterAliases(expr.Expr, aliases, shadowed, replaceAliases)
+		if innerChanged {
+			expr.Expr = inner
+			return expr, true
+		}
+	case *sqlparser.UnaryExpr:
+		inner, innerChanged := rewriteExprWithOuterAliases(expr.Expr, aliases, shadowed, replaceAliases)
+		if innerChanged {
+			expr.Expr = inner
+			return expr, true
+		}
+	case *sqlparser.FuncExpr:
+		changed := false
+		for _, selectExpr := range expr.Exprs {
+			aliased, ok := selectExpr.(*sqlparser.AliasedExpr)
+			if !ok {
+				continue
+			}
+			rewritten, exprChanged := rewriteExprWithOuterAliases(aliased.Expr, aliases, shadowed, replaceAliases)
+			if exprChanged {
+				aliased.Expr = rewritten
+				changed = true
+			}
+		}
+		if changed {
+			return expr, true
+		}
+	}
+	return expr, false
 }
 
 func shouldRewriteSelect(stmt *sqlparser.Select, state *queryConversionState) bool {
@@ -1928,6 +2186,18 @@ func TestConvertQuery(t *testing.T) {
 			input: "SELECT i AS `200`, `100` FROM t ORDER BY `200`",
 			expected: []string{
 				`select i as "200", "100" from t order by "200" asc nulls first`,
+			},
+		},
+		{
+			input: "SELECT id as alias1, (SELECT alias1+1 group by alias1 having alias1 > 0) FROM members where id < 6",
+			expected: []string{
+				"select id as alias1, (select (id) + 1 group by (id) having (id) > 0) from members where id < 6",
+			},
+		},
+		{
+			input: "SELECT id as alias1, (SELECT 0 as alias1 having alias1 = 0) FROM members",
+			expected: []string{
+				"SELECT id as alias1, (SELECT 0 as alias1 having alias1 = 0) FROM members",
 			},
 		},
 		{

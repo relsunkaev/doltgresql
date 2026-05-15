@@ -10,6 +10,17 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### beta - 2026-05-15 02:03 MST
+
+- Discovery update: post-`9e2f27d2` subpackage failfast `go test -json -vet=off ./testing/go/enginetest ./testing/go/postgres16 ./testing/go/postgres18 -count=1 -failfast -timeout=60m > /tmp/doltgresql-beta-subpkg-discovery-0208.json` stops in `TestOrderByGroupBy/Basic order by/group by cases/SELECT id as alias1, (SELECT alias1+1 group by alias1 having alias1 > 0) FROM members where id < 6;`.
+- Red proof: Doltgres sends the MySQL enginetest query unchanged and PostgreSQL parsing rejects the scalar subquery with `ERROR: column "alias1" does not exist (SQLSTATE 42703)`.
+- Lane claimed: narrow enginetest MySQL select-list alias visibility inside scalar subqueries, scoped to the compatibility converter/harness so native PG16 behavior continues to reject the same shape.
+- Expected files: `testing/go/enginetest/query_converter_test.go` only unless reproduction proves a deeper harness issue. Boundary: no alpha EXPLAIN/citext files, no Dolt merge FK workaround while alpha has that lane noted, no PostgreSQL oracle/test weakening.
+- Next action: add converter coverage for the failing shape, implement a minimal rewrite for outer select aliases referenced from subquery `GROUP BY`/`HAVING`, then validate focused `TestOrderByGroupBy` and converter tests.
+- Result update beta - 2026-05-15 02:09 MST: fixed the converter-only MySQL alias compatibility path. Explicit outer select aliases are now inlined inside no-FROM scalar subqueries, with inner select aliases shadowing the outer alias so the GMS "inner scope wins" case is preserved.
+- Validation passed with ICU env: `go test -vet=off ./testing/go/enginetest -run '^TestConvertQuery$' -count=1 -timeout=10m -v` and `go test -vet=off ./testing/go/enginetest -run '^TestOrderByGroupBy$' -count=1 -timeout=10m -v`.
+- Next beta action: stage/commit only `testing/go/enginetest/query_converter_test.go` plus beta-owned coop hunks, leaving alpha hstore/EXPLAIN files and peer coop entries unstaged, then rerun subpackage discovery.
+
 ### beta - 2026-05-15 00:02 MST
 
 - Full run result: current `HEAD=e8d75b91` passes `go test -json -vet=off ./testing/go -count=1 -timeout=40m` with ICU env.
@@ -18510,3 +18521,9 @@ Use this file to avoid overlapping work. Add short entries with:
   - `go test -vet=off ./server/ast ./server/analyzer -run '^$' -count=1 -timeout=10m`
   - `go test -vet=off ./testing/go/enginetest -run '^TestScripts$/Subqueries_inside_NOT_EXISTS_clause_with_correlated_column_filter$' -count=1 -timeout=10m -v`
 - Next beta target: stage/commit only beta AST/CTE-alias files plus beta coop hunks, leaving alpha's peer EXPLAIN files unstaged, then rerun subpackage discovery.
+
+### beta - 2026-05-15 02:08 MST
+
+- Commit landed: `9e2f27d2 fix(ast): scope set-op aliases to cte outputs`.
+- Post-commit state: `TestColumnAliases` alias lane is closed; peer dirty EXPLAIN files remain unstaged and outside beta's commit.
+- Next beta target: rerun current subpackage discovery and claim the first non-overlapping failure.
