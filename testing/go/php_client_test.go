@@ -21,6 +21,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
 
 	gms "github.com/dolthub/go-mysql-server/sql"
 	"github.com/stretchr/testify/require"
@@ -59,7 +60,7 @@ func TestPHPPgSQLClientSmoke(t *testing.T) {
 	scriptPath := filepath.Join(work, "pgsql_probe.php")
 	require.NoError(t, os.WriteFile(scriptPath, []byte(phpPgSQLProbe), 0o644))
 
-	cmdCtx, cancel := context.WithCancel(ctx)
+	cmdCtx, cancel := context.WithTimeout(ctx, 3*time.Minute)
 	defer cancel()
 	conninfo := fmt.Sprintf(
 		"host=host.docker.internal port=%d dbname=postgres user=postgres password=password application_name=php-pgsql-harness",
@@ -76,6 +77,9 @@ func TestPHPPgSQLClientSmoke(t *testing.T) {
 		"apt-get update >/dev/null && apt-get install -y --no-install-recommends libpq-dev >/dev/null && docker-php-ext-install pgsql >/dev/null && php /tmp/pgsql_probe.php",
 	}
 	out, err := exec.CommandContext(cmdCtx, "docker", args...).CombinedOutput()
+	if err != nil && dockerInfrastructureUnavailable(err, out, cmdCtx.Err()) {
+		t.Skipf("Docker runtime is unavailable for the PHP pgsql harness: %v\n%s", err, string(out))
+	}
 	require.NoError(t, err, "PHP pgsql probe failed: %s", string(out))
 	require.Contains(t, string(out), `"ok":true`)
 	require.Contains(t, string(out), `"accounts":"acme,beta,gamma"`)

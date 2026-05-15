@@ -10,6 +10,15 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 22:50 MST
+
+- Lane claimed: `TestPHPPgSQLClientSmoke` Docker harness timeout/skip behavior after the full root `./testing/go` run reached the PHP container and stayed quiet for several minutes while `docker run php:8.4-cli` was still active.
+- Rationale: Perl DBI already bounds its Docker fallback to three minutes and skips when Docker infrastructure is unavailable; PHP had no per-test timeout, so a local Docker hang can consume the package timeout and hide real test failures.
+- Expected files: `testing/go/php_client_test.go` plus this coordination note only. Boundary: no PHP probe behavior changes, no server/runtime catalog edits, no pg_dump changes, no beta-owned enginetest/analyzer/catalog lanes.
+- Next action: add the same bounded Docker skip behavior to the PHP harness, validate the focused PHP smoke under current local Docker behavior, then rerun the root gate.
+- Result: PHP now uses the same three-minute Docker infrastructure timeout/skip path as Perl. Focused validation passed as a skip under current local Docker behavior: `go test -vet=off ./testing/go -run '^TestPHPPgSQLClientSmoke$' -count=1 -timeout=6m -v` with ICU env and `GOFLAGS=-p=1`.
+- Claim status: closed after commit. Full root failures outside this lane remain beta-owned or unclaimed per current `coop.md`.
+
 ### beta - 2026-05-14 22:25 MST
 
 - Lane claimed: enginetest `TestScripts/Subqueries inside NOT EXISTS clause with correlated column filter`, specifically the recursive CTE query failing during prepare with `table "bt" does not have column "issue_id"` inside `JOIN dependencies d ON d.depends_on_id = bt.issue_id`.
