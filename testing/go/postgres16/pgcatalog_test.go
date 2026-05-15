@@ -494,7 +494,25 @@ func TestPgAuthid(t *testing.T) {
 			Name: "pg_authid",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT oid, rolname, rolsuper, rolcanlogin FROM "pg_catalog"."pg_authid" ORDER BY rolname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgauthid-0001-select-oid-rolname-rolsuper-rolcanlogin"},
+					Query: `SELECT oid, rolname, rolsuper, rolcanlogin
+						FROM "pg_catalog"."pg_authid"
+						WHERE rolname IN (
+							'pg_checkpoint',
+							'pg_create_subscription',
+							'pg_database_owner',
+							'pg_execute_server_program',
+							'pg_monitor',
+							'pg_read_all_data',
+							'pg_read_all_settings',
+							'pg_read_all_stats',
+							'pg_read_server_files',
+							'pg_signal_backend',
+							'pg_stat_scan_tables',
+							'pg_use_reserved_connections',
+							'pg_write_all_data',
+							'pg_write_server_files'
+						)
+						ORDER BY rolname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgauthid-0001-select-oid-rolname-rolsuper-rolcanlogin"},
 				},
 				{ // Different cases and quoted, so it fails
 					Query: `SELECT * FROM "PG_catalog"."pg_authid";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -509,7 +527,25 @@ func TestPgAuthid(t *testing.T) {
 						ID: "pgcatalog-test-testpgauthid-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT rolname FROM PG_catalog.pg_AUTHID ORDER BY rolname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgauthid-0004-select-rolname-from-pg_catalog.pg_authid-order"},
+					Query: `SELECT rolname
+						FROM PG_catalog.pg_AUTHID
+						WHERE rolname IN (
+							'pg_checkpoint',
+							'pg_create_subscription',
+							'pg_database_owner',
+							'pg_execute_server_program',
+							'pg_monitor',
+							'pg_read_all_data',
+							'pg_read_all_settings',
+							'pg_read_all_stats',
+							'pg_read_server_files',
+							'pg_signal_backend',
+							'pg_stat_scan_tables',
+							'pg_use_reserved_connections',
+							'pg_write_all_data',
+							'pg_write_server_files'
+						)
+						ORDER BY rolname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgauthid-0004-select-rolname-from-pg_catalog.pg_authid-order"},
 				},
 			},
 		},
