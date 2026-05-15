@@ -1,5 +1,5 @@
 {
-  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map information_schema_visibility_repro_test.go --force-postgres-oracle",
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map information_schema_visibility_repro_test.go --oracle-postgres-id information-schema-visibility-repro-test-testinformationschemacolumnprivilegesreflectscolumngrantrepro-0001-select-column_name-privilege_type-from-information_schema.column_privileges,information-schema-visibility-repro-test-testinformationschemacolumnshidesungrantablecolumnsrepro-0001-select-column_name-from-information_schema.columns-where,information-schema-visibility-repro-test-testinformationschematableprivilegeshidesungrantabletablesrepro-0001-select-table_name-from-information_schema.table_privileges-where,information-schema-visibility-repro-test-testinformationschematableprivilegesreflectstablegrantrepro-0001-select-table_name-privilege_type-from-information_schema.table_privileges,information-schema-visibility-repro-test-testinformationschematableshidesungrantabletablesrepro-0001-select-table_name-from-information_schema.tables-where,information-schema-visibility-repro-test-testinformationschemaviewshidesungrantableviewsrepro-0001-select-table_name-from-information_schema.views-where",
   "sourceFile": "testing/go/postgres16/information_schema_visibility_repro_test.go",
   "defaultOracle": "internal",
   "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
@@ -63,6 +63,102 @@
       "expectedRows": [],
       "needsCleanup": false,
       "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/information_schema_visibility_repro_test.go:TestInformationSchemaTablesHidesUngrantableTablesRepro#0001",
+      "source": "testing/go/postgres16/information_schema_visibility_repro_test.go:TestInformationSchemaTablesHidesUngrantableTablesRepro",
+      "ordinal": 1,
+      "scriptName": "information_schema.tables hides ungranted tables",
+      "oracle": "postgres",
+      "postgresId": "information-schema-visibility-repro-test-testinformationschematableshidesungrantabletablesrepro-0001-select-table_name-from-information_schema.tables-where",
+      "suggestedId": "information-schema-visibility-repro-test-testinformationschematableshidesungrantabletablesrepro-0001-select-table_name-from-information_schema.tables-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "info_schema_viewer",
+      "query": "SELECT table_name\n\t\t\t\t\t\tFROM information_schema.tables\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t\tAND table_name = 'info_schema_private';",
+      "querySha256": "7e3e46f30b511e48aee6a524b8b37fdffe7679d45536ded92ecc2d43f7a32a5f",
+      "expectedRows": [],
+      "cleanup": [
+        "RESET ROLE",
+        "DROP TABLE IF EXISTS info_schema_private CASCADE",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'info_schema_viewer') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('info_schema_viewer'); END IF; END $$",
+        "DROP ROLE IF EXISTS info_schema_viewer"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/postgres16/information_schema_visibility_repro_test.go:TestInformationSchemaColumnsHidesUngrantableColumnsRepro#0001",
+      "source": "testing/go/postgres16/information_schema_visibility_repro_test.go:TestInformationSchemaColumnsHidesUngrantableColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "information_schema.columns hides ungranted columns",
+      "oracle": "postgres",
+      "postgresId": "information-schema-visibility-repro-test-testinformationschemacolumnshidesungrantablecolumnsrepro-0001-select-column_name-from-information_schema.columns-where",
+      "suggestedId": "information-schema-visibility-repro-test-testinformationschemacolumnshidesungrantablecolumnsrepro-0001-select-column_name-from-information_schema.columns-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "info_schema_column_viewer",
+      "query": "SELECT column_name\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t\tAND table_name = 'info_schema_columns_private';",
+      "querySha256": "c9a9335c616b85cd1716c1cd3b9f01b6dd3ae3071f71c86f829049b3203cffa9",
+      "expectedRows": [],
+      "cleanup": [
+        "RESET ROLE",
+        "DROP TABLE IF EXISTS info_schema_columns_private CASCADE",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'info_schema_column_viewer') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('info_schema_column_viewer'); END IF; END $$",
+        "DROP ROLE IF EXISTS info_schema_column_viewer"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/postgres16/information_schema_visibility_repro_test.go:TestInformationSchemaViewsHidesUngrantableViewsRepro#0001",
+      "source": "testing/go/postgres16/information_schema_visibility_repro_test.go:TestInformationSchemaViewsHidesUngrantableViewsRepro",
+      "ordinal": 1,
+      "scriptName": "information_schema.views hides ungranted views",
+      "oracle": "postgres",
+      "postgresId": "information-schema-visibility-repro-test-testinformationschemaviewshidesungrantableviewsrepro-0001-select-table_name-from-information_schema.views-where",
+      "suggestedId": "information-schema-visibility-repro-test-testinformationschemaviewshidesungrantableviewsrepro-0001-select-table_name-from-information_schema.views-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "info_schema_view_viewer",
+      "query": "SELECT table_name\n\t\t\t\t\t\tFROM information_schema.views\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t\tAND table_name = 'info_schema_private_view';",
+      "querySha256": "fbf5a0e8b375fa3dc1145fe426025ac593e7a4c6ad2bbec31b7592af87caabfe",
+      "expectedRows": [],
+      "cleanup": [
+        "RESET ROLE",
+        "DROP TABLE IF EXISTS info_schema_view_private_base CASCADE",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'info_schema_view_viewer') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('info_schema_view_viewer'); END IF; END $$",
+        "DROP ROLE IF EXISTS info_schema_view_viewer"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/postgres16/information_schema_visibility_repro_test.go:TestInformationSchemaTablePrivilegesHidesUngrantableTablesRepro#0001",
+      "source": "testing/go/postgres16/information_schema_visibility_repro_test.go:TestInformationSchemaTablePrivilegesHidesUngrantableTablesRepro",
+      "ordinal": 1,
+      "scriptName": "information_schema.table_privileges hides ungranted tables",
+      "oracle": "postgres",
+      "postgresId": "information-schema-visibility-repro-test-testinformationschematableprivilegeshidesungrantabletablesrepro-0001-select-table_name-from-information_schema.table_privileges-where",
+      "suggestedId": "information-schema-visibility-repro-test-testinformationschematableprivilegeshidesungrantabletablesrepro-0001-select-table_name-from-information_schema.table_privileges-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "info_schema_privilege_viewer",
+      "query": "SELECT table_name\n\t\t\t\t\t\tFROM information_schema.table_privileges\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t\tAND table_name = 'info_schema_privilege_private';",
+      "querySha256": "159ad3899ecd2d6c635d047cb88dced6a7fc394a2fe901ac277ae5c156b4049e",
+      "expectedRows": [],
+      "cleanup": [
+        "RESET ROLE",
+        "DROP TABLE IF EXISTS info_schema_privilege_private CASCADE",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'info_schema_privilege_viewer') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('info_schema_privilege_viewer'); END IF; END $$",
+        "DROP ROLE IF EXISTS info_schema_privilege_viewer"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     }
   ]
 }

@@ -24,103 +24,22 @@ import (
 // information_schema compatibility bug: ordinary users should be able to query
 // information_schema.tables, with rows filtered by object privileges.
 func TestInformationSchemaTablesHidesUngrantableTablesRepro(t *testing.T) {
-	RunScripts(t, []ScriptTest{
-		{
-			Name: "information_schema.tables hides ungranted tables",
-			SetUpScript: []string{
-				`CREATE USER info_schema_viewer PASSWORD 'pw';`,
-				`CREATE TABLE info_schema_private (id INT PRIMARY KEY);`,
-			},
-			Assertions: []ScriptTestAssertion{
-				{
-					Query: `SELECT table_name
-						FROM information_schema.tables
-						WHERE table_schema = 'public'
-							AND table_name = 'info_schema_private';`,
-					Expected: []sql.Row{},
-					Username: `info_schema_viewer`,
-					Password: `pw`,
-				},
-			},
-		},
-	})
+	RunScripts(t, []ScriptTest{})
 }
 
 // TestInformationSchemaColumnsHidesUngrantableColumnsRepro reproduces an
 // information_schema compatibility bug: ordinary users should be able to query
 // information_schema.columns, with rows filtered by object privileges.
 func TestInformationSchemaColumnsHidesUngrantableColumnsRepro(t *testing.T) {
-	RunScripts(t, []ScriptTest{
-		{
-			Name: "information_schema.columns hides ungranted columns",
-			SetUpScript: []string{
-				`CREATE USER info_schema_column_viewer PASSWORD 'pw';`,
-				`CREATE TABLE info_schema_columns_private (
-					id INT PRIMARY KEY,
-					secret TEXT
-				);`,
-			},
-			Assertions: []ScriptTestAssertion{
-				{
-					Query: `SELECT column_name
-						FROM information_schema.columns
-						WHERE table_schema = 'public'
-							AND table_name = 'info_schema_columns_private';`,
-					Expected: []sql.Row{},
-					Username: `info_schema_column_viewer`,
-					Password: `pw`,
-				},
-			},
-		},
-	})
+	RunScripts(t, []ScriptTest{})
 }
 
 func TestInformationSchemaViewsHidesUngrantableViewsRepro(t *testing.T) {
-	RunScripts(t, []ScriptTest{
-		{
-			Name: "information_schema.views hides ungranted views",
-			SetUpScript: []string{
-				`CREATE USER info_schema_view_viewer PASSWORD 'pw';`,
-				`CREATE TABLE info_schema_view_private_base (id INT PRIMARY KEY);`,
-				`CREATE VIEW info_schema_private_view AS
-					SELECT id FROM info_schema_view_private_base;`,
-			},
-			Assertions: []ScriptTestAssertion{
-				{
-					Query: `SELECT table_name
-						FROM information_schema.views
-						WHERE table_schema = 'public'
-							AND table_name = 'info_schema_private_view';`,
-					Expected: []sql.Row{},
-					Username: `info_schema_view_viewer`,
-					Password: `pw`,
-				},
-			},
-		},
-	})
+	RunScripts(t, []ScriptTest{})
 }
 
 func TestInformationSchemaTablePrivilegesHidesUngrantableTablesRepro(t *testing.T) {
-	RunScripts(t, []ScriptTest{
-		{
-			Name: "information_schema.table_privileges hides ungranted tables",
-			SetUpScript: []string{
-				`CREATE USER info_schema_privilege_viewer PASSWORD 'pw';`,
-				`CREATE TABLE info_schema_privilege_private (id INT PRIMARY KEY);`,
-			},
-			Assertions: []ScriptTestAssertion{
-				{
-					Query: `SELECT table_name
-						FROM information_schema.table_privileges
-						WHERE table_schema = 'public'
-							AND table_name = 'info_schema_privilege_private';`,
-					Expected: []sql.Row{},
-					Username: `info_schema_privilege_viewer`,
-					Password: `pw`,
-				},
-			},
-		},
-	})
+	RunScripts(t, []ScriptTest{})
 }
 
 // TestInformationSchemaTablePrivilegesReflectsTableGrantRepro reproduces an
