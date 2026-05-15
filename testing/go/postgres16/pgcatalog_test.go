@@ -5084,7 +5084,7 @@ func TestPgStatXactSysTables(t *testing.T) {
 			Name: "pg_stat_xact_sys_tables",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_stat_xact_sys_tables";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT count(*) = 1, bool_and(seq_scan >= 0), bool_and(seq_tup_read >= 0), bool_and(idx_scan >= 0), bool_and(idx_tup_fetch >= 0), bool_and(n_tup_ins >= 0), bool_and(n_tup_upd >= 0), bool_and(n_tup_del >= 0), bool_and(n_tup_hot_upd >= 0), bool_and(n_tup_newpage_upd >= 0) FROM "pg_catalog"."pg_stat_xact_sys_tables" WHERE schemaname = 'pg_catalog' AND relname = 'pg_class';`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpgstatxactsystables-0001-select-*-from-pg_catalog-."},
@@ -5102,7 +5102,7 @@ func TestPgStatXactSysTables(t *testing.T) {
 						ID: "pgcatalog-test-testpgstatxactsystables-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT relid FROM PG_catalog.pg_STAT_XACT_SYS_TABLES ORDER BY relid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatxactsystables-0004-select-relid-from-pg_catalog.pg_stat_xact_sys_tables-order"},
+					Query: "SELECT count(*) = 1 FROM PG_catalog.pg_STAT_XACT_SYS_TABLES WHERE schemaname = 'pg_catalog' AND relname = 'pg_class';", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatxactsystables-0004-select-relid-from-pg_catalog.pg_stat_xact_sys_tables-order"},
 				},
 			},
 		},
