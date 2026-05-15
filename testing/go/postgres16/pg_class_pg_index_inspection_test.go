@@ -31,7 +31,7 @@ func TestPgClassPgIndexInspection(t *testing.T) {
 		{
 			Name: "pg_class table existence and relkind",
 			SetUpScript: []string{
-				`CREATE TABLE widgets (id INT PRIMARY KEY, label TEXT);`,
+				`CREATE TABLE public.widgets (id INT PRIMARY KEY, label TEXT);`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
