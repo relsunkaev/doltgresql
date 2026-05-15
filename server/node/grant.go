@@ -26,9 +26,12 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/core/typecollection"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/largeobject"
+	"github.com/dolthub/doltgresql/server/settings"
+	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 // Grant handles all of the GRANT statements.
@@ -733,6 +736,113 @@ func compiledFunctionParameterIDs(function framework.FunctionInterface) []id.Typ
 	return paramIDs
 }
 
+type aclTypeTarget struct {
+	schemaName string
+	typeName   string
+}
+
+func resolveACLTypeTarget(ctx *sql.Context, typeCollection *typecollection.TypeCollection, target auth.TypePrivilegeKey, userRole auth.Role, privileges []auth.Privilege) (aclTypeTarget, error) {
+	if target.Schema != "" {
+		schemaName, err := resolveExistingACLSchema(ctx, target.Schema)
+		if err != nil {
+			return aclTypeTarget{}, err
+		}
+		resolvedType, err := typeCollection.GetType(ctx, id.NewType(schemaName, target.Name))
+		if err != nil {
+			return aclTypeTarget{}, err
+		}
+		if resolvedType == nil {
+			return aclTypeTarget{}, errors.Errorf(`type "%s" does not exist`, target.Name)
+		}
+		if !aclSchemaVisibleToRole(userRole, schemaName) && !aclTypeVisibleToRole(userRole, schemaName, target.Name, resolvedType, privileges) {
+			return aclTypeTarget{}, errors.Errorf("permission denied for schema %s", schemaName)
+		}
+		return aclTypeTarget{schemaName: schemaName, typeName: target.Name}, nil
+	}
+
+	searchPath, err := settings.GetCurrentSchemas(ctx)
+	if err != nil {
+		return aclTypeTarget{}, err
+	}
+	for _, schemaName := range searchPath {
+		exists, err := aclSchemaExists(ctx, schemaName)
+		if err != nil {
+			return aclTypeTarget{}, err
+		}
+		if !exists {
+			continue
+		}
+		resolvedType, err := typeCollection.GetType(ctx, id.NewType(schemaName, target.Name))
+		if err != nil {
+			return aclTypeTarget{}, err
+		}
+		if resolvedType == nil {
+			continue
+		}
+		if aclTypeVisibleToRole(userRole, schemaName, target.Name, resolvedType, privileges) {
+			return aclTypeTarget{schemaName: schemaName, typeName: target.Name}, nil
+		}
+	}
+	return aclTypeTarget{}, errors.Errorf(`type "%s" does not exist`, target.Name)
+}
+
+func aclSchemaExists(ctx *sql.Context, schema string) (bool, error) {
+	schemaDatabase, err := currentSchemaDatabase(ctx)
+	if err != nil {
+		return false, err
+	}
+	_, ok, err := schemaDatabase.GetSchema(ctx, schema)
+	if err != nil {
+		return false, err
+	}
+	return ok, nil
+}
+
+func aclSchemaVisibleToRole(role auth.Role, schema string) bool {
+	if role.IsSuperUser || auth.SchemaOwnedByRole(schema, role.Name) {
+		return true
+	}
+	if auth.HasSchemaPrivilege(auth.SchemaPrivilegeKey{Role: role.ID(), Schema: schema}, auth.Privilege_USAGE) {
+		return true
+	}
+	publicRole := auth.GetRole("public")
+	return publicRole.IsValid() && auth.HasSchemaPrivilege(auth.SchemaPrivilegeKey{Role: publicRole.ID(), Schema: schema}, auth.Privilege_USAGE)
+}
+
+func aclTypeVisibleToRole(role auth.Role, schemaName string, typeName string, resolvedType *pgtypes.DoltgresType, privileges []auth.Privilege) bool {
+	if aclTypeOwnedByRole(role, resolvedType) {
+		return true
+	}
+	for _, privilege := range privileges {
+		if aclRoleHasTypePrivilege(role, schemaName, typeName, privilege) {
+			return true
+		}
+		if auth.HasTypePrivilegeGrantOption(auth.TypePrivilegeKey{Role: role.ID(), Schema: schemaName, Name: typeName}, privilege).IsValid() {
+			return true
+		}
+	}
+	return false
+}
+
+func aclTypeOwnedByRole(role auth.Role, resolvedType *pgtypes.DoltgresType) bool {
+	if role.IsSuperUser {
+		return true
+	}
+	owner := resolvedType.Owner
+	if owner == "" {
+		owner = "postgres"
+	}
+	return owner == role.Name
+}
+
+func aclRoleHasTypePrivilege(role auth.Role, schemaName string, typeName string, privilege auth.Privilege) bool {
+	if auth.HasTypePrivilege(auth.TypePrivilegeKey{Role: role.ID(), Schema: schemaName, Name: typeName}, privilege) {
+		return true
+	}
+	publicRole := auth.GetRole("public")
+	return publicRole.IsValid() && auth.HasTypePrivilege(auth.TypePrivilegeKey{Role: publicRole.ID(), Schema: schemaName, Name: typeName}, privilege)
+}
+
 // grantType handles *GrantType from within RowIter.
 func (g *Grant) grantType(ctx *sql.Context) error {
 	roles, userRole, err := g.common(ctx)
@@ -745,31 +855,28 @@ func (g *Grant) grantType(ctx *sql.Context) error {
 	}
 	for _, role := range roles {
 		for _, typ := range g.GrantType.Types {
-			schemaName, err := core.GetSchemaName(ctx, nil, typ.Schema)
+			resolvedTarget, err := resolveACLTypeTarget(ctx, typeCollection, typ, userRole, g.GrantType.Privileges)
 			if err != nil {
 				return err
-			}
-			resolvedType, err := typeCollection.GetType(ctx, id.NewType(schemaName, typ.Name))
-			if err != nil {
-				return err
-			}
-			if resolvedType == nil {
-				return errors.Errorf(`type "%s" does not exist`, typ.Name)
 			}
 			key := auth.TypePrivilegeKey{
 				Role:   userRole.ID(),
-				Schema: schemaName,
-				Name:   typ.Name,
+				Schema: resolvedTarget.schemaName,
+				Name:   resolvedTarget.typeName,
 			}
 			for _, privilege := range g.GrantType.Privileges {
 				grantedBy := auth.HasTypePrivilegeGrantOption(key, privilege)
 				if !grantedBy.IsValid() {
+					if aclRoleHasTypePrivilege(userRole, key.Schema, key.Name, privilege) {
+						ctx.Warn(0, "no privileges were granted for %s", key.Name)
+						continue
+					}
 					return errors.Errorf(`role "%s" does not have permission to grant this privilege`, userRole.Name)
 				}
 				auth.AddTypePrivilege(auth.TypePrivilegeKey{
 					Role:   role.ID(),
-					Schema: schemaName,
-					Name:   typ.Name,
+					Schema: key.Schema,
+					Name:   key.Name,
 				}, auth.GrantedPrivilege{
 					Privilege: privilege,
 					GrantedBy: grantedBy,
