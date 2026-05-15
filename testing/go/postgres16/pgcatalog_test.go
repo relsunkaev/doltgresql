@@ -3604,27 +3604,69 @@ func TestPgRewrite(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "pg_rewrite",
+			SetUpScript: []string{
+				`CREATE VIEW pg_rewrite_oracle_view AS SELECT 1 AS id;`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_rewrite";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT c.relname,
+	r.rulename,
+	r.oid <> 0 AS has_oid,
+	r.ev_class = c.oid AS class_matches,
+	r.ev_type,
+	r.ev_enabled,
+	r.is_instead,
+	r.ev_qual IS NOT NULL AS has_qual,
+	r.ev_action IS NOT NULL AS has_action,
+	r.tableoid <> 0 AS has_tableoid
+FROM "pg_catalog"."pg_rewrite" r
+JOIN "pg_catalog"."pg_class" c ON c.oid = r.ev_class
+JOIN "pg_catalog"."pg_namespace" n ON n.oid = c.relnamespace
+WHERE n.nspname = current_schema()
+	AND c.relname = 'pg_rewrite_oracle_view'
+ORDER BY c.relname, r.rulename;`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpgrewrite-0001-select-*-from-pg_catalog-."},
 				},
+			},
+		},
+		{
+			Name: "pg_rewrite schema case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_rewrite";`, PostgresOracle: ScriptTestPostgresOracle{
 
 						// Different cases and quoted, so it fails
 						ID: "pgcatalog-test-testpgrewrite-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_rewrite relation case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "pg_catalog"."PG_rewrite";`, PostgresOracle: ScriptTestPostgresOracle{
 
 						// Different cases but non-quoted, so it works
 						ID: "pgcatalog-test-testpgrewrite-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_rewrite mixed-case lookup",
+			SetUpScript: []string{
+				`CREATE VIEW pg_rewrite_mixed_view AS SELECT 1 AS id;`,
+			},
+			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT oid FROM PG_catalog.pg_REWRITE ORDER BY oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgrewrite-0004-select-oid-from-pg_catalog.pg_rewrite-order"},
+					Query: `SELECT c.relname
+FROM PG_catalog.pg_REWRITE r
+JOIN PG_catalog.pg_CLASS c ON c.oid = r.ev_class
+JOIN PG_catalog.pg_NAMESPACE n ON n.oid = c.relnamespace
+WHERE n.nspname = current_schema()
+	AND c.relname = 'pg_rewrite_mixed_view'
+ORDER BY c.relname, r.rulename;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgrewrite-0004-select-oid-from-pg_catalog.pg_rewrite-order"},
 				},
 			},
 		},
