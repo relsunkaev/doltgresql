@@ -248,7 +248,14 @@ func TestShowCreateTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SHOW CREATE TABLE t1`, PostgresOracle: ScriptTestPostgresOracle{ID: "show-test-testshowcreatetable-0001-show-create-table-t1", Compare: "sqlstate"},
+					Query: `SHOW CREATE TABLE t1`,
+					Expected: []sql.Row{
+						{"t1", `CREATE TABLE "t1" (
+  "a" integer NOT NULL,
+  "name" text,
+  PRIMARY KEY ("a")
+)`},
+					},
 				},
 				{
 					Skip:  true, // TODO: printing string format of functions should not show parenthesis for constants
@@ -320,7 +327,13 @@ func TestShowDatabasesAndSchemas(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SHOW databases`, PostgresOracle: ScriptTestPostgresOracle{ID: "show-test-testshowdatabasesandschemas-0001-show-databases", Compare: "sqlstate"},
+					Query: `SHOW databases`,
+					Expected: []sql.Row{
+						{"db1"},
+						{"db2"},
+						{"information_schema"},
+						{"postgres"},
+					},
 				},
 				{
 					Query: `show SCHEMAS`,

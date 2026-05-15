@@ -407,16 +407,15 @@
       "source": "testing/go/show_test.go:TestShowCreateTable",
       "ordinal": 1,
       "scriptName": "show create table",
-      "oracle": "postgres",
-      "postgresId": "show-test-testshowcreatetable-0001-show-create-table-t1",
+      "oracle": "internal",
       "suggestedId": "show-test-testshowcreatetable-0001-show-create-table-t1",
-      "compare": "sqlstate",
       "expectedKind": "rows",
-      "sqlstate": "42601",
-      "errorSeverity": "ERROR",
       "query": "SHOW CREATE TABLE t1",
       "querySha256": "0276d300e2862a20b397b16e8020558ecea604f75c814115524ee91f7dde15b3",
-      "needsCleanup": false,
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -504,16 +503,15 @@
       "source": "testing/go/show_test.go:TestShowDatabasesAndSchemas",
       "ordinal": 1,
       "scriptName": "show databases",
-      "oracle": "postgres",
-      "postgresId": "show-test-testshowdatabasesandschemas-0001-show-databases",
+      "oracle": "internal",
       "suggestedId": "show-test-testshowdatabasesandschemas-0001-show-databases",
-      "compare": "sqlstate",
       "expectedKind": "rows",
-      "sqlstate": "42704",
-      "errorSeverity": "ERROR",
       "query": "SHOW databases",
       "querySha256": "f0610b97907188f6311e27e1569a0312b4119ad0cebf7e0e3063e3d5c942df07",
-      "needsCleanup": false,
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
