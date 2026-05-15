@@ -26,7 +26,16 @@
       "username": "info_schema_schema_viewer",
       "query": "SELECT schema_name\n\t\t\t\t\t\tFROM information_schema.schemata\n\t\t\t\t\t\tWHERE schema_name = 'info_schema_private_schema';",
       "querySha256": "4d7286e02ff7f157be51213e1e6522e4925f6281c7237d66fb6cd1e14a478d76",
-      "expectedRows": [],
+      "expectedRows": [
+        [
+          {
+            "value": "info_schema_routine_grant_target"
+          },
+          {
+            "value": "EXECUTE"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },

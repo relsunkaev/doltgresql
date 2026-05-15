@@ -103,12 +103,12 @@ func TestInformationSchemaRoutinePrivilegesReflectsFunctionGrantRepro(t *testing
 			Name: "information_schema.routine_privileges reflects granted functions",
 			SetUpScript: []string{
 				`CREATE USER info_schema_routine_grantee PASSWORD 'pw';`,
-				`CREATE FUNCTION info_schema_routine_grant_target(input INT)
+				`CREATE FUNCTION public.info_schema_routine_grant_target(input INT)
 					RETURNS INT
 					LANGUAGE SQL
 					AS $$ SELECT input + 1 $$;`,
 				`GRANT USAGE ON SCHEMA public TO info_schema_routine_grantee;`,
-				`GRANT EXECUTE ON FUNCTION info_schema_routine_grant_target(INT)
+				`GRANT EXECUTE ON FUNCTION public.info_schema_routine_grant_target(INT)
 					TO info_schema_routine_grantee;`,
 			},
 			Assertions: []ScriptTestAssertion{
