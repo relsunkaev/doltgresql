@@ -23,7 +23,7 @@ import (
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
-const postgresVersion = "15.5"
+const postgresVersion = "16.13 on aarch64-unknown-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit"
 
 // initVersion registers the functions to the catalog.
 func initVersion() {
