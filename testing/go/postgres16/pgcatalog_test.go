@@ -2123,14 +2123,26 @@ func TestPgLanguage(t *testing.T) {
 func TestPgLargeobject(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "pg_largeobject",
+			Name: "pg_largeobject row",
+			SetUpScript: []string{
+				`SELECT lo_create(424270);`,
+				`SELECT lo_put(424270, 0, decode('0102', 'hex'));`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_largeobject";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT loid::text, pageno, data
+						FROM "pg_catalog"."pg_largeobject"
+						WHERE loid = 424270
+						ORDER BY pageno;`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpglargeobject-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "structural", "bytea"}},
 				},
+			},
+		},
+		{
+			Name: "pg_largeobject case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_largeobject";`, PostgresOracle: ScriptTestPostgresOracle{
 
@@ -2143,8 +2155,16 @@ func TestPgLargeobject(t *testing.T) {
 						// Different cases but non-quoted, so it works
 						ID: "pgcatalog-test-testpglargeobject-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_largeobject mixed-case lookup",
+			SetUpScript: []string{
+				`SELECT lo_create(424272);`,
+			},
+			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT loid FROM PG_catalog.pg_LARGEOBJECT ORDER BY loid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpglargeobject-0004-select-loid-from-pg_catalog.pg_largeobject-order"},
+					Query: "SELECT loid::text FROM PG_catalog.pg_LARGEOBJECT WHERE loid = 424272 ORDER BY loid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpglargeobject-0004-select-loid-from-pg_catalog.pg_largeobject-order"},
 				},
 			},
 		},
@@ -2154,14 +2174,25 @@ func TestPgLargeobject(t *testing.T) {
 func TestPgLargeobjectMetadata(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "pg_largeobject_metadata",
+			Name: "pg_largeobject_metadata row",
+			SetUpScript: []string{
+				`SELECT lo_create(424271);`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_largeobject_metadata";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT oid::text, lomacl IS NULL
+						FROM "pg_catalog"."pg_largeobject_metadata"
+						WHERE oid = 424271
+						ORDER BY oid;`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpglargeobjectmetadata-0001-select-*-from-pg_catalog-."},
 				},
+			},
+		},
+		{
+			Name: "pg_largeobject_metadata case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_largeobject_metadata";`, PostgresOracle: ScriptTestPostgresOracle{
 
@@ -2174,8 +2205,16 @@ func TestPgLargeobjectMetadata(t *testing.T) {
 						// Different cases but non-quoted, so it works
 						ID: "pgcatalog-test-testpglargeobjectmetadata-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_largeobject_metadata mixed-case lookup",
+			SetUpScript: []string{
+				`SELECT lo_create(424273);`,
+			},
+			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT oid FROM PG_catalog.pg_LARGEOBJECT_METADATA ORDER BY oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpglargeobjectmetadata-0004-select-oid-from-pg_catalog.pg_largeobject_metadata-order"},
+					Query: "SELECT oid::text FROM PG_catalog.pg_LARGEOBJECT_METADATA WHERE oid = 424273 ORDER BY oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpglargeobjectmetadata-0004-select-oid-from-pg_catalog.pg_largeobject_metadata-order"},
 				},
 			},
 		},
