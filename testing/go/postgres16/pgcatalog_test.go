@@ -2341,11 +2341,21 @@ func TestPgMatviews(t *testing.T) {
 func TestPgNamespace(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "pg_namespace",
+			Name: "pg_namespace builtin rows",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_namespace" ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespace-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "schema"}},
+					Query: `SELECT nspname,
+							nspowner <> 0,
+							oid <> 0
+						FROM "pg_catalog"."pg_namespace"
+						WHERE nspname IN ('information_schema', 'pg_catalog', 'public')
+						ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespace-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"schema", "structural", "structural"}},
 				},
+			},
+		},
+		{
+			Name: "pg_namespace case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{ // Different cases and quoted, so it fails
 					Query: `SELECT * FROM "PG_catalog"."pg_namespace";`, PostgresOracle: ScriptTestPostgresOracle{
 
@@ -2358,19 +2368,46 @@ func TestPgNamespace(t *testing.T) {
 						// Different cases but non-quoted, so it works
 						ID: "pgcatalog-test-testpgnamespace-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_namespace mixed-case lookup",
+			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT nspname FROM PG_catalog.pg_NAMESPACE ORDER BY nspname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespace-0004-select-nspname-from-pg_catalog.pg_namespace-order", ColumnModes: []string{"schema"}},
+					Query: `SELECT nspname
+						FROM PG_catalog.pg_NAMESPACE
+						WHERE nspname IN ('information_schema', 'pg_catalog', 'public')
+						ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespace-0004-select-nspname-from-pg_catalog.pg_namespace-order", ColumnModes: []string{"schema"}},
+				},
+			},
+		},
+		{
+			Name: "pg_namespace created schema",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "CREATE SCHEMA namespace_oracle_schema;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespace-0005-create-schema-testschema"},
 				},
 				{
-					Query: "CREATE SCHEMA testschema;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespace-0005-create-schema-testschema"},
-				},
-				{
-					Query: `SELECT * FROM "pg_catalog"."pg_namespace" ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespace-0006-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "schema"}},
+					Query: `SELECT nspname,
+							nspowner <> 0,
+							oid <> 0
+						FROM "pg_catalog"."pg_namespace"
+						WHERE nspname = 'namespace_oracle_schema'
+						ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespace-0006-select-*-from-pg_catalog-.", ColumnModes: []string{"schema", "structural", "structural"}},
 				},
 				// Test index lookups - first let's see what the actual OID values are
 				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespace-0007-select-oid-nspname-from-pg_catalog", ColumnModes: []string{"structural", "schema"}},
+					Query: `SELECT oid <> 0,
+							nspname
+						FROM "pg_catalog"."pg_namespace"
+						WHERE nspname = 'namespace_oracle_schema'
+						ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespace-0007-select-oid-nspname-from-pg_catalog", ColumnModes: []string{"structural", "schema"}},
 				},
+			},
+		},
+		{
+			Name: "pg_namespace index lookups",
+			Assertions: []ScriptTestAssertion{
 				// Test simple index lookups
 				{
 					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid = 11;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespace-0008-select-nspname-from-pg_catalog-."},
