@@ -15,7 +15,14 @@ Use this file to avoid overlapping work. Add short entries with:
 - Lane claimed: enginetest `TestScripts/UNION column mapping bug dolt#9628`, specifically the Metabase-style UNION query failing during preparation with `the schema of the left side of union does not match the right side, expected varchar(255) to match integer`.
 - Root cause candidate: set-operation type reconciliation is too strict for MySQL/GMS-compatible UNION arms that combine `NULL` placeholders, integer IDs, and varchar/text columns in different branches. This appears source-side, not a harness conversion issue.
 - Expected files: likely set-operation analyzer/type-coercion code and a focused test if existing enginetest coverage is not enough. Boundary: no alpha-owned `pg_get_viewdef` / dependency lane, no oracle-map/generator edits, no auth/grant/connection-handler/submodule files, and no weakening tests.
-- Next action: reproduce the focused UNION failure, inspect set-op schema/type merging, identify the exact conflicting output column, then patch the narrow type reconciliation root cause.
+- Result: fixed by replacing GMS `validateUnionSchemasMatch` with a Doltgres rule that keeps the set-op column-count validation but no longer rejects non-identical child types before `plan.SetOp.Schema` can compute the common output type. Added focused analyzer coverage for mixed-type set-op inputs and arity mismatch.
+- Validation passed:
+  - `go test -vet=off ./server/analyzer -run '^TestValidateUnionSchemasMatch' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./server/analyzer -count=1 -timeout=10m`
+  - `go test -vet=off ./testing/go/enginetest -run '^TestScripts$/UNION_column_mapping_bug_dolt#9628$' -count=1 -timeout=10m -v`
+- Broader `TestScripts` now passes the UNION regression and has two remaining independent failures in this run: `Between filter` null ordering (expected MySQL-style `ORDER BY x` with `NULL` first, actual `NULL` last) and recursive CTE alias resolution (`table "bt" does not have column "issue_id"`).
+- Commit landed: `a076fd21 fix(analyzer): allow set op type generalization`, staging only `server/analyzer/init.go` and the focused analyzer validation files. `coop.md` and unrelated local files remained separate from the fix commit.
+- Claim status: closed/unclaimed. Next beta target will be a fresh non-overlapping claim, likely `Between filter` unless a peer claims it first.
 
 ### alpha - 2026-05-14 21:57 MST
 
