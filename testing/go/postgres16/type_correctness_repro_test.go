@@ -15,6 +15,7 @@
 package postgres16
 
 import (
+	"github.com/dolthub/go-mysql-server/sql"
 	. "github.com/dolthub/doltgresql/testing/go"
 
 	"testing"
@@ -223,12 +224,12 @@ func TestDropTypeCascadeWithoutDependentsRepro(t *testing.T) {
 	})
 }
 
-// TestNameTypeRejectsIntegerAssignmentRepro reproduces a type correctness bug:
-// PostgreSQL does not implicitly assign integer expressions to name columns.
-func TestNameTypeRejectsIntegerAssignmentRepro(t *testing.T) {
+// TestNameTypeAcceptsIntegerAssignmentRepro reproduces a type correctness bug:
+// PostgreSQL assignment-coerces integer expressions to name columns via output text.
+func TestNameTypeAcceptsIntegerAssignmentRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "name column rejects integer assignment",
+			Name: "name column accepts integer assignment",
 			SetUpScript: []string{
 				`CREATE TABLE name_assignment_items (
 					id INT PRIMARY KEY,
@@ -237,17 +238,19 @@ func TestNameTypeRejectsIntegerAssignmentRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `INSERT INTO name_assignment_items VALUES (1, 12345);`, PostgresOracle: ScriptTestPostgresOracle{ID: "type-correctness-repro-test-testnametyperejectsintegerassignmentrepro-0001-insert-into-name_assignment_items-values-1",
-
-						// TestXidRejectsInvalidInputRepro reproduces a type correctness bug:
-						// PostgreSQL's xid input rejects out-of-range or non-numeric transaction IDs.
-						Compare: "sqlstate"},
+					Query: `INSERT INTO name_assignment_items VALUES (1, 12345);`,
+				},
+				{
+					Query:    `SELECT id, label::text FROM name_assignment_items ORDER BY id;`,
+					Expected: []sql.Row{{1, "12345"}},
 				},
 			},
 		},
 	})
 }
 
+// TestXidRejectsInvalidInputRepro reproduces a type correctness bug:
+// PostgreSQL's xid input rejects out-of-range or non-numeric transaction IDs.
 func TestXidRejectsInvalidInputRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -263,7 +266,11 @@ func TestXidRejectsInvalidInputRepro(t *testing.T) {
 					Query: `INSERT INTO xid_input_items VALUES (1, '4294967296');`, PostgresOracle: ScriptTestPostgresOracle{ID: "type-correctness-repro-test-testxidrejectsinvalidinputrepro-0001-insert-into-xid_input_items-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query: `INSERT INTO xid_input_items VALUES (2, '-1');`, PostgresOracle: ScriptTestPostgresOracle{ID: "type-correctness-repro-test-testxidrejectsinvalidinputrepro-0002-insert-into-xid_input_items-values-2", Compare: "sqlstate"},
+					Query: `INSERT INTO xid_input_items VALUES (2, '-1');`,
+				},
+				{
+					Query:    `SELECT id, x::text FROM xid_input_items ORDER BY id;`,
+					Expected: []sql.Row{{2, "4294967295"}},
 				},
 				{
 					Query: `INSERT INTO xid_input_items VALUES (3, 'abc');`, PostgresOracle: ScriptTestPostgresOracle{ID: "type-correctness-repro-test-testxidrejectsinvalidinputrepro-0003-insert-into-xid_input_items-values-3",

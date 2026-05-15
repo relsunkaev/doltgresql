@@ -248,19 +248,27 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNameTypeRejectsIntegerAssignmentRepro#0001",
-      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNameTypeRejectsIntegerAssignmentRepro",
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNameTypeAcceptsIntegerAssignmentRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNameTypeAcceptsIntegerAssignmentRepro",
       "ordinal": 1,
-      "scriptName": "name column rejects integer assignment",
+      "scriptName": "name column accepts integer assignment",
       "oracle": "postgres",
-      "postgresId": "type-correctness-repro-test-testnametyperejectsintegerassignmentrepro-0001-insert-into-name_assignment_items-values-1",
-      "suggestedId": "type-correctness-repro-test-testnametyperejectsintegerassignmentrepro-0001-insert-into-name_assignment_items-values-1",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "23505",
-      "errorSeverity": "ERROR",
-      "query": "INSERT INTO name_assignment_items VALUES (1, 12345);",
-      "querySha256": "52aed5da1c153cac0b98cccb82f8714006cf5a590a400e9bfee77ef82c574d9f",
+      "postgresId": "postgres16/type-correctness-repro-test-testnametypeacceptsintegerassignmentrepro-0001-select-id-label::text-from-name_assignment_items",
+      "suggestedId": "postgres16/type-correctness-repro-test-testnametypeacceptsintegerassignmentrepro-0001-select-id-label::text-from-name_assignment_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label::text FROM name_assignment_items ORDER BY id;",
+      "querySha256": "0d6aa55c137bb9f68808d202a164c31510557bbaefe270f9a0a533fa12516147",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "12345"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -287,14 +295,22 @@
       "ordinal": 2,
       "scriptName": "xid rejects invalid inputs",
       "oracle": "postgres",
-      "postgresId": "type-correctness-repro-test-testxidrejectsinvalidinputrepro-0002-insert-into-xid_input_items-values-2",
-      "suggestedId": "type-correctness-repro-test-testxidrejectsinvalidinputrepro-0002-insert-into-xid_input_items-values-2",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "23505",
-      "errorSeverity": "ERROR",
-      "query": "INSERT INTO xid_input_items VALUES (2, '-1');",
-      "querySha256": "4f1a29463863a4d67f6b3c3ef047299008c5d965e0134fc6099d5f7ae61d5f9a",
+      "postgresId": "postgres16/type-correctness-repro-test-testxidrejectsinvalidinputrepro-0002-select-id-x::text-from-xid_input_items",
+      "suggestedId": "postgres16/type-correctness-repro-test-testxidrejectsinvalidinputrepro-0002-select-id-x::text-from-xid_input_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, x::text FROM xid_input_items ORDER BY id;",
+      "querySha256": "70fd56f750f84804eaa1c38a77e54d91c0c26c22393c73a1fffdd2ad6c602361",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "4294967295"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },

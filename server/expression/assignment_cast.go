@@ -78,6 +78,13 @@ func (ac *AssignmentCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 	}
 	castFunc := framework.GetAssignmentCast(fromType, toType)
 	if castFunc == nil {
+		if toType.ID == pgtypes.Name.ID {
+			output, err := fromType.IoOutput(ctx, val)
+			if err != nil {
+				return nil, err
+			}
+			return toType.IoInput(ctx, output)
+		}
 		return nil, errors.Errorf("ASSIGNMENT_CAST: target is of type %s but expression is of type %s: %s",
 			toType.String(), fromType.String(), ac.expr.String())
 	}
