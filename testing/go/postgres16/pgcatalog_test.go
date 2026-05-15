@@ -3004,9 +3004,26 @@ func TestPgPolicies(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "pg_policies",
+			SetUpScript: []string{
+				`CREATE TABLE pg_policies_docs (
+					id int PRIMARY KEY,
+					owner_name text
+				);`,
+				`CREATE POLICY pg_policies_docs_owner_insert
+					ON pg_policies_docs
+					FOR INSERT
+					WITH CHECK (owner_name = CURRENT_USER);`,
+				`CREATE POLICY pg_policies_docs_owner_select
+					ON pg_policies_docs
+					FOR SELECT
+					USING (owner_name = CURRENT_USER);`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_policies";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
+FROM "pg_catalog"."pg_policies"
+WHERE tablename = 'pg_policies_docs'
+ORDER BY policyname;`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpgpolicies-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"schema"}},
@@ -3024,7 +3041,7 @@ func TestPgPolicies(t *testing.T) {
 						ID: "pgcatalog-test-testpgpolicies-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT policyname FROM PG_catalog.pg_POLICIES ORDER BY policyname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgpolicies-0004-select-policyname-from-pg_catalog.pg_policies-order"},
+					Query: "SELECT policyname FROM PG_catalog.pg_POLICIES WHERE tablename = 'pg_policies_docs' ORDER BY policyname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgpolicies-0004-select-policyname-from-pg_catalog.pg_policies-order"},
 				},
 			},
 		},
@@ -3035,9 +3052,28 @@ func TestPgPolicy(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "pg_policy",
+			SetUpScript: []string{
+				`CREATE TABLE pg_policy_docs (
+					id int PRIMARY KEY,
+					owner_name text
+				);`,
+				`CREATE POLICY pg_policy_docs_owner_insert
+					ON pg_policy_docs
+					FOR INSERT
+					WITH CHECK (owner_name = CURRENT_USER);`,
+				`CREATE POLICY pg_policy_docs_owner_select
+					ON pg_policy_docs
+					FOR SELECT
+					USING (owner_name = CURRENT_USER);`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_policy";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT polname, polcmd, polpermissive, polroles,
+	pg_get_expr(polqual, polrelid),
+	pg_get_expr(polwithcheck, polrelid)
+FROM "pg_catalog"."pg_policy"
+WHERE polname IN ('pg_policy_docs_owner_insert', 'pg_policy_docs_owner_select')
+ORDER BY polname;`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpgpolicy-0001-select-*-from-pg_catalog-."},
@@ -3055,7 +3091,7 @@ func TestPgPolicy(t *testing.T) {
 						ID: "pgcatalog-test-testpgpolicy-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT polname FROM PG_catalog.pg_POLICY ORDER BY polname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgpolicy-0004-select-polname-from-pg_catalog.pg_policy-order"},
+					Query: "SELECT polname FROM PG_catalog.pg_POLICY WHERE polname IN ('pg_policy_docs_owner_insert', 'pg_policy_docs_owner_select') ORDER BY polname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgpolicy-0004-select-polname-from-pg_catalog.pg_policy-order"},
 				},
 			},
 		},

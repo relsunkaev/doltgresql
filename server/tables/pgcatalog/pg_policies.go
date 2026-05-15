@@ -15,8 +15,6 @@
 package pgcatalog
 
 import (
-	"io"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/server/tables"
@@ -43,8 +41,25 @@ func (p PgPoliciesHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgPoliciesHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_policies row iter
-	return emptyRowIter()
+	policies, err := rowSecurityPolicyCatalogRows(ctx)
+	if err != nil {
+		return nil, err
+	}
+	rows := make([]sql.Row, 0, len(policies))
+	for _, policyRow := range policies {
+		policy := policyRow.policy
+		rows = append(rows, sql.Row{
+			policyRow.schemaName,                // schemaname
+			policyRow.tableName,                 // tablename
+			policy.Name,                         // policyname
+			"PERMISSIVE",                        // permissive
+			pgPolicyRoleNames(policy),           // roles
+			pgPolicyCommandName(policy.Command), // cmd
+			pgPolicyExpression(policy.UsingAll, policy.UsingColumn), // qual
+			pgPolicyExpression(policy.CheckAll, policy.CheckColumn), // with_check
+		})
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -65,20 +80,4 @@ var pgPoliciesSchema = sql.Schema{
 	{Name: "cmd", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgPoliciesName},
 	{Name: "qual", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgPoliciesName},       // TODO: collation C
 	{Name: "with_check", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgPoliciesName}, // TODO: collation C
-}
-
-// pgPoliciesRowIter is the sql.RowIter for the pg_policies table.
-type pgPoliciesRowIter struct {
-}
-
-var _ sql.RowIter = (*pgPoliciesRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgPoliciesRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgPoliciesRowIter) Close(ctx *sql.Context) error {
-	return nil
 }

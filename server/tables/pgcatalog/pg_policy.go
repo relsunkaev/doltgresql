@@ -15,10 +15,9 @@
 package pgcatalog
 
 import (
-	"io"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +42,26 @@ func (p PgPolicyHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgPolicyHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_policy row iter
-	return emptyRowIter()
+	policies, err := rowSecurityPolicyCatalogRows(ctx)
+	if err != nil {
+		return nil, err
+	}
+	rows := make([]sql.Row, 0, len(policies))
+	for _, policyRow := range policies {
+		policy := policyRow.policy
+		rows = append(rows, sql.Row{
+			pgPolicyOID(policyRow),              // oid
+			policy.Name,                         // polname
+			policyRow.tableOID,                  // polrelid
+			pgPolicyCommandChar(policy.Command), // polcmd
+			true,                                // polpermissive
+			pgPolicyRoleOIDs(policy),            // polroles
+			pgPolicyExpression(policy.UsingAll, policy.UsingColumn), // polqual
+			pgPolicyExpression(policy.CheckAll, policy.CheckColumn), // polwithcheck
+			id.NewTable(PgCatalogName, PgPolicyName).AsId(),         // tableoid
+		})
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -66,20 +83,4 @@ var pgPolicySchema = sql.Schema{
 	{Name: "polqual", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgPolicyName},      // TODO: pg_node_tree type, collation C
 	{Name: "polwithcheck", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgPolicyName}, // TODO: pg_node_tree type, collation C
 	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgPolicyName},
-}
-
-// pgPolicyRowIter is the sql.RowIter for the pg_policy table.
-type pgPolicyRowIter struct {
-}
-
-var _ sql.RowIter = (*pgPolicyRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgPolicyRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgPolicyRowIter) Close(ctx *sql.Context) error {
-	return nil
 }
