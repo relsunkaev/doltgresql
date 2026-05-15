@@ -822,19 +822,19 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 			Expr: expr,
 		}, nil
 	case *tree.NullIfExpr:
-		expr1, err := nodeExprToSelectExpr(ctx, node.Expr1)
+		expr1, err := nodeExpr(ctx, node.Expr1)
 		if err != nil {
 			return nil, err
 		}
 
-		expr2, err := nodeExprToSelectExpr(ctx, node.Expr2)
+		expr2, err := nodeExpr(ctx, node.Expr2)
 		if err != nil {
 			return nil, err
 		}
 
-		return &vitess.FuncExpr{
-			Name:  vitess.NewColIdent("NULLIF"),
-			Exprs: vitess.SelectExprs{expr1, expr2},
+		return vitess.InjectedExpr{
+			Expression: pgexprs.NewNullIf(),
+			Children:   vitess.Exprs{expr1, expr2},
 		}, nil
 	case tree.NullLiteral:
 		return &vitess.NullVal{}, nil
