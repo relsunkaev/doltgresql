@@ -23,7 +23,8 @@
       "expectedKind": "error",
       "username": "copy_file_reader",
       "nonLiteral": [
-        "Query"
+        "Query",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -37,7 +38,8 @@
       "suggestedId": "copy-server-file-privilege-repro-test-testcopyfromserverfilerejectsrelativepathrepro-0001",
       "expectedKind": "error",
       "nonLiteral": [
-        "Query"
+        "Query",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -74,7 +76,8 @@
       "expectedKind": "error",
       "username": "copy_file_writer",
       "nonLiteral": [
-        "Query"
+        "Query",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -89,7 +92,8 @@
       "expectedKind": "error",
       "username": "copy_program_writer",
       "nonLiteral": [
-        "Query"
+        "Query",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false

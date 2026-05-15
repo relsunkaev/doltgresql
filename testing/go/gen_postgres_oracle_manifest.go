@@ -1592,6 +1592,17 @@ func hasDoltgresOnlySource(source string) bool {
 	}
 }
 
+func hasNonMigratableSource(source string) bool {
+	sourceFile, _, _ := strings.Cut(source, ":")
+	switch sourceFile {
+	case "testing/go/copy_server_file_privilege_repro_test.go",
+		"testing/go/copy_test.go":
+		return true
+	default:
+		return false
+	}
+}
+
 func sqlCodeAndStringLiterals(statement string) (string, []string) {
 	var code strings.Builder
 	var literals []string
@@ -1670,6 +1681,7 @@ func hasPostgresOracleBlockingNonLiteral(nonLiteral []string) bool {
 		"CopyFromStdInFile",
 		"SetUpScript",
 		"DoltSpecific",
+		"NonMigratable",
 		"GeneratedHelper",
 		"PriorQuery",
 		"PriorUsername",
@@ -2450,6 +2462,9 @@ func migrationCandidatesFromScriptTestSlice(source string, ordinal *int, lit *as
 			}
 			if candidate.Oracle == "internal" && hasDoltgresOnlySource(source) {
 				candidate.NonLiteral = appendNonLiteral(candidate.NonLiteral, "DoltSpecific")
+			}
+			if candidate.Oracle == "internal" && hasNonMigratableSource(source) {
+				candidate.NonLiteral = appendNonLiteral(candidate.NonLiteral, "NonMigratable")
 			}
 			candidate.NonLiteral = append(candidate.NonLiteral, priorNonLiteral...)
 			if !migrationCandidateMatchesPostgresIDFilter(candidate, postgresIDFilter) {

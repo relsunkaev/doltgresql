@@ -2,7 +2,7 @@
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map copy_test.go",
   "sourceFile": "testing/go/copy_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -25,6 +25,7 @@
       "querySha256": "a3ec3f876311f2592e0a95f3166171bf22e9be8049a7bf1b3025f17c9e440e90",
       "nonLiteral": [
         "Expected",
+        "NonMigratable",
         "PriorCopyFromStdInFile"
       ],
       "needsCleanup": true,
@@ -42,6 +43,7 @@
       "querySha256": "a3ec3f876311f2592e0a95f3166171bf22e9be8049a7bf1b3025f17c9e440e90",
       "nonLiteral": [
         "Expected",
+        "NonMigratable",
         "PriorCopyFromStdInFile"
       ],
       "needsCleanup": true,
@@ -58,6 +60,7 @@
       "query": "SELECT \"Id\", \"Code\", \"Capital\", \"Name\" FROM regions ORDER BY \"Id\";",
       "querySha256": "55b131941b231264a79c07666dac201fc1319b868964483849c2f099c64b552f",
       "nonLiteral": [
+        "NonMigratable",
         "PriorCopyFromStdInFile"
       ],
       "needsCleanup": true,
@@ -74,6 +77,7 @@
       "query": "select * from tbl1 order by pk;",
       "querySha256": "3f7a941fdafc184fc0b817b267fb4767d52fe61cc5b5bdd726c468a34802ed36",
       "nonLiteral": [
+        "NonMigratable",
         "PriorCopyFromStdInFile"
       ],
       "needsCleanup": true,
@@ -91,6 +95,7 @@
       "querySha256": "2aa31132d67963fcef02fd7b8bfd173322250366d012da2593a8bca60bf42a50",
       "nonLiteral": [
         "Expected",
+        "NonMigratable",
         "PriorCopyFromStdInFile"
       ],
       "needsCleanup": true,
@@ -108,6 +113,7 @@
       "querySha256": "c5ef956b51df2add2ff97171f461a9bea1eec6a4af7ded2b71dc56061e34cf4a",
       "nonLiteral": [
         "Expected",
+        "NonMigratable",
         "PriorCopyFromStdInFile"
       ],
       "needsCleanup": true,
@@ -125,6 +131,7 @@
       "querySha256": "2aa31132d67963fcef02fd7b8bfd173322250366d012da2593a8bca60bf42a50",
       "nonLiteral": [
         "Expected",
+        "NonMigratable",
         "PriorCopyFromStdInFile"
       ],
       "needsCleanup": true,
@@ -142,6 +149,7 @@
       "querySha256": "2aa31132d67963fcef02fd7b8bfd173322250366d012da2593a8bca60bf42a50",
       "nonLiteral": [
         "Expected",
+        "NonMigratable",
         "PriorCopyFromStdInFile"
       ],
       "needsCleanup": true,
@@ -159,6 +167,7 @@
       "querySha256": "c5ef956b51df2add2ff97171f461a9bea1eec6a4af7ded2b71dc56061e34cf4a",
       "nonLiteral": [
         "Expected",
+        "NonMigratable",
         "PriorCopyFromStdInFile"
       ],
       "needsCleanup": true,
@@ -176,6 +185,7 @@
       "querySha256": "975127be23807a15b1be4f3686a86a18a70114765e193aecb3e969b1e540a66b",
       "nonLiteral": [
         "Expected",
+        "NonMigratable",
         "PriorCopyFromStdInFile"
       ],
       "needsCleanup": true,
@@ -193,6 +203,7 @@
       "querySha256": "a3ec3f876311f2592e0a95f3166171bf22e9be8049a7bf1b3025f17c9e440e90",
       "nonLiteral": [
         "Expected",
+        "NonMigratable",
         "PriorCopyFromStdInFile"
       ],
       "needsCleanup": true,
@@ -210,6 +221,7 @@
       "querySha256": "2aa31132d67963fcef02fd7b8bfd173322250366d012da2593a8bca60bf42a50",
       "nonLiteral": [
         "Expected",
+        "NonMigratable",
         "PriorQuery"
       ],
       "needsCleanup": true,
@@ -227,6 +239,7 @@
       "querySha256": "c5ef956b51df2add2ff97171f461a9bea1eec6a4af7ded2b71dc56061e34cf4a",
       "nonLiteral": [
         "Expected",
+        "NonMigratable",
         "PriorQuery"
       ],
       "needsCleanup": true,
@@ -244,6 +257,7 @@
       "querySha256": "2aa31132d67963fcef02fd7b8bfd173322250366d012da2593a8bca60bf42a50",
       "nonLiteral": [
         "Expected",
+        "NonMigratable",
         "PriorQuery"
       ],
       "needsCleanup": true,
@@ -261,6 +275,7 @@
       "querySha256": "c5ef956b51df2add2ff97171f461a9bea1eec6a4af7ded2b71dc56061e34cf4a",
       "nonLiteral": [
         "Expected",
+        "NonMigratable",
         "PriorQuery"
       ],
       "needsCleanup": true,
@@ -278,6 +293,7 @@
       "querySha256": "a3ec3f876311f2592e0a95f3166171bf22e9be8049a7bf1b3025f17c9e440e90",
       "nonLiteral": [
         "Expected",
+        "NonMigratable",
         "PriorQuery"
       ],
       "needsCleanup": true,
@@ -294,6 +310,7 @@
       "query": "SELECT * FROM uuid_table order by id;",
       "querySha256": "29a269899003458f9c078f999f35bc950d7da981caff811f8c737b27d96e7bf0",
       "nonLiteral": [
+        "NonMigratable",
         "PriorCopyFromStdInFile"
       ],
       "needsCleanup": true,
@@ -308,7 +325,8 @@
       "suggestedId": "copy-test-testcopy-0018",
       "expectedKind": "error",
       "nonLiteral": [
-        "Query"
+        "Query",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -322,7 +340,8 @@
       "suggestedId": "copy-test-testcopy-0019",
       "expectedKind": "error",
       "nonLiteral": [
-        "Query"
+        "Query",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -336,7 +355,9 @@
       "suggestedId": "copy-test-testcopy-0020",
       "expectedKind": "error",
       "nonLiteral": [
-        "Query"
+        "Query",
+        "NonMigratable",
+        "PriorExpectedError"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -350,7 +371,8 @@
       "suggestedId": "copy-test-testcopy-0021",
       "expectedKind": "error",
       "nonLiteral": [
-        "Query"
+        "Query",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -364,7 +386,8 @@
       "suggestedId": "copy-test-testcopy-0022",
       "expectedKind": "error",
       "nonLiteral": [
-        "Query"
+        "Query",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -378,7 +401,8 @@
       "suggestedId": "copy-test-testcopy-0023",
       "expectedKind": "error",
       "nonLiteral": [
-        "Query"
+        "Query",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -414,7 +438,9 @@
       "suggestedId": "copy-test-testcopy-0025",
       "expectedKind": "error",
       "nonLiteral": [
-        "Query"
+        "Query",
+        "NonMigratable",
+        "PriorExpectedError"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -450,7 +476,9 @@
       "suggestedId": "copy-test-testcopy-0027",
       "expectedKind": "error",
       "nonLiteral": [
-        "Query"
+        "Query",
+        "NonMigratable",
+        "PriorExpectedError"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
