@@ -1,6 +1,8 @@
-package _go
+package postgres16
 
 import (
+	. "github.com/dolthub/doltgresql/testing/go"
+
 	"testing"
 )
 

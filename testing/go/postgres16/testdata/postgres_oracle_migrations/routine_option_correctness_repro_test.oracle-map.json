@@ -1,8 +1,8 @@
 {
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map routine_option_correctness_repro_test.go --force-postgres-oracle",
-  "sourceFile": "testing/go/routine_option_correctness_repro_test.go",
+  "sourceFile": "testing/go/postgres16/routine_option_correctness_repro_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -14,8 +14,8 @@
   ],
   "assertions": [
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro#0001",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro#0001",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro",
       "ordinal": 1,
       "scriptName": "function definitions reject invalid planner options",
       "oracle": "postgres",
@@ -31,8 +31,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro#0002",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro#0002",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro",
       "ordinal": 2,
       "scriptName": "function definitions reject invalid planner options",
       "oracle": "postgres",
@@ -48,8 +48,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro#0003",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro#0003",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro",
       "ordinal": 3,
       "scriptName": "function definitions reject invalid planner options",
       "oracle": "postgres",
@@ -65,8 +65,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro#0004",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro#0004",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro",
       "ordinal": 4,
       "scriptName": "function definitions reject invalid planner options",
       "oracle": "postgres",
@@ -82,8 +82,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionNullInputOptionsGuard#0001",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionNullInputOptionsGuard",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateFunctionNullInputOptionsGuard#0001",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateFunctionNullInputOptionsGuard",
       "ordinal": 1,
       "scriptName": "CREATE FUNCTION null-input options control strict execution",
       "oracle": "postgres",
@@ -104,8 +104,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionNullInputOptionsGuard#0002",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionNullInputOptionsGuard",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateFunctionNullInputOptionsGuard#0002",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateFunctionNullInputOptionsGuard",
       "ordinal": 2,
       "scriptName": "CREATE FUNCTION null-input options control strict execution",
       "oracle": "postgres",
@@ -126,8 +126,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateOrReplaceFunctionNullInputOptionsGuard#0001",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateOrReplaceFunctionNullInputOptionsGuard",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateOrReplaceFunctionNullInputOptionsGuard#0001",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateOrReplaceFunctionNullInputOptionsGuard",
       "ordinal": 1,
       "scriptName": "CREATE OR REPLACE FUNCTION updates null-input behavior",
       "oracle": "postgres",
@@ -148,8 +148,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateOrReplaceFunctionNullInputOptionsGuard#0002",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateOrReplaceFunctionNullInputOptionsGuard",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateOrReplaceFunctionNullInputOptionsGuard#0002",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateOrReplaceFunctionNullInputOptionsGuard",
       "ordinal": 2,
       "scriptName": "CREATE OR REPLACE FUNCTION updates null-input behavior",
       "oracle": "postgres",
@@ -164,8 +164,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateOrReplaceFunctionNullInputOptionsGuard#0003",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateOrReplaceFunctionNullInputOptionsGuard",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateOrReplaceFunctionNullInputOptionsGuard#0003",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateOrReplaceFunctionNullInputOptionsGuard",
       "ordinal": 3,
       "scriptName": "CREATE OR REPLACE FUNCTION updates null-input behavior",
       "oracle": "postgres",
@@ -186,8 +186,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionSecurityDefinerCatalogRepro#0001",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionSecurityDefinerCatalogRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateFunctionSecurityDefinerCatalogRepro#0001",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateFunctionSecurityDefinerCatalogRepro",
       "ordinal": 1,
       "scriptName": "CREATE FUNCTION security option persists in pg_proc",
       "oracle": "postgres",
@@ -219,8 +219,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateProcedureSecurityDefinerCatalogRepro#0001",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateProcedureSecurityDefinerCatalogRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateProcedureSecurityDefinerCatalogRepro#0001",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateProcedureSecurityDefinerCatalogRepro",
       "ordinal": 1,
       "scriptName": "CREATE PROCEDURE security option persists in pg_proc",
       "oracle": "postgres",
@@ -252,8 +252,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionOutArgumentCatalogRepro#0001",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionOutArgumentCatalogRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateFunctionOutArgumentCatalogRepro#0001",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateFunctionOutArgumentCatalogRepro",
       "ordinal": 1,
       "scriptName": "CREATE FUNCTION OUT arguments populate pg_proc metadata",
       "oracle": "postgres",
@@ -280,8 +280,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateProcedureOutArgumentCatalogRepro#0001",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateProcedureOutArgumentCatalogRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateProcedureOutArgumentCatalogRepro#0001",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateProcedureOutArgumentCatalogRepro",
       "ordinal": 1,
       "scriptName": "CREATE PROCEDURE OUT arguments populate pg_proc metadata",
       "oracle": "postgres",
@@ -308,8 +308,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionVolatilityCatalogRepro#0001",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionVolatilityCatalogRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateFunctionVolatilityCatalogRepro#0001",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateFunctionVolatilityCatalogRepro",
       "ordinal": 1,
       "scriptName": "CREATE FUNCTION volatility option persists in pg_proc",
       "oracle": "postgres",
@@ -349,8 +349,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionLeakproofCatalogRepro#0001",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionLeakproofCatalogRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateFunctionLeakproofCatalogRepro#0001",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateFunctionLeakproofCatalogRepro",
       "ordinal": 1,
       "scriptName": "CREATE FUNCTION leakproof option persists in pg_proc",
       "oracle": "postgres",
@@ -382,8 +382,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionParallelCatalogRepro#0001",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionParallelCatalogRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateFunctionParallelCatalogRepro#0001",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateFunctionParallelCatalogRepro",
       "ordinal": 1,
       "scriptName": "CREATE FUNCTION parallel option persists in pg_proc",
       "oracle": "postgres",
@@ -423,8 +423,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionCostRowsCatalogRepro#0001",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionCostRowsCatalogRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateFunctionCostRowsCatalogRepro#0001",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateFunctionCostRowsCatalogRepro",
       "ordinal": 1,
       "scriptName": "CREATE FUNCTION cost and rows options persist in pg_proc",
       "oracle": "postgres",
@@ -462,8 +462,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionVolatilityOptionRepro#0001",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionVolatilityOptionRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionVolatilityOptionRepro#0001",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionVolatilityOptionRepro",
       "ordinal": 1,
       "scriptName": "ALTER FUNCTION volatility changes pg_proc",
       "oracle": "postgres",
@@ -478,8 +478,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionVolatilityOptionRepro#0002",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionVolatilityOptionRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionVolatilityOptionRepro#0002",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionVolatilityOptionRepro",
       "ordinal": 2,
       "scriptName": "ALTER FUNCTION volatility changes pg_proc",
       "oracle": "postgres",
@@ -500,8 +500,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionSecurityDefinerOptionRepro#0001",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionSecurityDefinerOptionRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionSecurityDefinerOptionRepro#0001",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionSecurityDefinerOptionRepro",
       "ordinal": 1,
       "scriptName": "ALTER FUNCTION security option changes pg_proc",
       "oracle": "postgres",
@@ -516,8 +516,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionSecurityDefinerOptionRepro#0002",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionSecurityDefinerOptionRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionSecurityDefinerOptionRepro#0002",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionSecurityDefinerOptionRepro",
       "ordinal": 2,
       "scriptName": "ALTER FUNCTION security option changes pg_proc",
       "oracle": "postgres",
@@ -538,8 +538,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionLeakproofOptionRepro#0001",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionLeakproofOptionRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionLeakproofOptionRepro#0001",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionLeakproofOptionRepro",
       "ordinal": 1,
       "scriptName": "ALTER FUNCTION leakproof option changes pg_proc",
       "oracle": "postgres",
@@ -554,8 +554,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionLeakproofOptionRepro#0002",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionLeakproofOptionRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionLeakproofOptionRepro#0002",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionLeakproofOptionRepro",
       "ordinal": 2,
       "scriptName": "ALTER FUNCTION leakproof option changes pg_proc",
       "oracle": "postgres",
@@ -576,8 +576,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionCostRowsOptionRepro#0001",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionCostRowsOptionRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionCostRowsOptionRepro#0001",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionCostRowsOptionRepro",
       "ordinal": 1,
       "scriptName": "ALTER FUNCTION cost and rows options change pg_proc",
       "oracle": "postgres",
@@ -592,8 +592,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionCostRowsOptionRepro#0002",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionCostRowsOptionRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionCostRowsOptionRepro#0002",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionCostRowsOptionRepro",
       "ordinal": 2,
       "scriptName": "ALTER FUNCTION cost and rows options change pg_proc",
       "oracle": "postgres",
@@ -617,8 +617,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionSetConfigOptionRepro#0001",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionSetConfigOptionRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionSetConfigOptionRepro#0001",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionSetConfigOptionRepro",
       "ordinal": 1,
       "scriptName": "ALTER FUNCTION SET updates pg_proc proconfig",
       "oracle": "postgres",
@@ -639,8 +639,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterProcedureSetConfigOptionRepro#0001",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterProcedureSetConfigOptionRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterProcedureSetConfigOptionRepro#0001",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterProcedureSetConfigOptionRepro",
       "ordinal": 1,
       "scriptName": "ALTER PROCEDURE SET updates pg_proc proconfig",
       "oracle": "postgres",
@@ -661,8 +661,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateProcedurePgProcCatalogRowRepro#0001",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateProcedurePgProcCatalogRowRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateProcedurePgProcCatalogRowRepro#0001",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestCreateProcedurePgProcCatalogRowRepro",
       "ordinal": 1,
       "scriptName": "CREATE PROCEDURE creates pg_proc row",
       "oracle": "postgres",
@@ -686,8 +686,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionNullInputOptionRepro#0001",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionNullInputOptionRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionNullInputOptionRepro#0001",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionNullInputOptionRepro",
       "ordinal": 1,
       "scriptName": "ALTER FUNCTION STRICT changes null-input behavior",
       "oracle": "postgres",
@@ -708,8 +708,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionNullInputOptionRepro#0002",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionNullInputOptionRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionNullInputOptionRepro#0002",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionNullInputOptionRepro",
       "ordinal": 2,
       "scriptName": "ALTER FUNCTION STRICT changes null-input behavior",
       "oracle": "postgres",
@@ -724,8 +724,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionNullInputOptionRepro#0003",
-      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionNullInputOptionRepro",
+      "key": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionNullInputOptionRepro#0003",
+      "source": "testing/go/postgres16/routine_option_correctness_repro_test.go:TestAlterFunctionNullInputOptionRepro",
       "ordinal": 3,
       "scriptName": "ALTER FUNCTION STRICT changes null-input behavior",
       "oracle": "postgres",

@@ -1,8 +1,8 @@
 {
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map transaction_mode_repro_test.go --force-postgres-oracle",
-  "sourceFile": "testing/go/transaction_mode_repro_test.go",
+  "sourceFile": "testing/go/postgres16/transaction_mode_repro_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -14,8 +14,8 @@
   ],
   "assertions": [
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestSetTransactionReadOnlyPreventsWritesRepro#0001",
-      "source": "testing/go/transaction_mode_repro_test.go:TestSetTransactionReadOnlyPreventsWritesRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestSetTransactionReadOnlyPreventsWritesRepro#0001",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestSetTransactionReadOnlyPreventsWritesRepro",
       "ordinal": 1,
       "scriptName": "SET TRANSACTION READ ONLY prevents writes",
       "oracle": "postgres",
@@ -31,8 +31,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyPreventsWritesRepro#0001",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyPreventsWritesRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyPreventsWritesRepro#0001",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyPreventsWritesRepro",
       "ordinal": 1,
       "scriptName": "START TRANSACTION READ ONLY prevents writes",
       "oracle": "postgres",
@@ -48,8 +48,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestSetTransactionReadWriteAfterQueryRejectedRepro#0001",
-      "source": "testing/go/transaction_mode_repro_test.go:TestSetTransactionReadWriteAfterQueryRejectedRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestSetTransactionReadWriteAfterQueryRejectedRepro#0001",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestSetTransactionReadWriteAfterQueryRejectedRepro",
       "ordinal": 1,
       "scriptName": "SET TRANSACTION READ WRITE rejects after query",
       "oracle": "postgres",
@@ -70,8 +70,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestSetTransactionReadWriteAfterQueryRejectedRepro#0002",
-      "source": "testing/go/transaction_mode_repro_test.go:TestSetTransactionReadWriteAfterQueryRejectedRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestSetTransactionReadWriteAfterQueryRejectedRepro#0002",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestSetTransactionReadWriteAfterQueryRejectedRepro",
       "ordinal": 2,
       "scriptName": "SET TRANSACTION READ WRITE rejects after query",
       "oracle": "postgres",
@@ -87,8 +87,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro#0001",
-      "source": "testing/go/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro#0001",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro",
       "ordinal": 1,
       "scriptName": "SET TRANSACTION DEFERRABLE rejects after query",
       "oracle": "postgres",
@@ -109,8 +109,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro#0002",
-      "source": "testing/go/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro#0002",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro",
       "ordinal": 2,
       "scriptName": "SET TRANSACTION DEFERRABLE rejects after query",
       "oracle": "postgres",
@@ -126,8 +126,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro#0003",
-      "source": "testing/go/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro#0003",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro",
       "ordinal": 3,
       "scriptName": "SET TRANSACTION NOT DEFERRABLE rejects after query",
       "oracle": "postgres",
@@ -148,8 +148,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro#0004",
-      "source": "testing/go/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro#0004",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro",
       "ordinal": 4,
       "scriptName": "SET TRANSACTION NOT DEFERRABLE rejects after query",
       "oracle": "postgres",
@@ -165,8 +165,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsUpdateRepro#0001",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsUpdateRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsUpdateRepro#0001",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsUpdateRepro",
       "ordinal": 1,
       "scriptName": "START TRANSACTION READ ONLY rejects UPDATE",
       "oracle": "postgres",
@@ -182,8 +182,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsUpdateRepro#0002",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsUpdateRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsUpdateRepro#0002",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsUpdateRepro",
       "ordinal": 2,
       "scriptName": "START TRANSACTION READ ONLY rejects UPDATE",
       "oracle": "postgres",
@@ -207,8 +207,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDeleteRepro#0001",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDeleteRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDeleteRepro#0001",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDeleteRepro",
       "ordinal": 1,
       "scriptName": "START TRANSACTION READ ONLY rejects DELETE",
       "oracle": "postgres",
@@ -224,8 +224,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDeleteRepro#0002",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDeleteRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDeleteRepro#0002",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDeleteRepro",
       "ordinal": 2,
       "scriptName": "START TRANSACTION READ ONLY rejects DELETE",
       "oracle": "postgres",
@@ -246,8 +246,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsTruncateRepro#0001",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsTruncateRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsTruncateRepro#0001",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsTruncateRepro",
       "ordinal": 1,
       "scriptName": "START TRANSACTION READ ONLY rejects TRUNCATE",
       "oracle": "postgres",
@@ -263,8 +263,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsTruncateRepro#0002",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsTruncateRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsTruncateRepro#0002",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsTruncateRepro",
       "ordinal": 2,
       "scriptName": "START TRANSACTION READ ONLY rejects TRUNCATE",
       "oracle": "postgres",
@@ -290,8 +290,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateTableRepro#0001",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateTableRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateTableRepro#0001",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateTableRepro",
       "ordinal": 1,
       "scriptName": "START TRANSACTION READ ONLY rejects CREATE TABLE",
       "oracle": "postgres",
@@ -307,8 +307,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateTableRepro#0002",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateTableRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateTableRepro#0002",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateTableRepro",
       "ordinal": 2,
       "scriptName": "START TRANSACTION READ ONLY rejects CREATE TABLE",
       "oracle": "postgres",
@@ -324,8 +324,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsAlterTableRepro#0001",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsAlterTableRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsAlterTableRepro#0001",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsAlterTableRepro",
       "ordinal": 1,
       "scriptName": "START TRANSACTION READ ONLY rejects ALTER TABLE",
       "oracle": "postgres",
@@ -341,8 +341,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsAlterTableRepro#0002",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsAlterTableRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsAlterTableRepro#0002",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsAlterTableRepro",
       "ordinal": 2,
       "scriptName": "START TRANSACTION READ ONLY rejects ALTER TABLE",
       "oracle": "postgres",
@@ -358,8 +358,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropTableRepro#0001",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropTableRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropTableRepro#0001",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropTableRepro",
       "ordinal": 1,
       "scriptName": "START TRANSACTION READ ONLY rejects DROP TABLE",
       "oracle": "postgres",
@@ -375,8 +375,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropTableRepro#0002",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropTableRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropTableRepro#0002",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropTableRepro",
       "ordinal": 2,
       "scriptName": "START TRANSACTION READ ONLY rejects DROP TABLE",
       "oracle": "postgres",
@@ -397,8 +397,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateIndexRepro#0001",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateIndexRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateIndexRepro#0001",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateIndexRepro",
       "ordinal": 1,
       "scriptName": "START TRANSACTION READ ONLY rejects CREATE INDEX",
       "oracle": "postgres",
@@ -414,8 +414,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateIndexRepro#0002",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateIndexRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateIndexRepro#0002",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateIndexRepro",
       "ordinal": 2,
       "scriptName": "START TRANSACTION READ ONLY rejects CREATE INDEX",
       "oracle": "postgres",
@@ -430,8 +430,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropIndexRepro#0001",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropIndexRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropIndexRepro#0001",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropIndexRepro",
       "ordinal": 1,
       "scriptName": "START TRANSACTION READ ONLY rejects DROP INDEX",
       "oracle": "postgres",
@@ -447,8 +447,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropIndexRepro#0002",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropIndexRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropIndexRepro#0002",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropIndexRepro",
       "ordinal": 2,
       "scriptName": "START TRANSACTION READ ONLY rejects DROP INDEX",
       "oracle": "postgres",
@@ -474,8 +474,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateSequenceRepro#0001",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateSequenceRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateSequenceRepro#0001",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateSequenceRepro",
       "ordinal": 1,
       "scriptName": "START TRANSACTION READ ONLY rejects CREATE SEQUENCE",
       "oracle": "postgres",
@@ -491,8 +491,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateSequenceRepro#0002",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateSequenceRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateSequenceRepro#0002",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateSequenceRepro",
       "ordinal": 2,
       "scriptName": "START TRANSACTION READ ONLY rejects CREATE SEQUENCE",
       "oracle": "postgres",
@@ -508,8 +508,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropSequenceRepro#0001",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropSequenceRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropSequenceRepro#0001",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropSequenceRepro",
       "ordinal": 1,
       "scriptName": "START TRANSACTION READ ONLY rejects DROP SEQUENCE",
       "oracle": "postgres",
@@ -525,8 +525,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropSequenceRepro#0002",
-      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropSequenceRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropSequenceRepro#0002",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropSequenceRepro",
       "ordinal": 2,
       "scriptName": "START TRANSACTION READ ONLY rejects DROP SEQUENCE",
       "oracle": "postgres",
@@ -547,8 +547,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestDefaultTransactionReadOnlyPreventsWritesRepro#0001",
-      "source": "testing/go/transaction_mode_repro_test.go:TestDefaultTransactionReadOnlyPreventsWritesRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestDefaultTransactionReadOnlyPreventsWritesRepro#0001",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestDefaultTransactionReadOnlyPreventsWritesRepro",
       "ordinal": 1,
       "scriptName": "default_transaction_read_only prevents writes",
       "oracle": "postgres",
@@ -564,8 +564,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestBeginReadWriteOverridesDefaultReadOnlyGuard#0001",
-      "source": "testing/go/transaction_mode_repro_test.go:TestBeginReadWriteOverridesDefaultReadOnlyGuard",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestBeginReadWriteOverridesDefaultReadOnlyGuard#0001",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestBeginReadWriteOverridesDefaultReadOnlyGuard",
       "ordinal": 1,
       "scriptName": "BEGIN READ WRITE overrides default_transaction_read_only",
       "oracle": "postgres",
@@ -586,8 +586,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestReadOnlyTransactionRejectsPersistentSequenceNextvalRepro#0001",
-      "source": "testing/go/transaction_mode_repro_test.go:TestReadOnlyTransactionRejectsPersistentSequenceNextvalRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestReadOnlyTransactionRejectsPersistentSequenceNextvalRepro#0001",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestReadOnlyTransactionRejectsPersistentSequenceNextvalRepro",
       "ordinal": 1,
       "scriptName": "read-only transaction rejects persistent sequence nextval",
       "oracle": "postgres",
@@ -603,8 +603,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestReadOnlyTransactionRejectsPersistentSequenceSetvalRepro#0001",
-      "source": "testing/go/transaction_mode_repro_test.go:TestReadOnlyTransactionRejectsPersistentSequenceSetvalRepro",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestReadOnlyTransactionRejectsPersistentSequenceSetvalRepro#0001",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestReadOnlyTransactionRejectsPersistentSequenceSetvalRepro",
       "ordinal": 1,
       "scriptName": "read-only transaction rejects persistent sequence setval",
       "oracle": "postgres",
@@ -620,8 +620,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/transaction_mode_repro_test.go:TestReadOnlyTransactionAllowsTemporaryTableWritesGuard#0001",
-      "source": "testing/go/transaction_mode_repro_test.go:TestReadOnlyTransactionAllowsTemporaryTableWritesGuard",
+      "key": "testing/go/postgres16/transaction_mode_repro_test.go:TestReadOnlyTransactionAllowsTemporaryTableWritesGuard#0001",
+      "source": "testing/go/postgres16/transaction_mode_repro_test.go:TestReadOnlyTransactionAllowsTemporaryTableWritesGuard",
       "ordinal": 1,
       "scriptName": "read-only transaction allows temporary table writes",
       "oracle": "postgres",

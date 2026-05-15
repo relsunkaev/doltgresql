@@ -1,8 +1,8 @@
 {
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map role_membership_repro_test.go --force-postgres-oracle",
-  "sourceFile": "testing/go/role_membership_repro_test.go",
+  "sourceFile": "testing/go/postgres16/role_membership_repro_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -14,8 +14,8 @@
   ],
   "assertions": [
     {
-      "key": "testing/go/role_membership_repro_test.go:TestGrantRoleRejectsCircularMembershipRepro#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestGrantRoleRejectsCircularMembershipRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestGrantRoleRejectsCircularMembershipRepro#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestGrantRoleRejectsCircularMembershipRepro",
       "ordinal": 1,
       "scriptName": "GRANT role rejects circular membership",
       "oracle": "postgres",
@@ -31,8 +31,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestGrantSuperuserRoleDoesNotTripCircularMembershipRepro#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestGrantSuperuserRoleDoesNotTripCircularMembershipRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestGrantSuperuserRoleDoesNotTripCircularMembershipRepro#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestGrantSuperuserRoleDoesNotTripCircularMembershipRepro",
       "ordinal": 1,
       "scriptName": "GRANT superuser role does not trip circular membership guard",
       "oracle": "postgres",
@@ -56,8 +56,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestGrantRoleRejectsSelfMembershipRepro#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestGrantRoleRejectsSelfMembershipRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestGrantRoleRejectsSelfMembershipRepro#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestGrantRoleRejectsSelfMembershipRepro",
       "ordinal": 1,
       "scriptName": "GRANT role rejects self membership",
       "oracle": "postgres",
@@ -73,8 +73,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestGrantRolePopulatesPgAuthMembersRepro#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestGrantRolePopulatesPgAuthMembersRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestGrantRolePopulatesPgAuthMembersRepro#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestGrantRolePopulatesPgAuthMembersRepro",
       "ordinal": 1,
       "scriptName": "GRANT role populates pg_auth_members",
       "oracle": "postgres",
@@ -101,8 +101,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestGrantRolePopulatesPgGroupRepro#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestGrantRolePopulatesPgGroupRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestGrantRolePopulatesPgGroupRepro#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestGrantRolePopulatesPgGroupRepro",
       "ordinal": 1,
       "scriptName": "GRANT role populates pg_group",
       "oracle": "postgres",
@@ -126,8 +126,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestCreateRoleInRoleGrantsMembershipRepro#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestCreateRoleInRoleGrantsMembershipRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestCreateRoleInRoleGrantsMembershipRepro#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestCreateRoleInRoleGrantsMembershipRepro",
       "ordinal": 1,
       "scriptName": "CREATE ROLE IN ROLE grants membership",
       "oracle": "postgres",
@@ -148,8 +148,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestCreateRoleRoleOptionAddsMembersRepro#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestCreateRoleRoleOptionAddsMembersRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestCreateRoleRoleOptionAddsMembersRepro#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestCreateRoleRoleOptionAddsMembersRepro",
       "ordinal": 1,
       "scriptName": "CREATE ROLE ROLE option adds members",
       "oracle": "postgres",
@@ -170,8 +170,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestCreateRoleAdminOptionGrantsAdminMembershipRepro#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestCreateRoleAdminOptionGrantsAdminMembershipRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestCreateRoleAdminOptionGrantsAdminMembershipRepro#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestCreateRoleAdminOptionGrantsAdminMembershipRepro",
       "ordinal": 1,
       "scriptName": "CREATE ROLE ADMIN option grants delegable membership",
       "oracle": "postgres",
@@ -192,8 +192,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestGrantRoleRequiresAdminOptionGuard#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestGrantRoleRequiresAdminOptionGuard",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestGrantRoleRequiresAdminOptionGuard#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestGrantRoleRequiresAdminOptionGuard",
       "ordinal": 1,
       "scriptName": "GRANT role requires admin option",
       "oracle": "postgres",
@@ -210,8 +210,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestRevokeRoleOnlyRemovesNamedGrantorMembershipRepro#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestRevokeRoleOnlyRemovesNamedGrantorMembershipRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeRoleOnlyRemovesNamedGrantorMembershipRepro#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeRoleOnlyRemovesNamedGrantorMembershipRepro",
       "ordinal": 1,
       "scriptName": "REVOKE role keeps other grantors' memberships",
       "oracle": "postgres",
@@ -232,8 +232,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionOnlyRemovesNamedGrantorMembershipRepro#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionOnlyRemovesNamedGrantorMembershipRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeAdminOptionOnlyRemovesNamedGrantorMembershipRepro#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeAdminOptionOnlyRemovesNamedGrantorMembershipRepro",
       "ordinal": 1,
       "scriptName": "REVOKE ADMIN OPTION keeps other grantors' memberships",
       "oracle": "postgres",
@@ -254,8 +254,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionRestrictRejectsDependentRoleGrantRepro#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionRestrictRejectsDependentRoleGrantRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeAdminOptionRestrictRejectsDependentRoleGrantRepro#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeAdminOptionRestrictRejectsDependentRoleGrantRepro",
       "ordinal": 1,
       "scriptName": "REVOKE ADMIN OPTION RESTRICT rejects dependent role grant",
       "oracle": "postgres",
@@ -271,8 +271,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionRestrictRejectsDependentRoleGrantRepro#0002",
-      "source": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionRestrictRejectsDependentRoleGrantRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeAdminOptionRestrictRejectsDependentRoleGrantRepro#0002",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeAdminOptionRestrictRejectsDependentRoleGrantRepro",
       "ordinal": 2,
       "scriptName": "REVOKE ADMIN OPTION RESTRICT rejects dependent role grant",
       "oracle": "postgres",
@@ -293,8 +293,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionCascadeRemovesDependentRoleGrantRepro#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionCascadeRemovesDependentRoleGrantRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeAdminOptionCascadeRemovesDependentRoleGrantRepro#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeAdminOptionCascadeRemovesDependentRoleGrantRepro",
       "ordinal": 1,
       "scriptName": "REVOKE ADMIN OPTION CASCADE removes dependent role grant",
       "oracle": "postgres",
@@ -315,8 +315,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionCascadeRemovesDependentRoleGrantRepro#0002",
-      "source": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionCascadeRemovesDependentRoleGrantRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeAdminOptionCascadeRemovesDependentRoleGrantRepro#0002",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeAdminOptionCascadeRemovesDependentRoleGrantRepro",
       "ordinal": 2,
       "scriptName": "REVOKE ADMIN OPTION CASCADE removes dependent role grant",
       "oracle": "postgres",
@@ -337,8 +337,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionCascadeRemovesDependentRoleGrantRepro#0003",
-      "source": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionCascadeRemovesDependentRoleGrantRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeAdminOptionCascadeRemovesDependentRoleGrantRepro#0003",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeAdminOptionCascadeRemovesDependentRoleGrantRepro",
       "ordinal": 3,
       "scriptName": "REVOKE ADMIN OPTION CASCADE removes dependent role grant",
       "oracle": "postgres",
@@ -355,8 +355,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestRevokeRoleRestrictRejectsDependentRoleGrantRepro#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestRevokeRoleRestrictRejectsDependentRoleGrantRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeRoleRestrictRejectsDependentRoleGrantRepro#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeRoleRestrictRejectsDependentRoleGrantRepro",
       "ordinal": 1,
       "scriptName": "REVOKE role RESTRICT rejects dependent role grant",
       "oracle": "postgres",
@@ -372,8 +372,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestRevokeRoleRestrictRejectsDependentRoleGrantRepro#0002",
-      "source": "testing/go/role_membership_repro_test.go:TestRevokeRoleRestrictRejectsDependentRoleGrantRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeRoleRestrictRejectsDependentRoleGrantRepro#0002",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeRoleRestrictRejectsDependentRoleGrantRepro",
       "ordinal": 2,
       "scriptName": "REVOKE role RESTRICT rejects dependent role grant",
       "oracle": "postgres",
@@ -394,8 +394,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestRevokeRoleRestrictRejectsDependentRoleGrantRepro#0003",
-      "source": "testing/go/role_membership_repro_test.go:TestRevokeRoleRestrictRejectsDependentRoleGrantRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeRoleRestrictRejectsDependentRoleGrantRepro#0003",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeRoleRestrictRejectsDependentRoleGrantRepro",
       "ordinal": 3,
       "scriptName": "REVOKE role RESTRICT rejects dependent role grant",
       "oracle": "postgres",
@@ -416,8 +416,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestRevokeRoleCascadeRemovesDependentRoleGrantRepro#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestRevokeRoleCascadeRemovesDependentRoleGrantRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeRoleCascadeRemovesDependentRoleGrantRepro#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeRoleCascadeRemovesDependentRoleGrantRepro",
       "ordinal": 1,
       "scriptName": "REVOKE role CASCADE removes dependent role grant",
       "oracle": "postgres",
@@ -438,8 +438,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestRevokeRoleCascadeRemovesDependentRoleGrantRepro#0002",
-      "source": "testing/go/role_membership_repro_test.go:TestRevokeRoleCascadeRemovesDependentRoleGrantRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeRoleCascadeRemovesDependentRoleGrantRepro#0002",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeRoleCascadeRemovesDependentRoleGrantRepro",
       "ordinal": 2,
       "scriptName": "REVOKE role CASCADE removes dependent role grant",
       "oracle": "postgres",
@@ -460,8 +460,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestRevokeRoleCascadeRemovesDependentRoleGrantRepro#0003",
-      "source": "testing/go/role_membership_repro_test.go:TestRevokeRoleCascadeRemovesDependentRoleGrantRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeRoleCascadeRemovesDependentRoleGrantRepro#0003",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestRevokeRoleCascadeRemovesDependentRoleGrantRepro",
       "ordinal": 3,
       "scriptName": "REVOKE role CASCADE removes dependent role grant",
       "oracle": "postgres",
@@ -478,8 +478,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestInheritedRolePrivilegesApplyGuard#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestInheritedRolePrivilegesApplyGuard",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestInheritedRolePrivilegesApplyGuard#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestInheritedRolePrivilegesApplyGuard",
       "ordinal": 1,
       "scriptName": "inherited role privileges apply by default",
       "oracle": "postgres",
@@ -504,8 +504,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestGrantRoleWithInheritFalseDoesNotApplyPrivilegesRepro#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestGrantRoleWithInheritFalseDoesNotApplyPrivilegesRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestGrantRoleWithInheritFalseDoesNotApplyPrivilegesRepro#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestGrantRoleWithInheritFalseDoesNotApplyPrivilegesRepro",
       "ordinal": 1,
       "scriptName": "GRANT role WITH INHERIT FALSE blocks inherited privileges",
       "oracle": "postgres",
@@ -522,8 +522,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestGrantRoleWithInheritFalsePopulatesPgAuthMembersRepro#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestGrantRoleWithInheritFalsePopulatesPgAuthMembersRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestGrantRoleWithInheritFalsePopulatesPgAuthMembersRepro#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestGrantRoleWithInheritFalsePopulatesPgAuthMembersRepro",
       "ordinal": 1,
       "scriptName": "GRANT role WITH INHERIT FALSE records membership options",
       "oracle": "postgres",
@@ -547,8 +547,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestGrantRoleWithSetFalsePopulatesPgAuthMembersRepro#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestGrantRoleWithSetFalsePopulatesPgAuthMembersRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestGrantRoleWithSetFalsePopulatesPgAuthMembersRepro#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestGrantRoleWithSetFalsePopulatesPgAuthMembersRepro",
       "ordinal": 1,
       "scriptName": "GRANT role WITH SET FALSE records membership options",
       "oracle": "postgres",
@@ -572,8 +572,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestNoInheritRolePrivilegesDoNotApplyGuard#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestNoInheritRolePrivilegesDoNotApplyGuard",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestNoInheritRolePrivilegesDoNotApplyGuard#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestNoInheritRolePrivilegesDoNotApplyGuard",
       "ordinal": 1,
       "scriptName": "NOINHERIT role privileges do not apply by default",
       "oracle": "postgres",
@@ -590,8 +590,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestPgHasRoleSupportsRoleNameArgumentsRepro#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestPgHasRoleSupportsRoleNameArgumentsRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestPgHasRoleSupportsRoleNameArgumentsRepro#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestPgHasRoleSupportsRoleNameArgumentsRepro",
       "ordinal": 1,
       "scriptName": "pg_has_role supports role-name arguments",
       "oracle": "postgres",
@@ -612,8 +612,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestPgHasRoleSupportsRoleNameArgumentsRepro#0002",
-      "source": "testing/go/role_membership_repro_test.go:TestPgHasRoleSupportsRoleNameArgumentsRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestPgHasRoleSupportsRoleNameArgumentsRepro#0002",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestPgHasRoleSupportsRoleNameArgumentsRepro",
       "ordinal": 2,
       "scriptName": "pg_has_role supports role-name arguments",
       "oracle": "postgres",
@@ -634,8 +634,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestPgHasRoleSupportsRoleNameArgumentsRepro#0003",
-      "source": "testing/go/role_membership_repro_test.go:TestPgHasRoleSupportsRoleNameArgumentsRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestPgHasRoleSupportsRoleNameArgumentsRepro#0003",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestPgHasRoleSupportsRoleNameArgumentsRepro",
       "ordinal": 3,
       "scriptName": "pg_has_role supports role-name arguments",
       "oracle": "postgres",
@@ -656,8 +656,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestPgHasRoleUsageHonorsIntermediateNoInheritRepro#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestPgHasRoleUsageHonorsIntermediateNoInheritRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestPgHasRoleUsageHonorsIntermediateNoInheritRepro#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestPgHasRoleUsageHonorsIntermediateNoInheritRepro",
       "ordinal": 1,
       "scriptName": "pg_has_role usage honors intermediate NOINHERIT roles",
       "oracle": "postgres",
@@ -678,8 +678,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestPgHasRoleUsageHonorsIntermediateNoInheritRepro#0002",
-      "source": "testing/go/role_membership_repro_test.go:TestPgHasRoleUsageHonorsIntermediateNoInheritRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestPgHasRoleUsageHonorsIntermediateNoInheritRepro#0002",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestPgHasRoleUsageHonorsIntermediateNoInheritRepro",
       "ordinal": 2,
       "scriptName": "pg_has_role usage honors intermediate NOINHERIT roles",
       "oracle": "postgres",
@@ -700,8 +700,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/role_membership_repro_test.go:TestSetRoleUsesGrantedRolePrivilegesRepro#0001",
-      "source": "testing/go/role_membership_repro_test.go:TestSetRoleUsesGrantedRolePrivilegesRepro",
+      "key": "testing/go/postgres16/role_membership_repro_test.go:TestSetRoleUsesGrantedRolePrivilegesRepro#0001",
+      "source": "testing/go/postgres16/role_membership_repro_test.go:TestSetRoleUsesGrantedRolePrivilegesRepro",
       "ordinal": 1,
       "scriptName": "SET ROLE uses granted role privileges",
       "oracle": "postgres",

@@ -1,8 +1,8 @@
 {
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map subqueries_test.go --force-postgres-oracle",
-  "sourceFile": "testing/go/subqueries_test.go",
+  "sourceFile": "testing/go/postgres16/subqueries_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -14,8 +14,8 @@
   ],
   "assertions": [
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueries#0001",
-      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueries#0001",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueries",
       "ordinal": 1,
       "scriptName": "Subselect",
       "oracle": "postgres",
@@ -39,8 +39,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueries#0002",
-      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueries#0002",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueries",
       "ordinal": 2,
       "scriptName": "Subselect",
       "oracle": "postgres",
@@ -56,8 +56,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueries#0003",
-      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueries#0003",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueries",
       "ordinal": 3,
       "scriptName": "Subselect",
       "oracle": "postgres",
@@ -73,8 +73,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueries#0004",
-      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueries#0004",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueries",
       "ordinal": 4,
       "scriptName": "IN",
       "oracle": "postgres",
@@ -98,8 +98,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueries#0005",
-      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueries#0005",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueries",
       "ordinal": 5,
       "scriptName": "IN",
       "oracle": "postgres",
@@ -123,8 +123,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueries#0006",
-      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueries#0006",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueries",
       "ordinal": 6,
       "scriptName": "IN",
       "oracle": "postgres",
@@ -158,8 +158,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueries#0007",
-      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueries#0007",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueries",
       "ordinal": 7,
       "scriptName": "IN",
       "oracle": "postgres",
@@ -189,8 +189,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueries#0008",
-      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueries#0008",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueries",
       "ordinal": 8,
       "scriptName": "IN",
       "oracle": "postgres",
@@ -231,8 +231,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueries#0009",
-      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueries#0009",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueries",
       "ordinal": 9,
       "scriptName": "IN",
       "oracle": "postgres",
@@ -263,8 +263,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueries#0010",
-      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueries#0010",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueries",
       "ordinal": 10,
       "scriptName": "IN",
       "oracle": "postgres",
@@ -295,8 +295,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueries#0011",
-      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueries#0011",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueries",
       "ordinal": 11,
       "scriptName": "subquery equality",
       "oracle": "postgres",
@@ -323,8 +323,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueries#0012",
-      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueries#0012",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueries",
       "ordinal": 12,
       "scriptName": "subquery equality",
       "oracle": "postgres",
@@ -345,8 +345,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueries#0013",
-      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueries#0013",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueries",
       "ordinal": 13,
       "scriptName": "subquery equality",
       "oracle": "postgres",
@@ -367,8 +367,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueries#0014",
-      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueries#0014",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueries",
       "ordinal": 14,
       "scriptName": "subquery equality",
       "oracle": "postgres",
@@ -389,8 +389,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueries#0015",
-      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueries#0015",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueries",
       "ordinal": 15,
       "scriptName": "array flatten",
       "oracle": "postgres",
@@ -411,8 +411,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueries#0016",
-      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueries#0016",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueries",
       "ordinal": 16,
       "scriptName": "array flatten",
       "oracle": "postgres",
@@ -433,8 +433,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueries#0017",
-      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueries#0017",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueries",
       "ordinal": 17,
       "scriptName": "array flatten",
       "oracle": "postgres",
@@ -455,8 +455,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueries#0018",
-      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueries#0018",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueries",
       "ordinal": 18,
       "scriptName": "array flatten",
       "oracle": "postgres",
@@ -472,8 +472,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueries#0019",
-      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueries#0019",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueries",
       "ordinal": 19,
       "scriptName": "array flatten",
       "oracle": "postgres",
@@ -494,8 +494,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueries#0020",
-      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueries#0020",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueries",
       "ordinal": 20,
       "scriptName": "array flatten",
       "oracle": "postgres",
@@ -516,8 +516,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueryJoins#0001",
-      "source": "testing/go/subqueries_test.go:TestSubqueryJoins",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueryJoins#0001",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueryJoins",
       "ordinal": 1,
       "scriptName": "subquery join",
       "oracle": "postgres",
@@ -543,8 +543,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueryJoins#0002",
-      "source": "testing/go/subqueries_test.go:TestSubqueryJoins",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueryJoins#0002",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueryJoins",
       "ordinal": 2,
       "scriptName": "subquery join with aliased column",
       "oracle": "postgres",
@@ -570,8 +570,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestSubqueryJoins#0003",
-      "source": "testing/go/subqueries_test.go:TestSubqueryJoins",
+      "key": "testing/go/postgres16/subqueries_test.go:TestSubqueryJoins#0003",
+      "source": "testing/go/postgres16/subqueries_test.go:TestSubqueryJoins",
       "ordinal": 3,
       "scriptName": "subquery join with column renames",
       "oracle": "postgres",
@@ -597,8 +597,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestExistSubquery#0001",
-      "source": "testing/go/subqueries_test.go:TestExistSubquery",
+      "key": "testing/go/postgres16/subqueries_test.go:TestExistSubquery#0001",
+      "source": "testing/go/postgres16/subqueries_test.go:TestExistSubquery",
       "ordinal": 1,
       "scriptName": "basic case",
       "oracle": "postgres",
@@ -629,8 +629,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestExistSubquery#0002",
-      "source": "testing/go/subqueries_test.go:TestExistSubquery",
+      "key": "testing/go/postgres16/subqueries_test.go:TestExistSubquery#0002",
+      "source": "testing/go/postgres16/subqueries_test.go:TestExistSubquery",
       "ordinal": 2,
       "scriptName": "basic case",
       "oracle": "postgres",
@@ -645,8 +645,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestExistSubquery#0003",
-      "source": "testing/go/subqueries_test.go:TestExistSubquery",
+      "key": "testing/go/postgres16/subqueries_test.go:TestExistSubquery#0003",
+      "source": "testing/go/postgres16/subqueries_test.go:TestExistSubquery",
       "ordinal": 3,
       "scriptName": "basic case",
       "oracle": "postgres",
@@ -667,8 +667,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestExistSubquery#0004",
-      "source": "testing/go/subqueries_test.go:TestExistSubquery",
+      "key": "testing/go/postgres16/subqueries_test.go:TestExistSubquery#0004",
+      "source": "testing/go/postgres16/subqueries_test.go:TestExistSubquery",
       "ordinal": 4,
       "scriptName": "basic case",
       "oracle": "postgres",
@@ -683,8 +683,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestExistSubquery#0005",
-      "source": "testing/go/subqueries_test.go:TestExistSubquery",
+      "key": "testing/go/postgres16/subqueries_test.go:TestExistSubquery#0005",
+      "source": "testing/go/postgres16/subqueries_test.go:TestExistSubquery",
       "ordinal": 5,
       "scriptName": "basic case",
       "oracle": "postgres",
@@ -699,8 +699,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/subqueries_test.go:TestExistSubquery#0006",
-      "source": "testing/go/subqueries_test.go:TestExistSubquery",
+      "key": "testing/go/postgres16/subqueries_test.go:TestExistSubquery#0006",
+      "source": "testing/go/postgres16/subqueries_test.go:TestExistSubquery",
       "ordinal": 6,
       "scriptName": "basic case",
       "oracle": "postgres",

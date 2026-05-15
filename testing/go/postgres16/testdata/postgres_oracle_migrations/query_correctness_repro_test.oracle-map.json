@@ -1,8 +1,8 @@
 {
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map query_correctness_repro_test.go --force-postgres-oracle",
-  "sourceFile": "testing/go/query_correctness_repro_test.go",
+  "sourceFile": "testing/go/postgres16/query_correctness_repro_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -14,8 +14,8 @@
   ],
   "assertions": [
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestValuesQuotedCaseDistinctAggregateColumnsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestValuesQuotedCaseDistinctAggregateColumnsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestValuesQuotedCaseDistinctAggregateColumnsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestValuesQuotedCaseDistinctAggregateColumnsRepro",
       "ordinal": 1,
       "scriptName": "quoted VALUES aliases remain case-distinct inside aggregates",
       "oracle": "postgres",
@@ -42,8 +42,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestValuesQuotedCaseDistinctAggregateColumnsRepro#0002",
-      "source": "testing/go/query_correctness_repro_test.go:TestValuesQuotedCaseDistinctAggregateColumnsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestValuesQuotedCaseDistinctAggregateColumnsRepro#0002",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestValuesQuotedCaseDistinctAggregateColumnsRepro",
       "ordinal": 2,
       "scriptName": "quoted VALUES aliases remain case-distinct inside aggregates",
       "oracle": "postgres",
@@ -70,8 +70,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestWholeRowReferenceAllowsDuplicateFieldNamesRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestWholeRowReferenceAllowsDuplicateFieldNamesRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestWholeRowReferenceAllowsDuplicateFieldNamesRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestWholeRowReferenceAllowsDuplicateFieldNamesRepro",
       "ordinal": 1,
       "scriptName": "whole-row references allow duplicate field names",
       "oracle": "postgres",
@@ -95,8 +95,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestNumericPowerFractionalExponentRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestNumericPowerFractionalExponentRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestNumericPowerFractionalExponentRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestNumericPowerFractionalExponentRepro",
       "ordinal": 1,
       "scriptName": "numeric power supports fractional exponents",
       "oracle": "postgres",
@@ -117,8 +117,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestSqrtNumericMatchesPostgresPrecisionRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestSqrtNumericMatchesPostgresPrecisionRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestSqrtNumericMatchesPostgresPrecisionRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestSqrtNumericMatchesPostgresPrecisionRepro",
       "ordinal": 1,
       "scriptName": "numeric sqrt preserves PostgreSQL precision",
       "oracle": "postgres",
@@ -139,8 +139,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestSqrtNumericMatchesPostgresPrecisionRepro#0002",
-      "source": "testing/go/query_correctness_repro_test.go:TestSqrtNumericMatchesPostgresPrecisionRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestSqrtNumericMatchesPostgresPrecisionRepro#0002",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestSqrtNumericMatchesPostgresPrecisionRepro",
       "ordinal": 2,
       "scriptName": "numeric sqrt preserves PostgreSQL precision",
       "oracle": "postgres",
@@ -161,8 +161,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestNumericLogarithmsPreserveSmallDeltasRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestNumericLogarithmsPreserveSmallDeltasRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestNumericLogarithmsPreserveSmallDeltasRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestNumericLogarithmsPreserveSmallDeltasRepro",
       "ordinal": 1,
       "scriptName": "numeric logarithms preserve small deltas",
       "oracle": "postgres",
@@ -183,8 +183,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestNumericLogarithmsPreserveSmallDeltasRepro#0002",
-      "source": "testing/go/query_correctness_repro_test.go:TestNumericLogarithmsPreserveSmallDeltasRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestNumericLogarithmsPreserveSmallDeltasRepro#0002",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestNumericLogarithmsPreserveSmallDeltasRepro",
       "ordinal": 2,
       "scriptName": "numeric logarithms preserve small deltas",
       "oracle": "postgres",
@@ -205,8 +205,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestNumericLogarithmsPreserveSmallDeltasRepro#0003",
-      "source": "testing/go/query_correctness_repro_test.go:TestNumericLogarithmsPreserveSmallDeltasRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestNumericLogarithmsPreserveSmallDeltasRepro#0003",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestNumericLogarithmsPreserveSmallDeltasRepro",
       "ordinal": 3,
       "scriptName": "numeric logarithms preserve small deltas",
       "oracle": "postgres",
@@ -227,8 +227,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestWidthBucketReversedBoundsUnderflowGuard#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestWidthBucketReversedBoundsUnderflowGuard",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestWidthBucketReversedBoundsUnderflowGuard#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestWidthBucketReversedBoundsUnderflowGuard",
       "ordinal": 1,
       "scriptName": "width_bucket reversed bounds underflow",
       "oracle": "postgres",
@@ -249,8 +249,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestWidthBucketReversedBoundsUnderflowGuard#0002",
-      "source": "testing/go/query_correctness_repro_test.go:TestWidthBucketReversedBoundsUnderflowGuard",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestWidthBucketReversedBoundsUnderflowGuard#0002",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestWidthBucketReversedBoundsUnderflowGuard",
       "ordinal": 2,
       "scriptName": "width_bucket reversed bounds underflow",
       "oracle": "postgres",
@@ -271,8 +271,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestCaseExpressionShortCircuitsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestCaseExpressionShortCircuitsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestCaseExpressionShortCircuitsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestCaseExpressionShortCircuitsRepro",
       "ordinal": 1,
       "scriptName": "CASE expression short-circuits unselected branches",
       "oracle": "postgres",
@@ -293,8 +293,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestCoalesceShortCircuitsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestCoalesceShortCircuitsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestCoalesceShortCircuitsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestCoalesceShortCircuitsRepro",
       "ordinal": 1,
       "scriptName": "COALESCE short-circuits after first non-null argument",
       "oracle": "postgres",
@@ -315,8 +315,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestNumericToIntegerCastRoundsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestNumericToIntegerCastRoundsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestNumericToIntegerCastRoundsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestNumericToIntegerCastRoundsRepro",
       "ordinal": 1,
       "scriptName": "numeric to int4 casts round instead of truncate",
       "oracle": "postgres",
@@ -343,8 +343,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestArrayToStringUsesRoundedIntegerCastsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestArrayToStringUsesRoundedIntegerCastsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestArrayToStringUsesRoundedIntegerCastsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestArrayToStringUsesRoundedIntegerCastsRepro",
       "ordinal": 1,
       "scriptName": "array element integer casts round numeric inputs",
       "oracle": "postgres",
@@ -365,8 +365,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestByteaArrayCastToTextUsesPostgresEscapingRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestByteaArrayCastToTextUsesPostgresEscapingRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestByteaArrayCastToTextUsesPostgresEscapingRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestByteaArrayCastToTextUsesPostgresEscapingRepro",
       "ordinal": 1,
       "scriptName": "bytea array cast to text array uses PostgreSQL escaping",
       "oracle": "postgres",
@@ -387,8 +387,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestByteaArrayCastToTextUsesPostgresEscapingRepro#0002",
-      "source": "testing/go/query_correctness_repro_test.go:TestByteaArrayCastToTextUsesPostgresEscapingRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestByteaArrayCastToTextUsesPostgresEscapingRepro#0002",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestByteaArrayCastToTextUsesPostgresEscapingRepro",
       "ordinal": 2,
       "scriptName": "bytea array cast to text array uses PostgreSQL escaping",
       "oracle": "postgres",
@@ -409,8 +409,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestArrayAggOverArrayColumnReturnsHigherDimensionalArrayRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestArrayAggOverArrayColumnReturnsHigherDimensionalArrayRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestArrayAggOverArrayColumnReturnsHigherDimensionalArrayRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestArrayAggOverArrayColumnReturnsHigherDimensionalArrayRepro",
       "ordinal": 1,
       "scriptName": "array_agg over array input returns higher-dimensional array",
       "oracle": "postgres",
@@ -431,8 +431,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestIntegerPrimaryKeyComparedToFractionalFloatRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestIntegerPrimaryKeyComparedToFractionalFloatRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestIntegerPrimaryKeyComparedToFractionalFloatRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestIntegerPrimaryKeyComparedToFractionalFloatRepro",
       "ordinal": 1,
       "scriptName": "integer primary key comparison with fractional float literal",
       "oracle": "postgres",
@@ -456,8 +456,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestIntegerPrimaryKeyComparedToFractionalFloatRepro#0002",
-      "source": "testing/go/query_correctness_repro_test.go:TestIntegerPrimaryKeyComparedToFractionalFloatRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestIntegerPrimaryKeyComparedToFractionalFloatRepro#0002",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestIntegerPrimaryKeyComparedToFractionalFloatRepro",
       "ordinal": 2,
       "scriptName": "integer primary key comparison with fractional float literal",
       "oracle": "postgres",
@@ -486,8 +486,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestFloatInListMatchesExplicitFloatCastRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestFloatInListMatchesExplicitFloatCastRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestFloatInListMatchesExplicitFloatCastRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestFloatInListMatchesExplicitFloatCastRepro",
       "ordinal": 1,
       "scriptName": "float IN-list comparison with explicit float cast",
       "oracle": "postgres",
@@ -508,8 +508,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestIntersectAllPreservesDuplicateCountsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestIntersectAllPreservesDuplicateCountsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestIntersectAllPreservesDuplicateCountsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestIntersectAllPreservesDuplicateCountsRepro",
       "ordinal": 1,
       "scriptName": "INTERSECT ALL preserves duplicate counts",
       "oracle": "postgres",
@@ -540,8 +540,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestExceptAllPreservesDuplicateCountsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestExceptAllPreservesDuplicateCountsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestExceptAllPreservesDuplicateCountsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestExceptAllPreservesDuplicateCountsRepro",
       "ordinal": 1,
       "scriptName": "EXCEPT ALL preserves duplicate counts",
       "oracle": "postgres",
@@ -572,8 +572,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestInSubqueryReturnsBooleanForEmptyResultRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestInSubqueryReturnsBooleanForEmptyResultRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestInSubqueryReturnsBooleanForEmptyResultRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestInSubqueryReturnsBooleanForEmptyResultRepro",
       "ordinal": 1,
       "scriptName": "IN subquery returns boolean false for empty result",
       "oracle": "postgres",
@@ -594,8 +594,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestAnySubqueryRejectsMultipleColumnsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestAnySubqueryRejectsMultipleColumnsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestAnySubqueryRejectsMultipleColumnsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestAnySubqueryRejectsMultipleColumnsRepro",
       "ordinal": 1,
       "scriptName": "ANY subquery rejects multiple columns",
       "oracle": "postgres",
@@ -611,8 +611,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestAllSubqueryRejectsMultipleColumnsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestAllSubqueryRejectsMultipleColumnsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestAllSubqueryRejectsMultipleColumnsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestAllSubqueryRejectsMultipleColumnsRepro",
       "ordinal": 1,
       "scriptName": "ALL subquery rejects multiple columns",
       "oracle": "postgres",
@@ -628,8 +628,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestInSubqueryRejectsMultipleColumnsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestInSubqueryRejectsMultipleColumnsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestInSubqueryRejectsMultipleColumnsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestInSubqueryRejectsMultipleColumnsRepro",
       "ordinal": 1,
       "scriptName": "IN subquery rejects multiple columns",
       "oracle": "postgres",
@@ -645,8 +645,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRowInSubqueryAcceptsMultipleColumnsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestRowInSubqueryAcceptsMultipleColumnsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRowInSubqueryAcceptsMultipleColumnsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRowInSubqueryAcceptsMultipleColumnsRepro",
       "ordinal": 1,
       "scriptName": "row IN subquery accepts matching multiple columns",
       "oracle": "postgres",
@@ -667,8 +667,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRowInSubqueryAcceptsMultipleColumnsRepro#0002",
-      "source": "testing/go/query_correctness_repro_test.go:TestRowInSubqueryAcceptsMultipleColumnsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRowInSubqueryAcceptsMultipleColumnsRepro#0002",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRowInSubqueryAcceptsMultipleColumnsRepro",
       "ordinal": 2,
       "scriptName": "row IN subquery accepts matching multiple columns",
       "oracle": "postgres",
@@ -689,8 +689,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRowConstructorExpandsTableAliasStarRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestRowConstructorExpandsTableAliasStarRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRowConstructorExpandsTableAliasStarRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRowConstructorExpandsTableAliasStarRepro",
       "ordinal": 1,
       "scriptName": "ROW constructor expands table alias star",
       "oracle": "postgres",
@@ -716,8 +716,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestTableAliasCompositeFieldSelectionGuard#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestTableAliasCompositeFieldSelectionGuard",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestTableAliasCompositeFieldSelectionGuard#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestTableAliasCompositeFieldSelectionGuard",
       "ordinal": 1,
       "scriptName": "table alias composite field selection",
       "oracle": "postgres",
@@ -743,8 +743,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestInSubqueryCrossTypeEqualityRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestInSubqueryCrossTypeEqualityRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestInSubqueryCrossTypeEqualityRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestInSubqueryCrossTypeEqualityRepro",
       "ordinal": 1,
       "scriptName": "IN subquery cross-type equality",
       "oracle": "postgres",
@@ -765,8 +765,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestInSubqueryCrossTypeEqualityRepro#0002",
-      "source": "testing/go/query_correctness_repro_test.go:TestInSubqueryCrossTypeEqualityRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestInSubqueryCrossTypeEqualityRepro#0002",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestInSubqueryCrossTypeEqualityRepro",
       "ordinal": 2,
       "scriptName": "IN subquery cross-type equality",
       "oracle": "postgres",
@@ -787,8 +787,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestInSubqueryCrossTypeEqualityRepro#0003",
-      "source": "testing/go/query_correctness_repro_test.go:TestInSubqueryCrossTypeEqualityRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestInSubqueryCrossTypeEqualityRepro#0003",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestInSubqueryCrossTypeEqualityRepro",
       "ordinal": 3,
       "scriptName": "IN subquery cross-type equality",
       "oracle": "postgres",
@@ -809,8 +809,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestScalarSubqueryEqualityGuard#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestScalarSubqueryEqualityGuard",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestScalarSubqueryEqualityGuard#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestScalarSubqueryEqualityGuard",
       "ordinal": 1,
       "scriptName": "scalar subquery equality",
       "oracle": "postgres",
@@ -837,8 +837,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro",
       "ordinal": 1,
       "scriptName": "INSERT scalar subquery rejects multiple rows",
       "oracle": "postgres",
@@ -854,8 +854,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro#0002",
-      "source": "testing/go/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro#0002",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro",
       "ordinal": 2,
       "scriptName": "INSERT scalar subquery rejects multiple rows",
       "oracle": "postgres",
@@ -879,8 +879,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro#0003",
-      "source": "testing/go/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro#0003",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro",
       "ordinal": 3,
       "scriptName": "UPDATE scalar subquery rejects multiple rows",
       "oracle": "postgres",
@@ -896,8 +896,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro#0004",
-      "source": "testing/go/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro#0004",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro",
       "ordinal": 4,
       "scriptName": "UPDATE scalar subquery rejects multiple rows",
       "oracle": "postgres",
@@ -918,8 +918,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRowIsNotDistinctFromHandlesNullsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestRowIsNotDistinctFromHandlesNullsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRowIsNotDistinctFromHandlesNullsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRowIsNotDistinctFromHandlesNullsRepro",
       "ordinal": 1,
       "scriptName": "row IS NOT DISTINCT FROM handles NULL fields",
       "oracle": "postgres",
@@ -940,8 +940,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRowIsNotDistinctFromHandlesNullsRepro#0002",
-      "source": "testing/go/query_correctness_repro_test.go:TestRowIsNotDistinctFromHandlesNullsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRowIsNotDistinctFromHandlesNullsRepro#0002",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRowIsNotDistinctFromHandlesNullsRepro",
       "ordinal": 2,
       "scriptName": "row IS NOT DISTINCT FROM handles NULL fields",
       "oracle": "postgres",
@@ -962,8 +962,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsUseLexicographicSemanticsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsUseLexicographicSemanticsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRowValueComparisonsUseLexicographicSemanticsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRowValueComparisonsUseLexicographicSemanticsRepro",
       "ordinal": 1,
       "scriptName": "row value comparisons use lexicographic semantics",
       "oracle": "postgres",
@@ -984,8 +984,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsUseLexicographicSemanticsRepro#0002",
-      "source": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsUseLexicographicSemanticsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRowValueComparisonsUseLexicographicSemanticsRepro#0002",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRowValueComparisonsUseLexicographicSemanticsRepro",
       "ordinal": 2,
       "scriptName": "row value comparisons use lexicographic semantics",
       "oracle": "postgres",
@@ -1006,8 +1006,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsUseLexicographicSemanticsRepro#0003",
-      "source": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsUseLexicographicSemanticsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRowValueComparisonsUseLexicographicSemanticsRepro#0003",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRowValueComparisonsUseLexicographicSemanticsRepro",
       "ordinal": 3,
       "scriptName": "row value comparisons use lexicographic semantics",
       "oracle": "postgres",
@@ -1028,8 +1028,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro",
       "ordinal": 1,
       "scriptName": "row value comparisons handle NULL fields",
       "oracle": "postgres",
@@ -1050,8 +1050,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro#0002",
-      "source": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro#0002",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro",
       "ordinal": 2,
       "scriptName": "row value comparisons handle NULL fields",
       "oracle": "postgres",
@@ -1072,8 +1072,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro#0003",
-      "source": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro#0003",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro",
       "ordinal": 3,
       "scriptName": "row value comparisons handle NULL fields",
       "oracle": "postgres",
@@ -1094,8 +1094,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro#0004",
-      "source": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro#0004",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro",
       "ordinal": 4,
       "scriptName": "row value comparisons handle NULL fields",
       "oracle": "postgres",
@@ -1116,8 +1116,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestOrderByUsesPostgresNullOrderingRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestOrderByUsesPostgresNullOrderingRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestOrderByUsesPostgresNullOrderingRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestOrderByUsesPostgresNullOrderingRepro",
       "ordinal": 1,
       "scriptName": "ORDER BY uses PostgreSQL NULL ordering defaults",
       "oracle": "postgres",
@@ -1157,8 +1157,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestOrderByUsesPostgresNullOrderingRepro#0002",
-      "source": "testing/go/query_correctness_repro_test.go:TestOrderByUsesPostgresNullOrderingRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestOrderByUsesPostgresNullOrderingRepro#0002",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestOrderByUsesPostgresNullOrderingRepro",
       "ordinal": 2,
       "scriptName": "ORDER BY uses PostgreSQL NULL ordering defaults",
       "oracle": "postgres",
@@ -1198,8 +1198,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestOrderByUsingOperatorRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestOrderByUsingOperatorRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestOrderByUsingOperatorRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestOrderByUsingOperatorRepro",
       "ordinal": 1,
       "scriptName": "ORDER BY USING operator controls sort direction",
       "oracle": "postgres",
@@ -1235,8 +1235,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestOrderByUsingOperatorRepro#0002",
-      "source": "testing/go/query_correctness_repro_test.go:TestOrderByUsingOperatorRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestOrderByUsingOperatorRepro#0002",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestOrderByUsingOperatorRepro",
       "ordinal": 2,
       "scriptName": "ORDER BY USING operator controls sort direction",
       "oracle": "postgres",
@@ -1272,8 +1272,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro",
       "ordinal": 1,
       "scriptName": "varchar comparison with blank-padded char",
       "oracle": "postgres",
@@ -1294,8 +1294,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro#0002",
-      "source": "testing/go/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro#0002",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro",
       "ordinal": 2,
       "scriptName": "varchar comparison with blank-padded char",
       "oracle": "postgres",
@@ -1316,8 +1316,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro#0003",
-      "source": "testing/go/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro#0003",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro",
       "ordinal": 3,
       "scriptName": "varchar comparison with blank-padded char",
       "oracle": "postgres",
@@ -1338,8 +1338,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro",
       "ordinal": 1,
       "scriptName": "varchar column comparison with blank-padded char",
       "oracle": "postgres",
@@ -1360,8 +1360,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro#0002",
-      "source": "testing/go/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro#0002",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro",
       "ordinal": 2,
       "scriptName": "varchar column comparison with blank-padded char",
       "oracle": "postgres",
@@ -1382,8 +1382,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro#0003",
-      "source": "testing/go/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro#0003",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro",
       "ordinal": 3,
       "scriptName": "varchar column comparison with blank-padded char",
       "oracle": "postgres",
@@ -1409,8 +1409,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestBooleanInPredicateWithIndexedBooleanColumnRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestBooleanInPredicateWithIndexedBooleanColumnRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestBooleanInPredicateWithIndexedBooleanColumnRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestBooleanInPredicateWithIndexedBooleanColumnRepro",
       "ordinal": 1,
       "scriptName": "boolean IN predicate does not panic with boolean indexes present",
       "oracle": "postgres",
@@ -1431,8 +1431,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestBooleanInPredicateWithIndexedBooleanColumnRepro#0002",
-      "source": "testing/go/query_correctness_repro_test.go:TestBooleanInPredicateWithIndexedBooleanColumnRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestBooleanInPredicateWithIndexedBooleanColumnRepro#0002",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestBooleanInPredicateWithIndexedBooleanColumnRepro",
       "ordinal": 2,
       "scriptName": "boolean IN predicate does not panic with boolean indexes present",
       "oracle": "postgres",
@@ -1453,8 +1453,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestDistinctOnRequiresMatchingLeadingOrderByRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestDistinctOnRequiresMatchingLeadingOrderByRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestDistinctOnRequiresMatchingLeadingOrderByRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestDistinctOnRequiresMatchingLeadingOrderByRepro",
       "ordinal": 1,
       "scriptName": "DISTINCT ON requires matching leading ORDER BY expressions",
       "oracle": "postgres",
@@ -1470,8 +1470,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestFetchFirstWithTiesIncludesPeerRowsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestFetchFirstWithTiesIncludesPeerRowsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestFetchFirstWithTiesIncludesPeerRowsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestFetchFirstWithTiesIncludesPeerRowsRepro",
       "ordinal": 1,
       "scriptName": "FETCH FIRST WITH TIES includes peer rows",
       "oracle": "postgres",
@@ -1511,8 +1511,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestFetchFirstWithTiesIncludesPeerRowsRepro#0002",
-      "source": "testing/go/query_correctness_repro_test.go:TestFetchFirstWithTiesIncludesPeerRowsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestFetchFirstWithTiesIncludesPeerRowsRepro#0002",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestFetchFirstWithTiesIncludesPeerRowsRepro",
       "ordinal": 2,
       "scriptName": "FETCH FIRST WITH TIES includes peer rows",
       "oracle": "postgres",
@@ -1544,8 +1544,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestFetchFirstWithTiesIncludesPeerRowsRepro#0003",
-      "source": "testing/go/query_correctness_repro_test.go:TestFetchFirstWithTiesIncludesPeerRowsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestFetchFirstWithTiesIncludesPeerRowsRepro#0003",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestFetchFirstWithTiesIncludesPeerRowsRepro",
       "ordinal": 3,
       "scriptName": "FETCH FIRST WITH TIES includes peer rows",
       "oracle": "postgres",
@@ -1561,8 +1561,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestTableSampleSystemHundredReturnsAllRowsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestTableSampleSystemHundredReturnsAllRowsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestTableSampleSystemHundredReturnsAllRowsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestTableSampleSystemHundredReturnsAllRowsRepro",
       "ordinal": 1,
       "scriptName": "TABLESAMPLE SYSTEM 100 returns all rows",
       "oracle": "postgres",
@@ -1586,8 +1586,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRecursiveCteSearchClauseRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestRecursiveCteSearchClauseRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRecursiveCteSearchClauseRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRecursiveCteSearchClauseRepro",
       "ordinal": 1,
       "scriptName": "WITH RECURSIVE supports SEARCH clause",
       "oracle": "postgres",
@@ -1618,8 +1618,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRecursiveCteCycleClauseRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestRecursiveCteCycleClauseRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRecursiveCteCycleClauseRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRecursiveCteCycleClauseRepro",
       "ordinal": 1,
       "scriptName": "WITH RECURSIVE supports CYCLE clause",
       "oracle": "postgres",
@@ -1659,8 +1659,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestSelectCanProjectTableoidRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestSelectCanProjectTableoidRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestSelectCanProjectTableoidRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestSelectCanProjectTableoidRepro",
       "ordinal": 1,
       "scriptName": "SELECT can project tableoid",
       "oracle": "postgres",
@@ -1684,8 +1684,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRowsFromMultipleSetReturningFunctionsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestRowsFromMultipleSetReturningFunctionsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRowsFromMultipleSetReturningFunctionsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRowsFromMultipleSetReturningFunctionsRepro",
       "ordinal": 1,
       "scriptName": "ROWS FROM pads shorter set-returning functions",
       "oracle": "postgres",
@@ -1725,8 +1725,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestUnnestMultipleArraysPadsShorterInputsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestUnnestMultipleArraysPadsShorterInputsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestUnnestMultipleArraysPadsShorterInputsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestUnnestMultipleArraysPadsShorterInputsRepro",
       "ordinal": 1,
       "scriptName": "multi-array unnest pads shorter arrays",
       "oracle": "postgres",
@@ -1769,8 +1769,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestGenerateSeriesWithOrdinalityRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestGenerateSeriesWithOrdinalityRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestGenerateSeriesWithOrdinalityRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestGenerateSeriesWithOrdinalityRepro",
       "ordinal": 1,
       "scriptName": "generate_series supports WITH ORDINALITY",
       "oracle": "postgres",
@@ -1813,8 +1813,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestGenerateSeriesTimestampUnknownStepGuard#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestGenerateSeriesTimestampUnknownStepGuard",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestGenerateSeriesTimestampUnknownStepGuard#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestGenerateSeriesTimestampUnknownStepGuard",
       "ordinal": 1,
       "scriptName": "timestamp generate_series coerces unknown step to interval",
       "oracle": "postgres",
@@ -1850,8 +1850,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestWindowFrameExcludeCurrentRowRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestWindowFrameExcludeCurrentRowRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestWindowFrameExcludeCurrentRowRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestWindowFrameExcludeCurrentRowRepro",
       "ordinal": 1,
       "scriptName": "window frame EXCLUDE CURRENT ROW excludes current row",
       "oracle": "postgres",
@@ -1891,8 +1891,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestWindowFrameGroupsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestWindowFrameGroupsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestWindowFrameGroupsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestWindowFrameGroupsRepro",
       "ordinal": 1,
       "scriptName": "window frame GROUPS computes peer-group frame",
       "oracle": "postgres",
@@ -1940,8 +1940,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestWindowFrameExcludeGroupRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestWindowFrameExcludeGroupRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestWindowFrameExcludeGroupRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestWindowFrameExcludeGroupRepro",
       "ordinal": 1,
       "scriptName": "window frame EXCLUDE GROUP excludes peer group",
       "oracle": "postgres",
@@ -1989,8 +1989,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestWindowFrameExcludeTiesRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestWindowFrameExcludeTiesRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestWindowFrameExcludeTiesRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestWindowFrameExcludeTiesRepro",
       "ordinal": 1,
       "scriptName": "window frame EXCLUDE TIES excludes peer rows",
       "oracle": "postgres",
@@ -2038,8 +2038,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestWindowFrameRangeOffsetRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestWindowFrameRangeOffsetRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestWindowFrameRangeOffsetRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestWindowFrameRangeOffsetRepro",
       "ordinal": 1,
       "scriptName": "window frame RANGE offset computes value-distance frame",
       "oracle": "postgres",
@@ -2087,8 +2087,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestCumeDistWindowFunctionRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestCumeDistWindowFunctionRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestCumeDistWindowFunctionRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestCumeDistWindowFunctionRepro",
       "ordinal": 1,
       "scriptName": "cume_dist window function",
       "oracle": "postgres",
@@ -2136,8 +2136,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestNthValueWindowFunctionRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestNthValueWindowFunctionRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestNthValueWindowFunctionRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestNthValueWindowFunctionRepro",
       "ordinal": 1,
       "scriptName": "nth_value window function",
       "oracle": "postgres",
@@ -2177,8 +2177,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestWindowAggregateFilterReturnsNullForEmptyFrameRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestWindowAggregateFilterReturnsNullForEmptyFrameRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestWindowAggregateFilterReturnsNullForEmptyFrameRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestWindowAggregateFilterReturnsNullForEmptyFrameRepro",
       "ordinal": 1,
       "scriptName": "window aggregate FILTER returns NULL for empty filtered frame",
       "oracle": "postgres",
@@ -2226,8 +2226,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestAvgWindowAggregateFilterReturnsNullForEmptyFrameRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestAvgWindowAggregateFilterReturnsNullForEmptyFrameRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestAvgWindowAggregateFilterReturnsNullForEmptyFrameRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestAvgWindowAggregateFilterReturnsNullForEmptyFrameRepro",
       "ordinal": 1,
       "scriptName": "window avg FILTER returns NULL for empty filtered frame",
       "oracle": "postgres",
@@ -2270,8 +2270,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestBooleanAggregatesCanBeWindowFunctionsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestBooleanAggregatesCanBeWindowFunctionsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestBooleanAggregatesCanBeWindowFunctionsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestBooleanAggregatesCanBeWindowFunctionsRepro",
       "ordinal": 1,
       "scriptName": "boolean aggregates can be window functions",
       "oracle": "postgres",
@@ -2320,8 +2320,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestArrayAggCanBeWindowFunctionRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestArrayAggCanBeWindowFunctionRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestArrayAggCanBeWindowFunctionRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestArrayAggCanBeWindowFunctionRepro",
       "ordinal": 1,
       "scriptName": "array_agg can be a window function",
       "oracle": "postgres",
@@ -2361,8 +2361,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestLagLeadConstantOffsetAndDefaultRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestLagLeadConstantOffsetAndDefaultRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestLagLeadConstantOffsetAndDefaultRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestLagLeadConstantOffsetAndDefaultRepro",
       "ordinal": 1,
       "scriptName": "lag and lead accept constant offset and default",
       "oracle": "postgres",
@@ -2422,8 +2422,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestLagLeadDynamicOffsetRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestLagLeadDynamicOffsetRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestLagLeadDynamicOffsetRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestLagLeadDynamicOffsetRepro",
       "ordinal": 1,
       "scriptName": "lag and lead accept dynamic row offsets",
       "oracle": "postgres",
@@ -2483,8 +2483,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestNtileDynamicBucketCountRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestNtileDynamicBucketCountRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestNtileDynamicBucketCountRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestNtileDynamicBucketCountRepro",
       "ordinal": 1,
       "scriptName": "ntile accepts dynamic bucket count",
       "oracle": "postgres",
@@ -2535,8 +2535,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestCompositeStarArgumentToFunctionRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestCompositeStarArgumentToFunctionRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestCompositeStarArgumentToFunctionRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestCompositeStarArgumentToFunctionRepro",
       "ordinal": 1,
       "scriptName": "table star passes composite row to function argument",
       "oracle": "postgres",
@@ -2562,8 +2562,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestUuidEqualityAfterPrimaryKeyRewriteRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestUuidEqualityAfterPrimaryKeyRewriteRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestUuidEqualityAfterPrimaryKeyRewriteRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestUuidEqualityAfterPrimaryKeyRewriteRepro",
       "ordinal": 1,
       "scriptName": "UUID equality works after adding primary key",
       "oracle": "postgres",
@@ -2587,8 +2587,8 @@
       "cleanupProvided": true
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestSubstringForCountSyntaxRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestSubstringForCountSyntaxRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestSubstringForCountSyntaxRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestSubstringForCountSyntaxRepro",
       "ordinal": 1,
       "scriptName": "substring for count syntax",
       "oracle": "postgres",
@@ -2609,8 +2609,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestSubstringSimilarEscapeSyntaxRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestSubstringSimilarEscapeSyntaxRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestSubstringSimilarEscapeSyntaxRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestSubstringSimilarEscapeSyntaxRepro",
       "ordinal": 1,
       "scriptName": "substring similar escape syntax",
       "oracle": "postgres",
@@ -2631,8 +2631,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestSubstringSimilarEscapeSyntaxRepro#0002",
-      "source": "testing/go/query_correctness_repro_test.go:TestSubstringSimilarEscapeSyntaxRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestSubstringSimilarEscapeSyntaxRepro#0002",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestSubstringSimilarEscapeSyntaxRepro",
       "ordinal": 2,
       "scriptName": "substring similar escape syntax",
       "oracle": "postgres",
@@ -2653,8 +2653,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRegexpMatchesSupportedFlagsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestRegexpMatchesSupportedFlagsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRegexpMatchesSupportedFlagsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRegexpMatchesSupportedFlagsRepro",
       "ordinal": 1,
       "scriptName": "regexp_matches supports PostgreSQL regex flags",
       "oracle": "postgres",
@@ -2675,8 +2675,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRegexpMatchesSupportedFlagsRepro#0002",
-      "source": "testing/go/query_correctness_repro_test.go:TestRegexpMatchesSupportedFlagsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRegexpMatchesSupportedFlagsRepro#0002",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRegexpMatchesSupportedFlagsRepro",
       "ordinal": 2,
       "scriptName": "regexp_matches supports PostgreSQL regex flags",
       "oracle": "postgres",
@@ -2697,8 +2697,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRegexpReplaceReplacesMatchesRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestRegexpReplaceReplacesMatchesRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRegexpReplaceReplacesMatchesRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRegexpReplaceReplacesMatchesRepro",
       "ordinal": 1,
       "scriptName": "regexp_replace replaces matches",
       "oracle": "postgres",
@@ -2722,8 +2722,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRegexpSplitToArraySplitsTextRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestRegexpSplitToArraySplitsTextRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRegexpSplitToArraySplitsTextRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRegexpSplitToArraySplitsTextRepro",
       "ordinal": 1,
       "scriptName": "regexp_split_to_array splits text",
       "oracle": "postgres",
@@ -2744,8 +2744,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRegexpLikeReturnsBooleanRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestRegexpLikeReturnsBooleanRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRegexpLikeReturnsBooleanRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRegexpLikeReturnsBooleanRepro",
       "ordinal": 1,
       "scriptName": "regexp_like returns boolean",
       "oracle": "postgres",
@@ -2766,8 +2766,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRegexpCountCountsMatchesRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestRegexpCountCountsMatchesRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRegexpCountCountsMatchesRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRegexpCountCountsMatchesRepro",
       "ordinal": 1,
       "scriptName": "regexp_count counts matches",
       "oracle": "postgres",
@@ -2791,8 +2791,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRegexpSubstrReturnsMatchGuard#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestRegexpSubstrReturnsMatchGuard",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRegexpSubstrReturnsMatchGuard#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRegexpSubstrReturnsMatchGuard",
       "ordinal": 1,
       "scriptName": "regexp_substr returns match",
       "oracle": "postgres",
@@ -2813,8 +2813,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestRegexpInstrReturnsPositionGuard#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestRegexpInstrReturnsPositionGuard",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestRegexpInstrReturnsPositionGuard#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestRegexpInstrReturnsPositionGuard",
       "ordinal": 1,
       "scriptName": "regexp_instr returns position",
       "oracle": "postgres",
@@ -2838,8 +2838,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestConcatWsSkipsNullsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestConcatWsSkipsNullsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestConcatWsSkipsNullsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestConcatWsSkipsNullsRepro",
       "ordinal": 1,
       "scriptName": "concat_ws skips null arguments",
       "oracle": "postgres",
@@ -2866,8 +2866,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestFormatDynamicWidthRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestFormatDynamicWidthRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestFormatDynamicWidthRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestFormatDynamicWidthRepro",
       "ordinal": 1,
       "scriptName": "format dynamic width arguments",
       "oracle": "postgres",
@@ -2888,8 +2888,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestParseIdentSplitsQualifiedNamesRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestParseIdentSplitsQualifiedNamesRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestParseIdentSplitsQualifiedNamesRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestParseIdentSplitsQualifiedNamesRepro",
       "ordinal": 1,
       "scriptName": "parse_ident splits qualified identifiers",
       "oracle": "postgres",
@@ -2916,8 +2916,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestStringToTableSplitsRowsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestStringToTableSplitsRowsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestStringToTableSplitsRowsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestStringToTableSplitsRowsRepro",
       "ordinal": 1,
       "scriptName": "string_to_table splits text into rows",
       "oracle": "postgres",
@@ -2957,8 +2957,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestFunctionNamedArgumentNotationRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestFunctionNamedArgumentNotationRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestFunctionNamedArgumentNotationRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestFunctionNamedArgumentNotationRepro",
       "ordinal": 1,
       "scriptName": "named argument notation",
       "oracle": "postgres",
@@ -2982,8 +2982,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestCurrentCatalogColumnNameRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestCurrentCatalogColumnNameRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestCurrentCatalogColumnNameRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestCurrentCatalogColumnNameRepro",
       "ordinal": 1,
       "scriptName": "current_catalog column name",
       "oracle": "postgres",
@@ -3004,8 +3004,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestCurrentSchemaColumnNameRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestCurrentSchemaColumnNameRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestCurrentSchemaColumnNameRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestCurrentSchemaColumnNameRepro",
       "ordinal": 1,
       "scriptName": "current_schema column name",
       "oracle": "postgres",
@@ -3026,8 +3026,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestCurrentDatabaseFromFunctionGuard#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestCurrentDatabaseFromFunctionGuard",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestCurrentDatabaseFromFunctionGuard#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestCurrentDatabaseFromFunctionGuard",
       "ordinal": 1,
       "scriptName": "current_database function in FROM",
       "oracle": "postgres",
@@ -3048,8 +3048,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestCurrentCatalogFromExpressionGuard#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestCurrentCatalogFromExpressionGuard",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestCurrentCatalogFromExpressionGuard#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestCurrentCatalogFromExpressionGuard",
       "ordinal": 1,
       "scriptName": "current_catalog expression in FROM",
       "oracle": "postgres",
@@ -3070,8 +3070,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestCurrentSchemaFromFunctionGuard#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestCurrentSchemaFromFunctionGuard",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestCurrentSchemaFromFunctionGuard#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestCurrentSchemaFromFunctionGuard",
       "ordinal": 1,
       "scriptName": "current_schema function in FROM",
       "oracle": "postgres",
@@ -3092,8 +3092,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/query_correctness_repro_test.go:TestXmlWellFormedFunctionsRepro#0001",
-      "source": "testing/go/query_correctness_repro_test.go:TestXmlWellFormedFunctionsRepro",
+      "key": "testing/go/postgres16/query_correctness_repro_test.go:TestXmlWellFormedFunctionsRepro#0001",
+      "source": "testing/go/postgres16/query_correctness_repro_test.go:TestXmlWellFormedFunctionsRepro",
       "ordinal": 1,
       "scriptName": "XML well-formedness predicates",
       "oracle": "postgres",

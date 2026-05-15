@@ -1,8 +1,8 @@
 {
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map set_local_trigger_test.go --force-postgres-oracle",
-  "sourceFile": "testing/go/set_local_trigger_test.go",
+  "sourceFile": "testing/go/postgres16/set_local_trigger_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -14,8 +14,8 @@
   ],
   "assertions": [
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0001",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0001",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 1,
       "scriptName": "trigger reads current_setting set via SET LOCAL within the same transaction",
       "oracle": "postgres",
@@ -30,8 +30,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0002",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0002",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 2,
       "scriptName": "trigger reads current_setting set via SET LOCAL within the same transaction",
       "oracle": "postgres",
@@ -46,8 +46,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0003",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0003",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 3,
       "scriptName": "trigger reads current_setting set via SET LOCAL within the same transaction",
       "oracle": "postgres",
@@ -68,8 +68,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0004",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0004",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 4,
       "scriptName": "trigger reads current_setting set via SET LOCAL within the same transaction",
       "oracle": "postgres",
@@ -84,8 +84,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0005",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0005",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 5,
       "scriptName": "trigger reads current_setting set via SET LOCAL within the same transaction",
       "oracle": "postgres",
@@ -106,8 +106,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0006",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0006",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 6,
       "scriptName": "trigger reads current_setting set via SET LOCAL within the same transaction",
       "oracle": "postgres",
@@ -128,8 +128,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0007",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0007",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 7,
       "scriptName": "trigger reads value set via set_config(name, value, true)",
       "oracle": "postgres",
@@ -144,8 +144,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0008",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0008",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 8,
       "scriptName": "trigger reads value set via set_config(name, value, true)",
       "oracle": "postgres",
@@ -166,8 +166,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0009",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0009",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 9,
       "scriptName": "trigger reads value set via set_config(name, value, true)",
       "oracle": "postgres",
@@ -182,8 +182,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0010",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0010",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 10,
       "scriptName": "trigger reads value set via set_config(name, value, true)",
       "oracle": "postgres",
@@ -204,8 +204,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0011",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0011",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 11,
       "scriptName": "trigger reads value set via set_config(name, value, true)",
       "oracle": "postgres",
@@ -220,8 +220,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0012",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0012",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 12,
       "scriptName": "trigger reads value set via set_config(name, value, true)",
       "oracle": "postgres",
@@ -242,8 +242,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0013",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0013",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 13,
       "scriptName": "rollback discards the trigger-written audit row and reverts the GUC",
       "oracle": "postgres",
@@ -258,8 +258,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0014",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0014",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 14,
       "scriptName": "rollback discards the trigger-written audit row and reverts the GUC",
       "oracle": "postgres",
@@ -274,8 +274,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0015",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0015",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 15,
       "scriptName": "rollback discards the trigger-written audit row and reverts the GUC",
       "oracle": "postgres",
@@ -296,8 +296,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0016",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0016",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 16,
       "scriptName": "rollback discards the trigger-written audit row and reverts the GUC",
       "oracle": "postgres",
@@ -312,8 +312,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0017",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0017",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 17,
       "scriptName": "rollback discards the trigger-written audit row and reverts the GUC",
       "oracle": "postgres",
@@ -328,8 +328,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0018",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0018",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 18,
       "scriptName": "rollback discards the trigger-written audit row and reverts the GUC",
       "oracle": "postgres",
@@ -350,8 +350,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0019",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0019",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 19,
       "scriptName": "SET LOCAL inside a transaction restores the session-scope actor on COMMIT",
       "oracle": "postgres",
@@ -366,8 +366,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0020",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0020",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 20,
       "scriptName": "SET LOCAL inside a transaction restores the session-scope actor on COMMIT",
       "oracle": "postgres",
@@ -388,8 +388,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0021",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0021",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 21,
       "scriptName": "SET LOCAL inside a transaction restores the session-scope actor on COMMIT",
       "oracle": "postgres",
@@ -404,8 +404,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0022",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0022",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 22,
       "scriptName": "SET LOCAL inside a transaction restores the session-scope actor on COMMIT",
       "oracle": "postgres",
@@ -420,8 +420,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0023",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0023",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 23,
       "scriptName": "SET LOCAL inside a transaction restores the session-scope actor on COMMIT",
       "oracle": "postgres",
@@ -442,8 +442,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0024",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0024",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 24,
       "scriptName": "SET LOCAL inside a transaction restores the session-scope actor on COMMIT",
       "oracle": "postgres",
@@ -458,8 +458,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0025",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0025",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 25,
       "scriptName": "SET LOCAL inside a transaction restores the session-scope actor on COMMIT",
       "oracle": "postgres",
@@ -474,8 +474,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0026",
-      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "key": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0026",
+      "source": "testing/go/postgres16/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
       "ordinal": 26,
       "scriptName": "SET LOCAL inside a transaction restores the session-scope actor on COMMIT",
       "oracle": "postgres",

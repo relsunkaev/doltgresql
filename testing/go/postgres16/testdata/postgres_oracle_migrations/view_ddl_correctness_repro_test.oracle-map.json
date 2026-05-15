@@ -1,8 +1,8 @@
 {
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map view_ddl_correctness_repro_test.go --force-postgres-oracle",
-  "sourceFile": "testing/go/view_ddl_correctness_repro_test.go",
+  "sourceFile": "testing/go/postgres16/view_ddl_correctness_repro_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -14,8 +14,8 @@
   ],
   "assertions": [
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateTemporaryViewRoundTripRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateTemporaryViewRoundTripRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateTemporaryViewRoundTripRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateTemporaryViewRoundTripRepro",
       "ordinal": 1,
       "scriptName": "CREATE TEMPORARY VIEW round trips from temp schema",
       "oracle": "postgres",
@@ -36,8 +36,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateTemporaryViewRoundTripRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateTemporaryViewRoundTripRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateTemporaryViewRoundTripRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateTemporaryViewRoundTripRepro",
       "ordinal": 2,
       "scriptName": "CREATE TEMPORARY VIEW round trips from temp schema",
       "oracle": "postgres",
@@ -58,8 +58,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateRecursiveViewRoundTripRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateRecursiveViewRoundTripRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateRecursiveViewRoundTripRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateRecursiveViewRoundTripRepro",
       "ordinal": 1,
       "scriptName": "CREATE RECURSIVE VIEW evaluates recursive definition",
       "oracle": "postgres",
@@ -90,8 +90,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateViewFromOrderedUnionSubqueriesGuard#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateViewFromOrderedUnionSubqueriesGuard",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateViewFromOrderedUnionSubqueriesGuard#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateViewFromOrderedUnionSubqueriesGuard",
       "ordinal": 1,
       "scriptName": "CREATE VIEW from ordered UNION subqueries",
       "oracle": "postgres",
@@ -117,8 +117,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateViewTextDomainTypmodExposesCoercedValuesRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateViewTextDomainTypmodExposesCoercedValuesRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateViewTextDomainTypmodExposesCoercedValuesRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateViewTextDomainTypmodExposesCoercedValuesRepro",
       "ordinal": 1,
       "scriptName": "CREATE VIEW text domain typmod exposes coerced values",
       "oracle": "postgres",
@@ -154,8 +154,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateViewTextDomainTypmodExposesCoercedValuesRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateViewTextDomainTypmodExposesCoercedValuesRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateViewTextDomainTypmodExposesCoercedValuesRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateViewTextDomainTypmodExposesCoercedValuesRepro",
       "ordinal": 2,
       "scriptName": "CREATE VIEW text domain typmod exposes coerced values",
       "oracle": "postgres",
@@ -181,8 +181,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestAlterViewRenameToRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestAlterViewRenameToRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestAlterViewRenameToRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestAlterViewRenameToRepro",
       "ordinal": 1,
       "scriptName": "ALTER VIEW RENAME TO moves view name",
       "oracle": "postgres",
@@ -206,8 +206,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestAlterViewRenameToRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestAlterViewRenameToRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestAlterViewRenameToRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestAlterViewRenameToRepro",
       "ordinal": 2,
       "scriptName": "ALTER VIEW RENAME TO moves view name",
       "oracle": "postgres",
@@ -223,8 +223,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnRenameRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnRenameRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnRenameRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnRenameRepro",
       "ordinal": 1,
       "scriptName": "CREATE OR REPLACE VIEW rejects column rename",
       "oracle": "postgres",
@@ -240,8 +240,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnRenameRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnRenameRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnRenameRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnRenameRepro",
       "ordinal": 2,
       "scriptName": "CREATE OR REPLACE VIEW rejects column rename",
       "oracle": "postgres",
@@ -265,8 +265,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnTypeChangeRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnTypeChangeRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnTypeChangeRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnTypeChangeRepro",
       "ordinal": 1,
       "scriptName": "CREATE OR REPLACE VIEW rejects column type change",
       "oracle": "postgres",
@@ -282,8 +282,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnTypeChangeRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnTypeChangeRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnTypeChangeRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnTypeChangeRepro",
       "ordinal": 2,
       "scriptName": "CREATE OR REPLACE VIEW rejects column type change",
       "oracle": "postgres",
@@ -307,8 +307,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnDropRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnDropRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnDropRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnDropRepro",
       "ordinal": 1,
       "scriptName": "CREATE OR REPLACE VIEW rejects column drop",
       "oracle": "postgres",
@@ -324,8 +324,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnDropRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnDropRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnDropRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnDropRepro",
       "ordinal": 2,
       "scriptName": "CREATE OR REPLACE VIEW rejects column drop",
       "oracle": "postgres",
@@ -349,8 +349,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnReorderRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnReorderRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnReorderRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnReorderRepro",
       "ordinal": 1,
       "scriptName": "CREATE OR REPLACE VIEW rejects column reorder",
       "oracle": "postgres",
@@ -366,8 +366,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnReorderRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnReorderRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnReorderRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnReorderRepro",
       "ordinal": 2,
       "scriptName": "CREATE OR REPLACE VIEW rejects column reorder",
       "oracle": "postgres",
@@ -391,8 +391,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewAllowsAppendingColumnsGuard#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewAllowsAppendingColumnsGuard",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewAllowsAppendingColumnsGuard#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewAllowsAppendingColumnsGuard",
       "ordinal": 1,
       "scriptName": "CREATE OR REPLACE VIEW allows appending columns",
       "oracle": "postgres",
@@ -419,8 +419,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithDataGuard#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithDataGuard",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithDataGuard#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithDataGuard",
       "ordinal": 1,
       "scriptName": "CREATE MATERIALIZED VIEW WITH DATA populates rows",
       "oracle": "postgres",
@@ -452,8 +452,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimetzTypmodMaterializesRoundedValueRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimetzTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimetzTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimetzTypmodMaterializesRoundedValueRepro",
       "ordinal": 1,
       "scriptName": "CREATE MATERIALIZED VIEW timetz typmod materializes rounded value",
       "oracle": "postgres",
@@ -474,8 +474,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimetzTypmodMaterializesRoundedValueRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimetzTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimetzTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimetzTypmodMaterializesRoundedValueRepro",
       "ordinal": 2,
       "scriptName": "CREATE MATERIALIZED VIEW timetz typmod materializes rounded value",
       "oracle": "postgres",
@@ -496,8 +496,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimeTypmodMaterializesRoundedValueGuard#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimeTypmodMaterializesRoundedValueGuard",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimeTypmodMaterializesRoundedValueGuard#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimeTypmodMaterializesRoundedValueGuard",
       "ordinal": 1,
       "scriptName": "CREATE MATERIALIZED VIEW time typmod materializes rounded value",
       "oracle": "postgres",
@@ -518,8 +518,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimeTypmodMaterializesRoundedValueGuard#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimeTypmodMaterializesRoundedValueGuard",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimeTypmodMaterializesRoundedValueGuard#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimeTypmodMaterializesRoundedValueGuard",
       "ordinal": 2,
       "scriptName": "CREATE MATERIALIZED VIEW time typmod materializes rounded value",
       "oracle": "postgres",
@@ -540,8 +540,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestampTypmodMaterializesRoundedValueRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestampTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestampTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestampTypmodMaterializesRoundedValueRepro",
       "ordinal": 1,
       "scriptName": "CREATE MATERIALIZED VIEW timestamp typmod materializes rounded value",
       "oracle": "postgres",
@@ -562,8 +562,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestampTypmodMaterializesRoundedValueRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestampTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestampTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestampTypmodMaterializesRoundedValueRepro",
       "ordinal": 2,
       "scriptName": "CREATE MATERIALIZED VIEW timestamp typmod materializes rounded value",
       "oracle": "postgres",
@@ -584,8 +584,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro",
       "ordinal": 1,
       "scriptName": "CREATE MATERIALIZED VIEW timestamptz typmod materializes rounded value",
       "oracle": "postgres",
@@ -606,8 +606,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro",
       "ordinal": 2,
       "scriptName": "CREATE MATERIALIZED VIEW timestamptz typmod materializes rounded value",
       "oracle": "postgres",
@@ -628,8 +628,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro",
       "ordinal": 1,
       "scriptName": "CREATE MATERIALIZED VIEW interval typmod materializes restricted value",
       "oracle": "postgres",
@@ -650,8 +650,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro",
       "ordinal": 2,
       "scriptName": "CREATE MATERIALIZED VIEW interval typmod materializes restricted value",
       "oracle": "postgres",
@@ -672,8 +672,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewVarcharTypmodMaterializesTruncatedValueGuard#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewVarcharTypmodMaterializesTruncatedValueGuard",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewVarcharTypmodMaterializesTruncatedValueGuard#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewVarcharTypmodMaterializesTruncatedValueGuard",
       "ordinal": 1,
       "scriptName": "CREATE MATERIALIZED VIEW varchar typmod materializes truncated value",
       "oracle": "postgres",
@@ -694,8 +694,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewVarcharTypmodMaterializesTruncatedValueGuard#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewVarcharTypmodMaterializesTruncatedValueGuard",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewVarcharTypmodMaterializesTruncatedValueGuard#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewVarcharTypmodMaterializesTruncatedValueGuard",
       "ordinal": 2,
       "scriptName": "CREATE MATERIALIZED VIEW varchar typmod materializes truncated value",
       "oracle": "postgres",
@@ -716,8 +716,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewCharacterTypmodMaterializesPaddedValueRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewCharacterTypmodMaterializesPaddedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewCharacterTypmodMaterializesPaddedValueRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewCharacterTypmodMaterializesPaddedValueRepro",
       "ordinal": 1,
       "scriptName": "CREATE MATERIALIZED VIEW character typmod materializes padded value",
       "oracle": "postgres",
@@ -738,8 +738,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewCharacterTypmodMaterializesPaddedValueRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewCharacterTypmodMaterializesPaddedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewCharacterTypmodMaterializesPaddedValueRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewCharacterTypmodMaterializesPaddedValueRepro",
       "ordinal": 2,
       "scriptName": "CREATE MATERIALIZED VIEW character typmod materializes padded value",
       "oracle": "postgres",
@@ -760,8 +760,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro",
       "ordinal": 1,
       "scriptName": "CREATE MATERIALIZED VIEW text domain typmod materializes coerced value",
       "oracle": "postgres",
@@ -797,8 +797,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro",
       "ordinal": 2,
       "scriptName": "CREATE MATERIALIZED VIEW text domain typmod materializes coerced value",
       "oracle": "postgres",
@@ -824,8 +824,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimetzTypmodMaterializesRoundedValueRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimetzTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimetzTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimetzTypmodMaterializesRoundedValueRepro",
       "ordinal": 1,
       "scriptName": "REFRESH MATERIALIZED VIEW timetz typmod materializes rounded value",
       "oracle": "postgres",
@@ -846,8 +846,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimetzTypmodMaterializesRoundedValueRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimetzTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimetzTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimetzTypmodMaterializesRoundedValueRepro",
       "ordinal": 2,
       "scriptName": "REFRESH MATERIALIZED VIEW timetz typmod materializes rounded value",
       "oracle": "postgres",
@@ -868,8 +868,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimeTypmodMaterializesRoundedValueGuard#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimeTypmodMaterializesRoundedValueGuard",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimeTypmodMaterializesRoundedValueGuard#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimeTypmodMaterializesRoundedValueGuard",
       "ordinal": 1,
       "scriptName": "REFRESH MATERIALIZED VIEW time typmod materializes rounded value",
       "oracle": "postgres",
@@ -890,8 +890,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimeTypmodMaterializesRoundedValueGuard#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimeTypmodMaterializesRoundedValueGuard",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimeTypmodMaterializesRoundedValueGuard#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimeTypmodMaterializesRoundedValueGuard",
       "ordinal": 2,
       "scriptName": "REFRESH MATERIALIZED VIEW time typmod materializes rounded value",
       "oracle": "postgres",
@@ -912,8 +912,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestampTypmodMaterializesRoundedValueRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestampTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestampTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestampTypmodMaterializesRoundedValueRepro",
       "ordinal": 1,
       "scriptName": "REFRESH MATERIALIZED VIEW timestamp typmod materializes rounded value",
       "oracle": "postgres",
@@ -934,8 +934,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestampTypmodMaterializesRoundedValueRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestampTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestampTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestampTypmodMaterializesRoundedValueRepro",
       "ordinal": 2,
       "scriptName": "REFRESH MATERIALIZED VIEW timestamp typmod materializes rounded value",
       "oracle": "postgres",
@@ -956,8 +956,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro",
       "ordinal": 1,
       "scriptName": "REFRESH MATERIALIZED VIEW timestamptz typmod materializes rounded value",
       "oracle": "postgres",
@@ -978,8 +978,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro",
       "ordinal": 2,
       "scriptName": "REFRESH MATERIALIZED VIEW timestamptz typmod materializes rounded value",
       "oracle": "postgres",
@@ -1000,8 +1000,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro",
       "ordinal": 1,
       "scriptName": "REFRESH MATERIALIZED VIEW interval typmod materializes restricted value",
       "oracle": "postgres",
@@ -1022,8 +1022,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro",
       "ordinal": 2,
       "scriptName": "REFRESH MATERIALIZED VIEW interval typmod materializes restricted value",
       "oracle": "postgres",
@@ -1044,8 +1044,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewCharacterTypmodMaterializesPaddedValueRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewCharacterTypmodMaterializesPaddedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewCharacterTypmodMaterializesPaddedValueRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewCharacterTypmodMaterializesPaddedValueRepro",
       "ordinal": 1,
       "scriptName": "REFRESH MATERIALIZED VIEW character typmod materializes padded value",
       "oracle": "postgres",
@@ -1066,8 +1066,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewCharacterTypmodMaterializesPaddedValueRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewCharacterTypmodMaterializesPaddedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewCharacterTypmodMaterializesPaddedValueRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewCharacterTypmodMaterializesPaddedValueRepro",
       "ordinal": 2,
       "scriptName": "REFRESH MATERIALIZED VIEW character typmod materializes padded value",
       "oracle": "postgres",
@@ -1088,8 +1088,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro",
       "ordinal": 1,
       "scriptName": "REFRESH MATERIALIZED VIEW text domain typmod materializes coerced value",
       "oracle": "postgres",
@@ -1115,8 +1115,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro",
       "ordinal": 2,
       "scriptName": "REFRESH MATERIALIZED VIEW text domain typmod materializes coerced value",
       "oracle": "postgres",
@@ -1152,8 +1152,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimetzTypmodMaterializesRoundedValueRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimetzTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimetzTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimetzTypmodMaterializesRoundedValueRepro",
       "ordinal": 1,
       "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY timetz typmod materializes rounded value",
       "oracle": "postgres",
@@ -1174,8 +1174,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimetzTypmodMaterializesRoundedValueRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimetzTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimetzTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimetzTypmodMaterializesRoundedValueRepro",
       "ordinal": 2,
       "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY timetz typmod materializes rounded value",
       "oracle": "postgres",
@@ -1196,8 +1196,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimeTypmodMaterializesRoundedValueGuard#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimeTypmodMaterializesRoundedValueGuard",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimeTypmodMaterializesRoundedValueGuard#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimeTypmodMaterializesRoundedValueGuard",
       "ordinal": 1,
       "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY time typmod materializes rounded value",
       "oracle": "postgres",
@@ -1218,8 +1218,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimeTypmodMaterializesRoundedValueGuard#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimeTypmodMaterializesRoundedValueGuard",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimeTypmodMaterializesRoundedValueGuard#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimeTypmodMaterializesRoundedValueGuard",
       "ordinal": 2,
       "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY time typmod materializes rounded value",
       "oracle": "postgres",
@@ -1240,8 +1240,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestampTypmodMaterializesRoundedValueRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestampTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestampTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestampTypmodMaterializesRoundedValueRepro",
       "ordinal": 1,
       "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY timestamp typmod materializes rounded value",
       "oracle": "postgres",
@@ -1262,8 +1262,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestampTypmodMaterializesRoundedValueRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestampTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestampTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestampTypmodMaterializesRoundedValueRepro",
       "ordinal": 2,
       "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY timestamp typmod materializes rounded value",
       "oracle": "postgres",
@@ -1284,8 +1284,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestamptzTypmodMaterializesRoundedValueRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestamptzTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestamptzTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestamptzTypmodMaterializesRoundedValueRepro",
       "ordinal": 1,
       "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY timestamptz typmod materializes rounded value",
       "oracle": "postgres",
@@ -1306,8 +1306,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestamptzTypmodMaterializesRoundedValueRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestamptzTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestamptzTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestamptzTypmodMaterializesRoundedValueRepro",
       "ordinal": 2,
       "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY timestamptz typmod materializes rounded value",
       "oracle": "postgres",
@@ -1328,8 +1328,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyIntervalTypmodMaterializesRestrictedValueRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyIntervalTypmodMaterializesRestrictedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyIntervalTypmodMaterializesRestrictedValueRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyIntervalTypmodMaterializesRestrictedValueRepro",
       "ordinal": 1,
       "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY interval typmod materializes restricted value",
       "oracle": "postgres",
@@ -1350,8 +1350,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyIntervalTypmodMaterializesRestrictedValueRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyIntervalTypmodMaterializesRestrictedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyIntervalTypmodMaterializesRestrictedValueRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyIntervalTypmodMaterializesRestrictedValueRepro",
       "ordinal": 2,
       "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY interval typmod materializes restricted value",
       "oracle": "postgres",
@@ -1372,8 +1372,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyCharacterTypmodMaterializesPaddedValueRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyCharacterTypmodMaterializesPaddedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyCharacterTypmodMaterializesPaddedValueRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyCharacterTypmodMaterializesPaddedValueRepro",
       "ordinal": 1,
       "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY character typmod materializes padded value",
       "oracle": "postgres",
@@ -1394,8 +1394,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyCharacterTypmodMaterializesPaddedValueRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyCharacterTypmodMaterializesPaddedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyCharacterTypmodMaterializesPaddedValueRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyCharacterTypmodMaterializesPaddedValueRepro",
       "ordinal": 2,
       "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY character typmod materializes padded value",
       "oracle": "postgres",
@@ -1416,8 +1416,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTextDomainTypmodMaterializesCoercedValueRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTextDomainTypmodMaterializesCoercedValueRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTextDomainTypmodMaterializesCoercedValueRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTextDomainTypmodMaterializesCoercedValueRepro",
       "ordinal": 1,
       "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY text domain typmod materializes coerced value",
       "oracle": "postgres",
@@ -1450,8 +1450,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewDefaultTablespaceRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewDefaultTablespaceRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewDefaultTablespaceRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewDefaultTablespaceRepro",
       "ordinal": 1,
       "scriptName": "CREATE MATERIALIZED VIEW with default tablespace",
       "oracle": "postgres",
@@ -1472,8 +1472,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewUsingHeapRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewUsingHeapRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewUsingHeapRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewUsingHeapRepro",
       "ordinal": 1,
       "scriptName": "CREATE MATERIALIZED VIEW using heap access method",
       "oracle": "postgres",
@@ -1494,8 +1494,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewStorageParamsRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewStorageParamsRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewStorageParamsRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewStorageParamsRepro",
       "ordinal": 1,
       "scriptName": "CREATE MATERIALIZED VIEW storage parameters persist",
       "oracle": "postgres",
@@ -1516,8 +1516,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestAlterMaterializedViewSetDefaultTablespaceRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestAlterMaterializedViewSetDefaultTablespaceRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestAlterMaterializedViewSetDefaultTablespaceRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestAlterMaterializedViewSetDefaultTablespaceRepro",
       "ordinal": 1,
       "scriptName": "ALTER MATERIALIZED VIEW SET TABLESPACE pg_default",
       "oracle": "postgres",
@@ -1538,8 +1538,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestAlterMaterializedViewSetHeapAccessMethodRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestAlterMaterializedViewSetHeapAccessMethodRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestAlterMaterializedViewSetHeapAccessMethodRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestAlterMaterializedViewSetHeapAccessMethodRepro",
       "ordinal": 1,
       "scriptName": "ALTER MATERIALIZED VIEW SET ACCESS METHOD heap",
       "oracle": "postgres",
@@ -1560,8 +1560,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestAlterMaterializedViewReloptionsPersistRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestAlterMaterializedViewReloptionsPersistRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestAlterMaterializedViewReloptionsPersistRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestAlterMaterializedViewReloptionsPersistRepro",
       "ordinal": 1,
       "scriptName": "ALTER MATERIALIZED VIEW storage parameters persist",
       "oracle": "postgres",
@@ -1582,8 +1582,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithNoDataGuard#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithNoDataGuard",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithNoDataGuard#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithNoDataGuard",
       "ordinal": 1,
       "scriptName": "CREATE MATERIALIZED VIEW WITH NO DATA defers population",
       "oracle": "postgres",
@@ -1615,8 +1615,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithNoDataDoesNotEvaluateQueryRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithNoDataDoesNotEvaluateQueryRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithNoDataDoesNotEvaluateQueryRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithNoDataDoesNotEvaluateQueryRepro",
       "ordinal": 1,
       "scriptName": "CREATE MATERIALIZED VIEW WITH NO DATA does not evaluate query",
       "oracle": "postgres",
@@ -1632,8 +1632,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithNoDataDoesNotEvaluateQueryRepro#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithNoDataDoesNotEvaluateQueryRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithNoDataDoesNotEvaluateQueryRepro#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithNoDataDoesNotEvaluateQueryRepro",
       "ordinal": 2,
       "scriptName": "CREATE MATERIALIZED VIEW WITH NO DATA does not evaluate query",
       "oracle": "postgres",
@@ -1649,8 +1649,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewWithNoDataGuard#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewWithNoDataGuard",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewWithNoDataGuard#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewWithNoDataGuard",
       "ordinal": 1,
       "scriptName": "REFRESH MATERIALIZED VIEW WITH NO DATA clears populated snapshot",
       "oracle": "postgres",
@@ -1666,8 +1666,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewWithNoDataGuard#0002",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewWithNoDataGuard",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewWithNoDataGuard#0002",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewWithNoDataGuard",
       "ordinal": 2,
       "scriptName": "REFRESH MATERIALIZED VIEW WITH NO DATA clears populated snapshot",
       "oracle": "postgres",
@@ -1699,8 +1699,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewAllowsStableAnonymousColumnRepro#0001",
-      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewAllowsStableAnonymousColumnRepro",
+      "key": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewAllowsStableAnonymousColumnRepro#0001",
+      "source": "testing/go/postgres16/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewAllowsStableAnonymousColumnRepro",
       "ordinal": 1,
       "scriptName": "CREATE OR REPLACE VIEW allows stable anonymous column",
       "oracle": "postgres",

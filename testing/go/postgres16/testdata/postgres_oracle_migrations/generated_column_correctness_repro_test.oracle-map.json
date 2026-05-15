@@ -1,8 +1,8 @@
 {
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map generated_column_correctness_repro_test.go --force-postgres-oracle",
-  "sourceFile": "testing/go/generated_column_correctness_repro_test.go",
+  "sourceFile": "testing/go/postgres16/generated_column_correctness_repro_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -14,8 +14,8 @@
   ],
   "assertions": [
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsVolatileFunctionsRepro#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsVolatileFunctionsRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsVolatileFunctionsRepro#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsVolatileFunctionsRepro",
       "ordinal": 1,
       "scriptName": "generated columns reject volatile expressions",
       "oracle": "postgres",
@@ -31,8 +31,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSelfReferenceRepro#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSelfReferenceRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSelfReferenceRepro#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSelfReferenceRepro",
       "ordinal": 1,
       "scriptName": "generated columns reject self references",
       "oracle": "postgres",
@@ -48,8 +48,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsGeneratedColumnReferenceRepro#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsGeneratedColumnReferenceRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsGeneratedColumnReferenceRepro#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsGeneratedColumnReferenceRepro",
       "ordinal": 1,
       "scriptName": "generated columns reject references to generated columns",
       "oracle": "postgres",
@@ -65,8 +65,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsMalformedReferencesRepro#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsMalformedReferencesRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsMalformedReferencesRepro#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsMalformedReferencesRepro",
       "ordinal": 1,
       "scriptName": "generated columns reject duplicate generation clauses",
       "oracle": "postgres",
@@ -82,8 +82,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsMalformedReferencesRepro#0002",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsMalformedReferencesRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsMalformedReferencesRepro#0002",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsMalformedReferencesRepro",
       "ordinal": 2,
       "scriptName": "generated columns reject missing column references",
       "oracle": "postgres",
@@ -99,8 +99,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsMalformedReferencesRepro#0003",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsMalformedReferencesRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsMalformedReferencesRepro#0003",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsMalformedReferencesRepro",
       "ordinal": 3,
       "scriptName": "generated columns reject whole-row references",
       "oracle": "postgres",
@@ -116,8 +116,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsAggregateExpressionsRepro#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsAggregateExpressionsRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsAggregateExpressionsRepro#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsAggregateExpressionsRepro",
       "ordinal": 1,
       "scriptName": "generated columns reject aggregate expressions",
       "oracle": "postgres",
@@ -133,8 +133,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsWindowExpressionsRepro#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsWindowExpressionsRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsWindowExpressionsRepro#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsWindowExpressionsRepro",
       "ordinal": 1,
       "scriptName": "generated columns reject window expressions",
       "oracle": "postgres",
@@ -150,8 +150,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSetReturningExpressionsRepro#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSetReturningExpressionsRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSetReturningExpressionsRepro#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSetReturningExpressionsRepro",
       "ordinal": 1,
       "scriptName": "generated columns reject set-returning expressions",
       "oracle": "postgres",
@@ -167,8 +167,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSubqueryExpressionsRepro#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSubqueryExpressionsRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSubqueryExpressionsRepro#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSubqueryExpressionsRepro",
       "ordinal": 1,
       "scriptName": "generated columns reject subquery expressions",
       "oracle": "postgres",
@@ -184,8 +184,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSystemColumnReferencesRepro#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSystemColumnReferencesRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSystemColumnReferencesRepro#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSystemColumnReferencesRepro",
       "ordinal": 1,
       "scriptName": "generated columns reject unsupported system columns",
       "oracle": "postgres",
@@ -201,8 +201,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnAllowsTableoidReferenceRepro#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnAllowsTableoidReferenceRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnAllowsTableoidReferenceRepro#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnAllowsTableoidReferenceRepro",
       "ordinal": 1,
       "scriptName": "generated columns allow tableoid references",
       "oracle": "postgres",
@@ -229,8 +229,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsConflictingGenerationClausesRepro#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsConflictingGenerationClausesRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsConflictingGenerationClausesRepro#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsConflictingGenerationClausesRepro",
       "ordinal": 1,
       "scriptName": "generated columns reject regular defaults",
       "oracle": "postgres",
@@ -246,8 +246,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsConflictingGenerationClausesRepro#0002",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsConflictingGenerationClausesRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsConflictingGenerationClausesRepro#0002",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsConflictingGenerationClausesRepro",
       "ordinal": 2,
       "scriptName": "generated columns reject identity generation",
       "oracle": "postgres",
@@ -263,8 +263,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsConflictingGenerationClausesRepro#0003",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsConflictingGenerationClausesRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsConflictingGenerationClausesRepro#0003",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsConflictingGenerationClausesRepro",
       "ordinal": 3,
       "scriptName": "stored generated columns require GENERATED ALWAYS",
       "oracle": "postgres",
@@ -280,8 +280,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsExplicitInsertGuard#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsExplicitInsertGuard",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsExplicitInsertGuard#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsExplicitInsertGuard",
       "ordinal": 1,
       "scriptName": "generated columns reject explicit insert values",
       "oracle": "postgres",
@@ -297,8 +297,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsExplicitUpdateGuard#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsExplicitUpdateGuard",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsExplicitUpdateGuard#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsExplicitUpdateGuard",
       "ordinal": 1,
       "scriptName": "generated columns reject explicit update values",
       "oracle": "postgres",
@@ -314,8 +314,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnAcceptsDefaultKeywordGuard#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnAcceptsDefaultKeywordGuard",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnAcceptsDefaultKeywordGuard#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnAcceptsDefaultKeywordGuard",
       "ordinal": 1,
       "scriptName": "generated columns accept DEFAULT keyword",
       "oracle": "postgres",
@@ -339,8 +339,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnAddedToExistingRowsBackfillsValuesGuard#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnAddedToExistingRowsBackfillsValuesGuard",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnAddedToExistingRowsBackfillsValuesGuard#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnAddedToExistingRowsBackfillsValuesGuard",
       "ordinal": 1,
       "scriptName": "ALTER TABLE ADD generated column backfills existing rows",
       "oracle": "postgres",
@@ -378,8 +378,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnCheckConstraintUsesGeneratedValueGuard#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnCheckConstraintUsesGeneratedValueGuard",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnCheckConstraintUsesGeneratedValueGuard#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnCheckConstraintUsesGeneratedValueGuard",
       "ordinal": 1,
       "scriptName": "CHECK constraints validate generated column values",
       "oracle": "postgres",
@@ -395,8 +395,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnUniqueConstraintUsesGeneratedValueGuard#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnUniqueConstraintUsesGeneratedValueGuard",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnUniqueConstraintUsesGeneratedValueGuard#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnUniqueConstraintUsesGeneratedValueGuard",
       "ordinal": 1,
       "scriptName": "UNIQUE constraints validate generated column values",
       "oracle": "postgres",
@@ -412,8 +412,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnUniqueConstraintUsesUpdatedGeneratedValueGuard#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnUniqueConstraintUsesUpdatedGeneratedValueGuard",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnUniqueConstraintUsesUpdatedGeneratedValueGuard#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnUniqueConstraintUsesUpdatedGeneratedValueGuard",
       "ordinal": 1,
       "scriptName": "UNIQUE constraints validate updated generated column values",
       "oracle": "postgres",
@@ -429,8 +429,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnUniqueConstraintUsesUpdatedGeneratedValueGuard#0002",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnUniqueConstraintUsesUpdatedGeneratedValueGuard",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnUniqueConstraintUsesUpdatedGeneratedValueGuard#0002",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnUniqueConstraintUsesUpdatedGeneratedValueGuard",
       "ordinal": 2,
       "scriptName": "UNIQUE constraints validate updated generated column values",
       "oracle": "postgres",
@@ -468,8 +468,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnCheckConstraintUsesUpdatedGeneratedValueGuard#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnCheckConstraintUsesUpdatedGeneratedValueGuard",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnCheckConstraintUsesUpdatedGeneratedValueGuard#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnCheckConstraintUsesUpdatedGeneratedValueGuard",
       "ordinal": 1,
       "scriptName": "CHECK constraints validate updated generated column values",
       "oracle": "postgres",
@@ -485,8 +485,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnCheckConstraintUsesUpdatedGeneratedValueGuard#0002",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnCheckConstraintUsesUpdatedGeneratedValueGuard",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnCheckConstraintUsesUpdatedGeneratedValueGuard#0002",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnCheckConstraintUsesUpdatedGeneratedValueGuard",
       "ordinal": 2,
       "scriptName": "CHECK constraints validate updated generated column values",
       "oracle": "postgres",
@@ -513,8 +513,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnNotNullConstraintUsesGeneratedValueGuard#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnNotNullConstraintUsesGeneratedValueGuard",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnNotNullConstraintUsesGeneratedValueGuard#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnNotNullConstraintUsesGeneratedValueGuard",
       "ordinal": 1,
       "scriptName": "NOT NULL constraints validate generated column values",
       "oracle": "postgres",
@@ -530,8 +530,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnNotNullConstraintUsesGeneratedValueGuard#0002",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnNotNullConstraintUsesGeneratedValueGuard",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnNotNullConstraintUsesGeneratedValueGuard#0002",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnNotNullConstraintUsesGeneratedValueGuard",
       "ordinal": 2,
       "scriptName": "NOT NULL constraints validate generated column values",
       "oracle": "postgres",
@@ -558,8 +558,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRecomputesAfterBaseUpdateGuard#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRecomputesAfterBaseUpdateGuard",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRecomputesAfterBaseUpdateGuard#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRecomputesAfterBaseUpdateGuard",
       "ordinal": 1,
       "scriptName": "generated column recomputes after base column update",
       "oracle": "postgres",
@@ -583,8 +583,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRecomputesAfterUpdateFromGuard#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRecomputesAfterUpdateFromGuard",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRecomputesAfterUpdateFromGuard#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRecomputesAfterUpdateFromGuard",
       "ordinal": 1,
       "scriptName": "generated column recomputes after UPDATE FROM",
       "oracle": "postgres",
@@ -622,8 +622,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRecomputesAfterOnConflictUpdateGuard#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRecomputesAfterOnConflictUpdateGuard",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRecomputesAfterOnConflictUpdateGuard#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRecomputesAfterOnConflictUpdateGuard",
       "ordinal": 1,
       "scriptName": "generated column recomputes after ON CONFLICT DO UPDATE",
       "oracle": "postgres",
@@ -650,8 +650,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestBeforeTriggerGeneratedColumnAssignmentIsIgnoredRepro#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestBeforeTriggerGeneratedColumnAssignmentIsIgnoredRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestBeforeTriggerGeneratedColumnAssignmentIsIgnoredRepro#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestBeforeTriggerGeneratedColumnAssignmentIsIgnoredRepro",
       "ordinal": 1,
       "scriptName": "BEFORE trigger generated column assignment is ignored",
       "oracle": "postgres",
@@ -675,8 +675,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestBeforeTriggerWhenCannotReferenceNewGeneratedColumnRepro#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestBeforeTriggerWhenCannotReferenceNewGeneratedColumnRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestBeforeTriggerWhenCannotReferenceNewGeneratedColumnRepro#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestBeforeTriggerWhenCannotReferenceNewGeneratedColumnRepro",
       "ordinal": 1,
       "scriptName": "BEFORE trigger WHEN cannot reference NEW generated column",
       "oracle": "postgres",
@@ -692,8 +692,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestUpdateOfGeneratedColumnFiresForBaseColumnChangeRepro#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestUpdateOfGeneratedColumnFiresForBaseColumnChangeRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestUpdateOfGeneratedColumnFiresForBaseColumnChangeRepro#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestUpdateOfGeneratedColumnFiresForBaseColumnChangeRepro",
       "ordinal": 1,
       "scriptName": "UPDATE OF generated column fires for base column change",
       "oracle": "postgres",
@@ -720,8 +720,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestRenameColumnUsedByGeneratedColumnKeepsGeneratedColumnUsableGuard#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestRenameColumnUsedByGeneratedColumnKeepsGeneratedColumnUsableGuard",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestRenameColumnUsedByGeneratedColumnKeepsGeneratedColumnUsableGuard#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestRenameColumnUsedByGeneratedColumnKeepsGeneratedColumnUsableGuard",
       "ordinal": 1,
       "scriptName": "RENAME COLUMN rewrites generated-column dependencies",
       "oracle": "postgres",
@@ -759,8 +759,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestDropColumnUsedByGeneratedColumnRequiresCascadeRepro#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestDropColumnUsedByGeneratedColumnRequiresCascadeRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestDropColumnUsedByGeneratedColumnRequiresCascadeRepro#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestDropColumnUsedByGeneratedColumnRequiresCascadeRepro",
       "ordinal": 1,
       "scriptName": "DROP COLUMN rejects generated-column dependencies",
       "oracle": "postgres",
@@ -776,8 +776,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsOnUpdateCascadeReferenceRepro#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsOnUpdateCascadeReferenceRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsOnUpdateCascadeReferenceRepro#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsOnUpdateCascadeReferenceRepro",
       "ordinal": 1,
       "scriptName": "generated columns reject ON UPDATE CASCADE references",
       "oracle": "postgres",
@@ -793,8 +793,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsOnDeleteSetNullReferenceRepro#0001",
-      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsOnDeleteSetNullReferenceRepro",
+      "key": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsOnDeleteSetNullReferenceRepro#0001",
+      "source": "testing/go/postgres16/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsOnDeleteSetNullReferenceRepro",
       "ordinal": 1,
       "scriptName": "generated columns reject ON DELETE SET NULL references",
       "oracle": "postgres",

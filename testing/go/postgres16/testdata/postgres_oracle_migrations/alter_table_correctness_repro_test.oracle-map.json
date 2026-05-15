@@ -1,8 +1,8 @@
 {
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map alter_table_correctness_repro_test.go --force-postgres-oracle",
-  "sourceFile": "testing/go/alter_table_correctness_repro_test.go",
+  "sourceFile": "testing/go/postgres16/alter_table_correctness_repro_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -14,8 +14,8 @@
   ],
   "assertions": [
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableIfExistsMissingTableNoopsGuard#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableIfExistsMissingTableNoopsGuard",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableIfExistsMissingTableNoopsGuard#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableIfExistsMissingTableNoopsGuard",
       "ordinal": 1,
       "scriptName": "ALTER TABLE IF EXISTS no-ops on missing table",
       "oracle": "postgres",
@@ -30,8 +30,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableIfExistsMissingTableDropColumnNoopsGuard#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableIfExistsMissingTableDropColumnNoopsGuard",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableIfExistsMissingTableDropColumnNoopsGuard#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableIfExistsMissingTableDropColumnNoopsGuard",
       "ordinal": 1,
       "scriptName": "ALTER TABLE IF EXISTS DROP COLUMN no-ops on missing table",
       "oracle": "postgres",
@@ -46,8 +46,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMissingColumnNoops#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMissingColumnNoops",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMissingColumnNoops#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMissingColumnNoops",
       "ordinal": 1,
       "scriptName": "DROP COLUMN IF EXISTS no-ops on missing column",
       "oracle": "postgres",
@@ -62,8 +62,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMissingColumnNoops#0002",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMissingColumnNoops",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMissingColumnNoops#0002",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMissingColumnNoops",
       "ordinal": 2,
       "scriptName": "DROP COLUMN IF EXISTS no-ops on missing column",
       "oracle": "postgres",
@@ -87,8 +87,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsExistingColumnDrops#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsExistingColumnDrops",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsExistingColumnDrops#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsExistingColumnDrops",
       "ordinal": 1,
       "scriptName": "DROP COLUMN IF EXISTS drops the column when it exists",
       "oracle": "postgres",
@@ -103,8 +103,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsExistingColumnDrops#0002",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsExistingColumnDrops",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsExistingColumnDrops#0002",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsExistingColumnDrops",
       "ordinal": 2,
       "scriptName": "DROP COLUMN IF EXISTS drops the column when it exists",
       "oracle": "postgres",
@@ -128,8 +128,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsExistingColumnDrops#0003",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsExistingColumnDrops",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsExistingColumnDrops#0003",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsExistingColumnDrops",
       "ordinal": 3,
       "scriptName": "DROP COLUMN IF EXISTS drops the column when it exists",
       "oracle": "postgres",
@@ -145,8 +145,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsEmitsNotice#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsEmitsNotice",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsEmitsNotice#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsEmitsNotice",
       "ordinal": 1,
       "scriptName": "DROP COLUMN IF EXISTS emits a NOTICE on missing column",
       "oracle": "postgres",
@@ -161,8 +161,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMultiClause#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMultiClause",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMultiClause#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMultiClause",
       "ordinal": 1,
       "scriptName": "ALTER TABLE applies surviving clauses when DROP COLUMN IF EXISTS targets a missing column",
       "oracle": "postgres",
@@ -177,8 +177,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMultiClause#0002",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMultiClause",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMultiClause#0002",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMultiClause",
       "ordinal": 2,
       "scriptName": "ALTER TABLE applies surviving clauses when DROP COLUMN IF EXISTS targets a missing column",
       "oracle": "postgres",
@@ -205,8 +205,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMultiClause#0003",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMultiClause",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMultiClause#0003",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMultiClause",
       "ordinal": 3,
       "scriptName": "ALTER TABLE applies surviving clauses when DROP COLUMN IF EXISTS targets a missing column",
       "oracle": "postgres",
@@ -222,8 +222,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnWithoutIfExistsStillErrors#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnWithoutIfExistsStillErrors",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnWithoutIfExistsStillErrors#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnWithoutIfExistsStillErrors",
       "ordinal": 1,
       "scriptName": "DROP COLUMN without IF EXISTS still errors on missing column",
       "oracle": "postgres",
@@ -239,8 +239,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsCaseInsensitiveMatch#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsCaseInsensitiveMatch",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsCaseInsensitiveMatch#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsCaseInsensitiveMatch",
       "ordinal": 1,
       "scriptName": "DROP COLUMN IF EXISTS folds unquoted identifiers to lowercase",
       "oracle": "postgres",
@@ -255,8 +255,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsCaseInsensitiveMatch#0002",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsCaseInsensitiveMatch",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsCaseInsensitiveMatch#0002",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsCaseInsensitiveMatch",
       "ordinal": 2,
       "scriptName": "DROP COLUMN IF EXISTS folds unquoted identifiers to lowercase",
       "oracle": "postgres",
@@ -277,8 +277,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsCaseInsensitiveMatch#0003",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsCaseInsensitiveMatch",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsCaseInsensitiveMatch#0003",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsCaseInsensitiveMatch",
       "ordinal": 3,
       "scriptName": "DROP COLUMN IF EXISTS folds unquoted identifiers to lowercase",
       "oracle": "postgres",
@@ -294,8 +294,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeUsingConvertsExistingRowsRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeUsingConvertsExistingRowsRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeUsingConvertsExistingRowsRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeUsingConvertsExistingRowsRepro",
       "ordinal": 1,
       "scriptName": "ALTER COLUMN TYPE USING converts existing rows",
       "oracle": "postgres",
@@ -333,8 +333,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSameTypeRejectsRowTypeDependentsRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSameTypeRejectsRowTypeDependentsRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableSameTypeRejectsRowTypeDependentsRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableSameTypeRejectsRowTypeDependentsRepro",
       "ordinal": 1,
       "scriptName": "ALTER COLUMN TYPE rejects row type dependents",
       "oracle": "postgres",
@@ -350,8 +350,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro",
       "ordinal": 1,
       "scriptName": "SET and DROP NOT NULL allow row type dependents",
       "oracle": "postgres",
@@ -366,8 +366,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro#0002",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro#0002",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro",
       "ordinal": 2,
       "scriptName": "SET and DROP NOT NULL allow row type dependents",
       "oracle": "postgres",
@@ -383,8 +383,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro#0003",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro#0003",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro",
       "ordinal": 3,
       "scriptName": "SET and DROP NOT NULL allow row type dependents",
       "oracle": "postgres",
@@ -399,8 +399,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro#0004",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro#0004",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro",
       "ordinal": 4,
       "scriptName": "SET and DROP NOT NULL allow row type dependents",
       "oracle": "postgres",
@@ -415,8 +415,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro#0005",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro#0005",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro",
       "ordinal": 5,
       "scriptName": "SET and DROP NOT NULL allow row type dependents",
       "oracle": "postgres",
@@ -431,8 +431,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro",
       "ordinal": 1,
       "scriptName": "ALTER COLUMN TYPE applies typmods to existing rows",
       "oracle": "postgres",
@@ -456,8 +456,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro#0002",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro#0002",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro",
       "ordinal": 2,
       "scriptName": "ALTER COLUMN TYPE rejects typmod overflow",
       "oracle": "postgres",
@@ -473,8 +473,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro#0003",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro#0003",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro",
       "ordinal": 3,
       "scriptName": "ALTER COLUMN TYPE rejects typmod overflow",
       "oracle": "postgres",
@@ -495,8 +495,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeVarcharRejectsTypmodOverflowRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeVarcharRejectsTypmodOverflowRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeVarcharRejectsTypmodOverflowRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeVarcharRejectsTypmodOverflowRepro",
       "ordinal": 1,
       "scriptName": "ALTER COLUMN TYPE varchar rejects existing overflow",
       "oracle": "postgres",
@@ -512,8 +512,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeVarcharRejectsTypmodOverflowRepro#0002",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeVarcharRejectsTypmodOverflowRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeVarcharRejectsTypmodOverflowRepro#0002",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeVarcharRejectsTypmodOverflowRepro",
       "ordinal": 2,
       "scriptName": "ALTER COLUMN TYPE varchar rejects existing overflow",
       "oracle": "postgres",
@@ -540,8 +540,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeVarcharTruncatesTrailingSpacesRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeVarcharTruncatesTrailingSpacesRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeVarcharTruncatesTrailingSpacesRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeVarcharTruncatesTrailingSpacesRepro",
       "ordinal": 1,
       "scriptName": "ALTER COLUMN TYPE varchar truncates trailing spaces",
       "oracle": "postgres",
@@ -571,8 +571,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterAppliesTypmodRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterAppliesTypmodRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterAppliesTypmodRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterAppliesTypmodRepro",
       "ordinal": 1,
       "scriptName": "ALTER COLUMN TYPE character rejects existing overflow",
       "oracle": "postgres",
@@ -588,8 +588,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterAppliesTypmodRepro#0002",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterAppliesTypmodRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterAppliesTypmodRepro#0002",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterAppliesTypmodRepro",
       "ordinal": 2,
       "scriptName": "ALTER COLUMN TYPE character rejects existing overflow",
       "oracle": "postgres",
@@ -619,8 +619,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterAppliesTypmodRepro#0003",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterAppliesTypmodRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterAppliesTypmodRepro#0003",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterAppliesTypmodRepro",
       "ordinal": 3,
       "scriptName": "ALTER COLUMN TYPE character pads existing short values",
       "oracle": "postgres",
@@ -650,8 +650,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterTruncatesTrailingSpacesRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterTruncatesTrailingSpacesRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterTruncatesTrailingSpacesRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterTruncatesTrailingSpacesRepro",
       "ordinal": 1,
       "scriptName": "ALTER COLUMN TYPE character truncates trailing spaces",
       "oracle": "postgres",
@@ -681,8 +681,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTimetzTypmodToExistingRowsRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTimetzTypmodToExistingRowsRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTimetzTypmodToExistingRowsRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTimetzTypmodToExistingRowsRepro",
       "ordinal": 1,
       "scriptName": "ALTER COLUMN TYPE applies timetz typmod to existing rows",
       "oracle": "postgres",
@@ -703,8 +703,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTimeTypmodToExistingRowsRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTimeTypmodToExistingRowsRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTimeTypmodToExistingRowsRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTimeTypmodToExistingRowsRepro",
       "ordinal": 1,
       "scriptName": "ALTER COLUMN TYPE applies time typmod to existing rows",
       "oracle": "postgres",
@@ -725,8 +725,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTimestamptzTypmodToExistingRowsRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTimestamptzTypmodToExistingRowsRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTimestamptzTypmodToExistingRowsRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTimestamptzTypmodToExistingRowsRepro",
       "ordinal": 1,
       "scriptName": "ALTER COLUMN TYPE applies timestamptz typmod to existing rows",
       "oracle": "postgres",
@@ -747,8 +747,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesIntervalTypmodToExistingRowsRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesIntervalTypmodToExistingRowsRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesIntervalTypmodToExistingRowsRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesIntervalTypmodToExistingRowsRepro",
       "ordinal": 1,
       "scriptName": "ALTER COLUMN TYPE applies interval typmod to existing rows",
       "oracle": "postgres",
@@ -769,8 +769,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddTimetzTypmodColumnDefaultBackfillsRoundedValueRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddTimetzTypmodColumnDefaultBackfillsRoundedValueRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableAddTimetzTypmodColumnDefaultBackfillsRoundedValueRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableAddTimetzTypmodColumnDefaultBackfillsRoundedValueRepro",
       "ordinal": 1,
       "scriptName": "ALTER TABLE ADD timetz typmod column default backfills rounded value",
       "oracle": "postgres",
@@ -794,8 +794,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddTimeTypmodColumnDefaultBackfillsRoundedValueGuard#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddTimeTypmodColumnDefaultBackfillsRoundedValueGuard",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableAddTimeTypmodColumnDefaultBackfillsRoundedValueGuard#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableAddTimeTypmodColumnDefaultBackfillsRoundedValueGuard",
       "ordinal": 1,
       "scriptName": "ALTER TABLE ADD time typmod column default backfills rounded value",
       "oracle": "postgres",
@@ -819,8 +819,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddTimestampTypmodColumnDefaultBackfillsRoundedValueRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddTimestampTypmodColumnDefaultBackfillsRoundedValueRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableAddTimestampTypmodColumnDefaultBackfillsRoundedValueRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableAddTimestampTypmodColumnDefaultBackfillsRoundedValueRepro",
       "ordinal": 1,
       "scriptName": "ALTER TABLE ADD timestamp typmod column default backfills rounded value",
       "oracle": "postgres",
@@ -844,8 +844,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddTimestamptzTypmodColumnDefaultBackfillsRoundedValueRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddTimestamptzTypmodColumnDefaultBackfillsRoundedValueRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableAddTimestamptzTypmodColumnDefaultBackfillsRoundedValueRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableAddTimestamptzTypmodColumnDefaultBackfillsRoundedValueRepro",
       "ordinal": 1,
       "scriptName": "ALTER TABLE ADD timestamptz typmod column default backfills rounded value",
       "oracle": "postgres",
@@ -869,8 +869,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddIntervalTypmodColumnDefaultBackfillsRestrictedValueRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddIntervalTypmodColumnDefaultBackfillsRestrictedValueRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableAddIntervalTypmodColumnDefaultBackfillsRestrictedValueRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableAddIntervalTypmodColumnDefaultBackfillsRestrictedValueRepro",
       "ordinal": 1,
       "scriptName": "ALTER TABLE ADD interval typmod column default backfills restricted value",
       "oracle": "postgres",
@@ -894,8 +894,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddVarcharTypmodColumnDefaultTruncatesTrailingSpacesRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddVarcharTypmodColumnDefaultTruncatesTrailingSpacesRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableAddVarcharTypmodColumnDefaultTruncatesTrailingSpacesRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableAddVarcharTypmodColumnDefaultTruncatesTrailingSpacesRepro",
       "ordinal": 1,
       "scriptName": "ALTER TABLE ADD varchar typmod column default truncates trailing spaces",
       "oracle": "postgres",
@@ -922,8 +922,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddCharacterTypmodColumnDefaultTruncatesTrailingSpacesRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddCharacterTypmodColumnDefaultTruncatesTrailingSpacesRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableAddCharacterTypmodColumnDefaultTruncatesTrailingSpacesRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableAddCharacterTypmodColumnDefaultTruncatesTrailingSpacesRepro",
       "ordinal": 1,
       "scriptName": "ALTER TABLE ADD character typmod column default truncates trailing spaces",
       "oracle": "postgres",
@@ -950,8 +950,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddCharacterTypmodColumnDefaultPadsBackfillRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddCharacterTypmodColumnDefaultPadsBackfillRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableAddCharacterTypmodColumnDefaultPadsBackfillRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableAddCharacterTypmodColumnDefaultPadsBackfillRepro",
       "ordinal": 1,
       "scriptName": "ALTER TABLE ADD character typmod column default pads backfill",
       "oracle": "postgres",
@@ -981,8 +981,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnSetDefaultVarcharTruncatesTrailingSpacesRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnSetDefaultVarcharTruncatesTrailingSpacesRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnSetDefaultVarcharTruncatesTrailingSpacesRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnSetDefaultVarcharTruncatesTrailingSpacesRepro",
       "ordinal": 1,
       "scriptName": "ALTER COLUMN SET DEFAULT varchar truncates trailing spaces",
       "oracle": "postgres",
@@ -1009,8 +1009,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnSetDefaultCharacterTruncatesTrailingSpacesRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnSetDefaultCharacterTruncatesTrailingSpacesRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnSetDefaultCharacterTruncatesTrailingSpacesRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterColumnSetDefaultCharacterTruncatesTrailingSpacesRepro",
       "ordinal": 1,
       "scriptName": "ALTER COLUMN SET DEFAULT character truncates trailing spaces",
       "oracle": "postgres",
@@ -1037,8 +1037,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableReloptionsPersistRepro#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableReloptionsPersistRepro",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableReloptionsPersistRepro#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableReloptionsPersistRepro",
       "ordinal": 1,
       "scriptName": "ALTER TABLE reloptions persist in pg_class",
       "oracle": "postgres",
@@ -1059,8 +1059,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDefaultTablespace#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDefaultTablespace",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableSetDefaultTablespace#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableSetDefaultTablespace",
       "ordinal": 1,
       "scriptName": "ALTER TABLE SET TABLESPACE pg_default",
       "oracle": "postgres",
@@ -1084,8 +1084,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetTablespaceUnknownErrors#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetTablespaceUnknownErrors",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableSetTablespaceUnknownErrors#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableSetTablespaceUnknownErrors",
       "ordinal": 1,
       "scriptName": "SET TABLESPACE rejects unknown tablespace",
       "oracle": "postgres",
@@ -1101,8 +1101,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetHeapAccessMethod#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetHeapAccessMethod",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableSetHeapAccessMethod#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableSetHeapAccessMethod",
       "ordinal": 1,
       "scriptName": "ALTER TABLE SET ACCESS METHOD heap",
       "oracle": "postgres",
@@ -1126,8 +1126,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetAccessMethodUnknownErrors#0001",
-      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetAccessMethodUnknownErrors",
+      "key": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableSetAccessMethodUnknownErrors#0001",
+      "source": "testing/go/postgres16/alter_table_correctness_repro_test.go:TestAlterTableSetAccessMethodUnknownErrors",
       "ordinal": 1,
       "scriptName": "SET ACCESS METHOD rejects non-heap target",
       "oracle": "postgres",

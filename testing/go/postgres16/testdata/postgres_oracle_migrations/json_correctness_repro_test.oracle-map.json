@@ -1,8 +1,8 @@
 {
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map json_correctness_repro_test.go --force-postgres-oracle",
-  "sourceFile": "testing/go/json_correctness_repro_test.go",
+  "sourceFile": "testing/go/postgres16/json_correctness_repro_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -14,8 +14,8 @@
   ],
   "assertions": [
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonAggDistinctRequiresJsonEqualityOperatorRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonAggDistinctRequiresJsonEqualityOperatorRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonAggDistinctRequiresJsonEqualityOperatorRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonAggDistinctRequiresJsonEqualityOperatorRepro",
       "ordinal": 1,
       "scriptName": "json_agg DISTINCT rejects json inputs without equality",
       "oracle": "postgres",
@@ -31,8 +31,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectAggDistinctRequiresJsonEqualityOperatorRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectAggDistinctRequiresJsonEqualityOperatorRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectAggDistinctRequiresJsonEqualityOperatorRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectAggDistinctRequiresJsonEqualityOperatorRepro",
       "ordinal": 1,
       "scriptName": "json_object_agg DISTINCT rejects json inputs without equality",
       "oracle": "postgres",
@@ -48,8 +48,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbAggDistinctDeduplicatesJsonbValuesRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbAggDistinctDeduplicatesJsonbValuesRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbAggDistinctDeduplicatesJsonbValuesRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbAggDistinctDeduplicatesJsonbValuesRepro",
       "ordinal": 1,
       "scriptName": "jsonb_agg DISTINCT deduplicates jsonb inputs",
       "oracle": "postgres",
@@ -70,8 +70,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonExtractionPreservesJsonSubdocumentTextRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonExtractionPreservesJsonSubdocumentTextRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonExtractionPreservesJsonSubdocumentTextRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonExtractionPreservesJsonSubdocumentTextRepro",
       "ordinal": 1,
       "scriptName": "json extraction preserves subdocument text",
       "oracle": "postgres",
@@ -104,8 +104,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonExtractionPreservesJsonObjectKeyOrderRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonExtractionPreservesJsonObjectKeyOrderRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonExtractionPreservesJsonObjectKeyOrderRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonExtractionPreservesJsonObjectKeyOrderRepro",
       "ordinal": 1,
       "scriptName": "json extraction preserves object key order",
       "oracle": "postgres",
@@ -126,8 +126,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonEachPreservesJsonObjectOrderAndDuplicatesRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonEachPreservesJsonObjectOrderAndDuplicatesRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonEachPreservesJsonObjectOrderAndDuplicatesRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonEachPreservesJsonObjectOrderAndDuplicatesRepro",
       "ordinal": 1,
       "scriptName": "json_each preserves plain json object order and duplicate keys",
       "oracle": "postgres",
@@ -148,8 +148,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonEachPreservesJsonObjectOrderAndDuplicatesRepro#0002",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonEachPreservesJsonObjectOrderAndDuplicatesRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonEachPreservesJsonObjectOrderAndDuplicatesRepro#0002",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonEachPreservesJsonObjectOrderAndDuplicatesRepro",
       "ordinal": 2,
       "scriptName": "json_each preserves plain json object order and duplicate keys",
       "oracle": "postgres",
@@ -170,8 +170,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectKeysPreservesJsonObjectOrderAndDuplicatesRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectKeysPreservesJsonObjectOrderAndDuplicatesRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectKeysPreservesJsonObjectOrderAndDuplicatesRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectKeysPreservesJsonObjectOrderAndDuplicatesRepro",
       "ordinal": 1,
       "scriptName": "json_object_keys preserves plain json object order and duplicate keys",
       "oracle": "postgres",
@@ -192,8 +192,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectKeysPreservesJsonObjectOrderAndDuplicatesRepro#0002",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectKeysPreservesJsonObjectOrderAndDuplicatesRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectKeysPreservesJsonObjectOrderAndDuplicatesRepro#0002",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectKeysPreservesJsonObjectOrderAndDuplicatesRepro",
       "ordinal": 2,
       "scriptName": "json_object_keys preserves plain json object order and duplicate keys",
       "oracle": "postgres",
@@ -214,8 +214,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonArrayElementsPreservesJsonElementTextRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonArrayElementsPreservesJsonElementTextRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonArrayElementsPreservesJsonElementTextRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonArrayElementsPreservesJsonElementTextRepro",
       "ordinal": 1,
       "scriptName": "json_array_elements preserves plain json element text",
       "oracle": "postgres",
@@ -236,8 +236,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonArrayElementsPreservesJsonElementTextRepro#0002",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonArrayElementsPreservesJsonElementTextRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonArrayElementsPreservesJsonElementTextRepro#0002",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonArrayElementsPreservesJsonElementTextRepro",
       "ordinal": 2,
       "scriptName": "json_array_elements preserves plain json element text",
       "oracle": "postgres",
@@ -258,8 +258,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonBuildObjectRejectsNonScalarKeysRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonBuildObjectRejectsNonScalarKeysRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonBuildObjectRejectsNonScalarKeysRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonBuildObjectRejectsNonScalarKeysRepro",
       "ordinal": 1,
       "scriptName": "json_build_object rejects non-scalar keys",
       "oracle": "postgres",
@@ -275,8 +275,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonBuildObjectRejectsNonScalarKeysRepro#0002",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonBuildObjectRejectsNonScalarKeysRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonBuildObjectRejectsNonScalarKeysRepro#0002",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonBuildObjectRejectsNonScalarKeysRepro",
       "ordinal": 2,
       "scriptName": "json_build_object rejects non-scalar keys",
       "oracle": "postgres",
@@ -292,8 +292,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonBuildObjectRejectsNonScalarKeysRepro#0003",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonBuildObjectRejectsNonScalarKeysRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonBuildObjectRejectsNonScalarKeysRepro#0003",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonBuildObjectRejectsNonScalarKeysRepro",
       "ordinal": 3,
       "scriptName": "json_build_object rejects non-scalar keys",
       "oracle": "postgres",
@@ -309,8 +309,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbBuildObjectRejectsNonScalarKeysRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbBuildObjectRejectsNonScalarKeysRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbBuildObjectRejectsNonScalarKeysRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbBuildObjectRejectsNonScalarKeysRepro",
       "ordinal": 1,
       "scriptName": "jsonb_build_object rejects non-scalar keys",
       "oracle": "postgres",
@@ -326,8 +326,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbBuildObjectRejectsNonScalarKeysRepro#0002",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbBuildObjectRejectsNonScalarKeysRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbBuildObjectRejectsNonScalarKeysRepro#0002",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbBuildObjectRejectsNonScalarKeysRepro",
       "ordinal": 2,
       "scriptName": "jsonb_build_object rejects non-scalar keys",
       "oracle": "postgres",
@@ -343,8 +343,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbBuildObjectRejectsNonScalarKeysRepro#0003",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbBuildObjectRejectsNonScalarKeysRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbBuildObjectRejectsNonScalarKeysRepro#0003",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbBuildObjectRejectsNonScalarKeysRepro",
       "ordinal": 3,
       "scriptName": "jsonb_build_object rejects non-scalar keys",
       "oracle": "postgres",
@@ -360,8 +360,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectAggRejectsNonScalarKeysRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectAggRejectsNonScalarKeysRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectAggRejectsNonScalarKeysRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectAggRejectsNonScalarKeysRepro",
       "ordinal": 1,
       "scriptName": "json_object_agg rejects non-scalar keys",
       "oracle": "postgres",
@@ -377,8 +377,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectAggRejectsNonScalarKeysRepro#0002",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectAggRejectsNonScalarKeysRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectAggRejectsNonScalarKeysRepro#0002",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectAggRejectsNonScalarKeysRepro",
       "ordinal": 2,
       "scriptName": "json_object_agg rejects non-scalar keys",
       "oracle": "postgres",
@@ -394,8 +394,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectAggRejectsNonScalarKeysRepro#0003",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectAggRejectsNonScalarKeysRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectAggRejectsNonScalarKeysRepro#0003",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectAggRejectsNonScalarKeysRepro",
       "ordinal": 3,
       "scriptName": "json_object_agg rejects non-scalar keys",
       "oracle": "postgres",
@@ -411,8 +411,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonAggregatesPreserveJsonInputTextRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonAggregatesPreserveJsonInputTextRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonAggregatesPreserveJsonInputTextRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonAggregatesPreserveJsonInputTextRepro",
       "ordinal": 1,
       "scriptName": "json aggregates preserve plain json input text",
       "oracle": "postgres",
@@ -433,8 +433,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonAggregatesPreserveJsonInputTextRepro#0002",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonAggregatesPreserveJsonInputTextRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonAggregatesPreserveJsonInputTextRepro#0002",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonAggregatesPreserveJsonInputTextRepro",
       "ordinal": 2,
       "scriptName": "json aggregates preserve plain json input text",
       "oracle": "postgres",
@@ -455,8 +455,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonToRecordPreservesNestedJsonTextRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonToRecordPreservesNestedJsonTextRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonToRecordPreservesNestedJsonTextRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonToRecordPreservesNestedJsonTextRepro",
       "ordinal": 1,
       "scriptName": "json_to_record preserves nested plain json field text",
       "oracle": "postgres",
@@ -477,8 +477,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonToRecordPreservesNestedJsonTextRepro#0002",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonToRecordPreservesNestedJsonTextRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonToRecordPreservesNestedJsonTextRepro#0002",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonToRecordPreservesNestedJsonTextRepro",
       "ordinal": 2,
       "scriptName": "json_to_record preserves nested plain json field text",
       "oracle": "postgres",
@@ -499,8 +499,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonPopulateRecordPreservesNestedJsonTextRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonPopulateRecordPreservesNestedJsonTextRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonPopulateRecordPreservesNestedJsonTextRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonPopulateRecordPreservesNestedJsonTextRepro",
       "ordinal": 1,
       "scriptName": "json_populate_record preserves nested plain json field text",
       "oracle": "postgres",
@@ -521,8 +521,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonPopulateRecordPreservesNestedJsonTextRepro#0002",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonPopulateRecordPreservesNestedJsonTextRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonPopulateRecordPreservesNestedJsonTextRepro#0002",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonPopulateRecordPreservesNestedJsonTextRepro",
       "ordinal": 2,
       "scriptName": "json_populate_record preserves nested plain json field text",
       "oracle": "postgres",
@@ -543,8 +543,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbObjectAggRejectsNonScalarKeysRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbObjectAggRejectsNonScalarKeysRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbObjectAggRejectsNonScalarKeysRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbObjectAggRejectsNonScalarKeysRepro",
       "ordinal": 1,
       "scriptName": "jsonb_object_agg rejects non-scalar keys",
       "oracle": "postgres",
@@ -560,8 +560,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbObjectAggRejectsNonScalarKeysRepro#0002",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbObjectAggRejectsNonScalarKeysRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbObjectAggRejectsNonScalarKeysRepro#0002",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbObjectAggRejectsNonScalarKeysRepro",
       "ordinal": 2,
       "scriptName": "jsonb_object_agg rejects non-scalar keys",
       "oracle": "postgres",
@@ -577,8 +577,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbObjectAggRejectsNonScalarKeysRepro#0003",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbObjectAggRejectsNonScalarKeysRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbObjectAggRejectsNonScalarKeysRepro#0003",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbObjectAggRejectsNonScalarKeysRepro",
       "ordinal": 3,
       "scriptName": "jsonb_object_agg rejects non-scalar keys",
       "oracle": "postgres",
@@ -594,8 +594,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectAcceptsTwoDimensionalTextArrayRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectAcceptsTwoDimensionalTextArrayRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectAcceptsTwoDimensionalTextArrayRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectAcceptsTwoDimensionalTextArrayRepro",
       "ordinal": 1,
       "scriptName": "json_object accepts two-dimensional text array",
       "oracle": "postgres",
@@ -619,8 +619,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro",
       "ordinal": 1,
       "scriptName": "json_object two-dimensional text array requires two columns",
       "oracle": "postgres",
@@ -636,8 +636,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro#0002",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro#0002",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro",
       "ordinal": 2,
       "scriptName": "json_object two-dimensional text array requires two columns",
       "oracle": "postgres",
@@ -653,8 +653,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro#0003",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro#0003",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro",
       "ordinal": 3,
       "scriptName": "json_object two-dimensional text array requires two columns",
       "oracle": "postgres",
@@ -670,8 +670,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro#0004",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro#0004",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro",
       "ordinal": 4,
       "scriptName": "json_object two-dimensional text array requires two columns",
       "oracle": "postgres",
@@ -687,8 +687,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro",
       "ordinal": 1,
       "scriptName": "json_object two-array form rejects multidimensional inputs",
       "oracle": "postgres",
@@ -704,8 +704,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro#0002",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro#0002",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro",
       "ordinal": 2,
       "scriptName": "json_object two-array form rejects multidimensional inputs",
       "oracle": "postgres",
@@ -721,8 +721,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro#0003",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro#0003",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro",
       "ordinal": 3,
       "scriptName": "json_object two-array form rejects multidimensional inputs",
       "oracle": "postgres",
@@ -738,8 +738,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro#0004",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro#0004",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro",
       "ordinal": 4,
       "scriptName": "json_object two-array form rejects multidimensional inputs",
       "oracle": "postgres",
@@ -755,8 +755,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestToJsonFloatNonFiniteValuesBecomeStringsRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestToJsonFloatNonFiniteValuesBecomeStringsRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestToJsonFloatNonFiniteValuesBecomeStringsRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestToJsonFloatNonFiniteValuesBecomeStringsRepro",
       "ordinal": 1,
       "scriptName": "to_json non-finite floats become strings",
       "oracle": "postgres",
@@ -792,8 +792,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonBuildersFloatNonFiniteValuesBecomeStringsRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonBuildersFloatNonFiniteValuesBecomeStringsRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonBuildersFloatNonFiniteValuesBecomeStringsRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonBuildersFloatNonFiniteValuesBecomeStringsRepro",
       "ordinal": 1,
       "scriptName": "json builders convert non-finite floats to strings",
       "oracle": "postgres",
@@ -823,8 +823,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonFloatNegativeZeroPreservesJsonSpellingRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonFloatNegativeZeroPreservesJsonSpellingRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonFloatNegativeZeroPreservesJsonSpellingRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonFloatNegativeZeroPreservesJsonSpellingRepro",
       "ordinal": 1,
       "scriptName": "plain json float negative zero preserves spelling",
       "oracle": "postgres",
@@ -854,8 +854,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestToJsonMultidimensionalArrayPreservesNestingRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestToJsonMultidimensionalArrayPreservesNestingRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestToJsonMultidimensionalArrayPreservesNestingRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestToJsonMultidimensionalArrayPreservesNestingRepro",
       "ordinal": 1,
       "scriptName": "to_json multidimensional array preserves nesting",
       "oracle": "postgres",
@@ -879,8 +879,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestToJsonDateTimestampUsePostgresFormattingRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestToJsonDateTimestampUsePostgresFormattingRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestToJsonDateTimestampUsePostgresFormattingRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestToJsonDateTimestampUsePostgresFormattingRepro",
       "ordinal": 1,
       "scriptName": "to_json date and timestamp values use PostgreSQL formatting",
       "oracle": "postgres",
@@ -910,8 +910,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonBuildersDateTimestampUsePostgresFormattingRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonBuildersDateTimestampUsePostgresFormattingRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonBuildersDateTimestampUsePostgresFormattingRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonBuildersDateTimestampUsePostgresFormattingRepro",
       "ordinal": 1,
       "scriptName": "json builders date and timestamp values use PostgreSQL formatting",
       "oracle": "postgres",
@@ -941,8 +941,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestToJsonRecordPreservesFieldOrderRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestToJsonRecordPreservesFieldOrderRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestToJsonRecordPreservesFieldOrderRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestToJsonRecordPreservesFieldOrderRepro",
       "ordinal": 1,
       "scriptName": "to_json record conversion preserves field order",
       "oracle": "postgres",
@@ -969,8 +969,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbComparisonTypePrecedenceMatchesPostgresRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbComparisonTypePrecedenceMatchesPostgresRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbComparisonTypePrecedenceMatchesPostgresRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbComparisonTypePrecedenceMatchesPostgresRepro",
       "ordinal": 1,
       "scriptName": "jsonb comparison uses PostgreSQL type precedence",
       "oracle": "postgres",
@@ -1003,8 +1003,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbPathMatchJsonNullReturnsSqlNullRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbPathMatchJsonNullReturnsSqlNullRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbPathMatchJsonNullReturnsSqlNullRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbPathMatchJsonNullReturnsSqlNullRepro",
       "ordinal": 1,
       "scriptName": "jsonb_path_match maps JSON null to SQL null",
       "oracle": "postgres",
@@ -1025,8 +1025,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbPathMatchRequiresSingleBooleanResultRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbPathMatchRequiresSingleBooleanResultRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbPathMatchRequiresSingleBooleanResultRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbPathMatchRequiresSingleBooleanResultRepro",
       "ordinal": 1,
       "scriptName": "jsonb_path_match rejects non-boolean results",
       "oracle": "postgres",
@@ -1042,8 +1042,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbPathQueryArrayFilterPredicateRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbPathQueryArrayFilterPredicateRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbPathQueryArrayFilterPredicateRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbPathQueryArrayFilterPredicateRepro",
       "ordinal": 1,
       "scriptName": "jsonb_path_query_array applies filter predicates",
       "oracle": "postgres",
@@ -1064,8 +1064,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonpathPostgres16NumericLiteralSyntaxRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonpathPostgres16NumericLiteralSyntaxRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonpathPostgres16NumericLiteralSyntaxRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonpathPostgres16NumericLiteralSyntaxRepro",
       "ordinal": 1,
       "scriptName": "JSONPath accepts PostgreSQL 16 numeric literal syntax",
       "oracle": "postgres",
@@ -1095,8 +1095,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbNestedArrayContainmentGuard#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbNestedArrayContainmentGuard",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbNestedArrayContainmentGuard#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbNestedArrayContainmentGuard",
       "ordinal": 1,
       "scriptName": "jsonb containment matches nested array elements",
       "oracle": "postgres",
@@ -1123,8 +1123,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbArrayContainmentSemanticsGuard#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbArrayContainmentSemanticsGuard",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbArrayContainmentSemanticsGuard#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbArrayContainmentSemanticsGuard",
       "ordinal": 1,
       "scriptName": "jsonb array containment uses PostgreSQL containment semantics",
       "oracle": "postgres",
@@ -1157,8 +1157,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbObjectContainmentSemanticsGuard#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbObjectContainmentSemanticsGuard",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbObjectContainmentSemanticsGuard#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbObjectContainmentSemanticsGuard",
       "ordinal": 1,
       "scriptName": "jsonb object containment uses PostgreSQL containment semantics",
       "oracle": "postgres",
@@ -1182,8 +1182,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbSetEmptyPathReplacesWholeDocumentRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbSetEmptyPathReplacesWholeDocumentRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbSetEmptyPathReplacesWholeDocumentRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbSetEmptyPathReplacesWholeDocumentRepro",
       "ordinal": 1,
       "scriptName": "jsonb_set empty path replaces whole document",
       "oracle": "postgres",
@@ -1204,8 +1204,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbSetEmptyPathUpdateReplacesStoredDocumentRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbSetEmptyPathUpdateReplacesStoredDocumentRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbSetEmptyPathUpdateReplacesStoredDocumentRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbSetEmptyPathUpdateReplacesStoredDocumentRepro",
       "ordinal": 1,
       "scriptName": "jsonb_set empty path update replaces stored document",
       "oracle": "postgres",
@@ -1226,8 +1226,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbSetLaxEmptyPathReplacesWholeDocumentRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbSetLaxEmptyPathReplacesWholeDocumentRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbSetLaxEmptyPathReplacesWholeDocumentRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbSetLaxEmptyPathReplacesWholeDocumentRepro",
       "ordinal": 1,
       "scriptName": "jsonb_set_lax empty path replaces whole document",
       "oracle": "postgres",
@@ -1248,8 +1248,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbExistsDecodesEscapedStringElementsRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbExistsDecodesEscapedStringElementsRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbExistsDecodesEscapedStringElementsRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbExistsDecodesEscapedStringElementsRepro",
       "ordinal": 1,
       "scriptName": "jsonb existence operators decode escaped string values",
       "oracle": "postgres",
@@ -1279,8 +1279,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbSetRejectsScalarTargetRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbSetRejectsScalarTargetRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbSetRejectsScalarTargetRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbSetRejectsScalarTargetRepro",
       "ordinal": 1,
       "scriptName": "jsonb_set rejects scalar targets",
       "oracle": "postgres",
@@ -1296,8 +1296,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbSetArrayPathRequiresIntegerRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbSetArrayPathRequiresIntegerRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbSetArrayPathRequiresIntegerRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbSetArrayPathRequiresIntegerRepro",
       "ordinal": 1,
       "scriptName": "jsonb_set array path elements must be integers",
       "oracle": "postgres",
@@ -1313,8 +1313,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbInsertRejectsScalarTargetRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbInsertRejectsScalarTargetRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbInsertRejectsScalarTargetRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbInsertRejectsScalarTargetRepro",
       "ordinal": 1,
       "scriptName": "jsonb_insert rejects scalar targets",
       "oracle": "postgres",
@@ -1330,8 +1330,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbInsertRejectsExistingObjectKeyRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbInsertRejectsExistingObjectKeyRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbInsertRejectsExistingObjectKeyRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbInsertRejectsExistingObjectKeyRepro",
       "ordinal": 1,
       "scriptName": "jsonb_insert rejects existing object keys",
       "oracle": "postgres",
@@ -1347,8 +1347,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbExtractPathNullElementReturnsNullGuard#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbExtractPathNullElementReturnsNullGuard",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbExtractPathNullElementReturnsNullGuard#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbExtractPathNullElementReturnsNullGuard",
       "ordinal": 1,
       "scriptName": "jsonb path extraction null path element returns null",
       "oracle": "postgres",
@@ -1372,8 +1372,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbSubscriptUpdatePersistsNestedDocumentRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbSubscriptUpdatePersistsNestedDocumentRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbSubscriptUpdatePersistsNestedDocumentRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbSubscriptUpdatePersistsNestedDocumentRepro",
       "ordinal": 1,
       "scriptName": "jsonb subscript reads and updates stored document",
       "oracle": "postgres",
@@ -1394,8 +1394,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbSubscriptUpdatePersistsNestedDocumentRepro#0002",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbSubscriptUpdatePersistsNestedDocumentRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbSubscriptUpdatePersistsNestedDocumentRepro#0002",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbSubscriptUpdatePersistsNestedDocumentRepro",
       "ordinal": 2,
       "scriptName": "jsonb subscript reads and updates stored document",
       "oracle": "postgres",
@@ -1416,8 +1416,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbDeleteOperatorPersistsStoredDocumentRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbDeleteOperatorPersistsStoredDocumentRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbDeleteOperatorPersistsStoredDocumentRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbDeleteOperatorPersistsStoredDocumentRepro",
       "ordinal": 1,
       "scriptName": "jsonb delete operator updates stored document",
       "oracle": "postgres",
@@ -1438,8 +1438,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbInsertPersistsNestedArrayUpdateGuard#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbInsertPersistsNestedArrayUpdateGuard",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbInsertPersistsNestedArrayUpdateGuard#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbInsertPersistsNestedArrayUpdateGuard",
       "ordinal": 1,
       "scriptName": "jsonb_insert updates nested arrays",
       "oracle": "postgres",
@@ -1471,8 +1471,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/json_correctness_repro_test.go:TestJsonbSetLaxDeleteKeyPersistsStoredDocumentRepro#0001",
-      "source": "testing/go/json_correctness_repro_test.go:TestJsonbSetLaxDeleteKeyPersistsStoredDocumentRepro",
+      "key": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbSetLaxDeleteKeyPersistsStoredDocumentRepro#0001",
+      "source": "testing/go/postgres16/json_correctness_repro_test.go:TestJsonbSetLaxDeleteKeyPersistsStoredDocumentRepro",
       "ordinal": 1,
       "scriptName": "jsonb_set_lax delete_key updates stored document",
       "oracle": "postgres",

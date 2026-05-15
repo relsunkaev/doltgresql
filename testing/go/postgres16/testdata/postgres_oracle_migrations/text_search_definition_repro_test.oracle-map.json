@@ -1,8 +1,8 @@
 {
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map text_search_definition_repro_test.go --force-postgres-oracle",
-  "sourceFile": "testing/go/text_search_definition_repro_test.go",
+  "sourceFile": "testing/go/postgres16/text_search_definition_repro_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -14,8 +14,8 @@
   ],
   "assertions": [
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestBuiltInTextSearchFunctionsMatchTermsRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestBuiltInTextSearchFunctionsMatchTermsRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestBuiltInTextSearchFunctionsMatchTermsRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestBuiltInTextSearchFunctionsMatchTermsRepro",
       "ordinal": 1,
       "scriptName": "built-in text-search functions match terms",
       "oracle": "postgres",
@@ -42,8 +42,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestPlainToTsQueryFunctionRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestPlainToTsQueryFunctionRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestPlainToTsQueryFunctionRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestPlainToTsQueryFunctionRepro",
       "ordinal": 1,
       "scriptName": "plainto_tsquery parses plain text",
       "oracle": "postgres",
@@ -64,8 +64,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestPhraseToTsQueryFunctionRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestPhraseToTsQueryFunctionRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestPhraseToTsQueryFunctionRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestPhraseToTsQueryFunctionRepro",
       "ordinal": 1,
       "scriptName": "phraseto_tsquery parses phrase text",
       "oracle": "postgres",
@@ -86,8 +86,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestWebsearchToTsQueryFunctionRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestWebsearchToTsQueryFunctionRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestWebsearchToTsQueryFunctionRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestWebsearchToTsQueryFunctionRepro",
       "ordinal": 1,
       "scriptName": "websearch_to_tsquery parses web search text",
       "oracle": "postgres",
@@ -108,8 +108,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestTsHeadlineFunctionRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestTsHeadlineFunctionRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestTsHeadlineFunctionRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestTsHeadlineFunctionRepro",
       "ordinal": 1,
       "scriptName": "ts_headline highlights matching text",
       "oracle": "postgres",
@@ -130,8 +130,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestTsRankFunctionRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestTsRankFunctionRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestTsRankFunctionRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestTsRankFunctionRepro",
       "ordinal": 1,
       "scriptName": "ts_rank scores matching documents",
       "oracle": "postgres",
@@ -152,8 +152,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestTsRankCdFunctionRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestTsRankCdFunctionRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestTsRankCdFunctionRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestTsRankCdFunctionRepro",
       "ordinal": 1,
       "scriptName": "ts_rank_cd scores matching documents",
       "oracle": "postgres",
@@ -174,8 +174,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestTsVectorToArrayFunctionRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestTsVectorToArrayFunctionRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestTsVectorToArrayFunctionRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestTsVectorToArrayFunctionRepro",
       "ordinal": 1,
       "scriptName": "tsvector_to_array extracts lexemes",
       "oracle": "postgres",
@@ -196,8 +196,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestArrayToTsVectorFunctionRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestArrayToTsVectorFunctionRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestArrayToTsVectorFunctionRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestArrayToTsVectorFunctionRepro",
       "ordinal": 1,
       "scriptName": "array_to_tsvector constructs sorted lexemes",
       "oracle": "postgres",
@@ -218,8 +218,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestTsDeleteFunctionRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestTsDeleteFunctionRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestTsDeleteFunctionRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestTsDeleteFunctionRepro",
       "ordinal": 1,
       "scriptName": "ts_delete removes a lexeme",
       "oracle": "postgres",
@@ -240,8 +240,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestSetWeightFunctionRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestSetWeightFunctionRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestSetWeightFunctionRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestSetWeightFunctionRepro",
       "ordinal": 1,
       "scriptName": "setweight assigns lexeme weights",
       "oracle": "postgres",
@@ -262,8 +262,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestStripTsVectorFunctionRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestStripTsVectorFunctionRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestStripTsVectorFunctionRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestStripTsVectorFunctionRepro",
       "ordinal": 1,
       "scriptName": "strip removes tsvector positions",
       "oracle": "postgres",
@@ -284,8 +284,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestNumNodeFunctionRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestNumNodeFunctionRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestNumNodeFunctionRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestNumNodeFunctionRepro",
       "ordinal": 1,
       "scriptName": "numnode counts tsquery nodes",
       "oracle": "postgres",
@@ -306,8 +306,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestQueryTreeFunctionRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestQueryTreeFunctionRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestQueryTreeFunctionRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestQueryTreeFunctionRepro",
       "ordinal": 1,
       "scriptName": "querytree returns indexable tsquery text",
       "oracle": "postgres",
@@ -328,8 +328,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestTsQueryPhraseFunctionRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestTsQueryPhraseFunctionRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestTsQueryPhraseFunctionRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestTsQueryPhraseFunctionRepro",
       "ordinal": 1,
       "scriptName": "tsquery_phrase builds phrase query",
       "oracle": "postgres",
@@ -350,8 +350,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestTsRewriteFunctionRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestTsRewriteFunctionRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestTsRewriteFunctionRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestTsRewriteFunctionRepro",
       "ordinal": 1,
       "scriptName": "ts_rewrite substitutes tsquery terms",
       "oracle": "postgres",
@@ -372,8 +372,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestTsFilterFunctionRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestTsFilterFunctionRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestTsFilterFunctionRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestTsFilterFunctionRepro",
       "ordinal": 1,
       "scriptName": "ts_filter keeps selected tsvector weights",
       "oracle": "postgres",
@@ -394,8 +394,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestJsonToTsVectorFunctionRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestJsonToTsVectorFunctionRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestJsonToTsVectorFunctionRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestJsonToTsVectorFunctionRepro",
       "ordinal": 1,
       "scriptName": "json_to_tsvector extracts JSON string tokens",
       "oracle": "postgres",
@@ -416,8 +416,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestCreateTextSearchConfigurationCopyIsUsableRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestCreateTextSearchConfigurationCopyIsUsableRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestCreateTextSearchConfigurationCopyIsUsableRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestCreateTextSearchConfigurationCopyIsUsableRepro",
       "ordinal": 1,
       "scriptName": "CREATE TEXT SEARCH CONFIGURATION copy is usable",
       "oracle": "postgres",
@@ -438,8 +438,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestCreateTextSearchConfigurationCopyIsUsableRepro#0002",
-      "source": "testing/go/text_search_definition_repro_test.go:TestCreateTextSearchConfigurationCopyIsUsableRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestCreateTextSearchConfigurationCopyIsUsableRepro#0002",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestCreateTextSearchConfigurationCopyIsUsableRepro",
       "ordinal": 2,
       "scriptName": "CREATE TEXT SEARCH CONFIGURATION copy is usable",
       "oracle": "postgres",
@@ -460,8 +460,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestDropTextSearchConfigurationIfExistsDropsExistingRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestDropTextSearchConfigurationIfExistsDropsExistingRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestDropTextSearchConfigurationIfExistsDropsExistingRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestDropTextSearchConfigurationIfExistsDropsExistingRepro",
       "ordinal": 1,
       "scriptName": "DROP TEXT SEARCH CONFIGURATION IF EXISTS removes existing config",
       "oracle": "postgres",
@@ -482,8 +482,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro#0001",
-      "source": "testing/go/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro#0001",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro",
       "ordinal": 1,
       "scriptName": "ALTER TEXT SEARCH objects validate missing targets",
       "oracle": "postgres",
@@ -499,8 +499,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro#0002",
-      "source": "testing/go/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro#0002",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro",
       "ordinal": 2,
       "scriptName": "ALTER TEXT SEARCH objects validate missing targets",
       "oracle": "postgres",
@@ -516,8 +516,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro#0003",
-      "source": "testing/go/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro#0003",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro",
       "ordinal": 3,
       "scriptName": "ALTER TEXT SEARCH objects validate missing targets",
       "oracle": "postgres",
@@ -533,8 +533,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro#0004",
-      "source": "testing/go/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro",
+      "key": "testing/go/postgres16/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro#0004",
+      "source": "testing/go/postgres16/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro",
       "ordinal": 4,
       "scriptName": "ALTER TEXT SEARCH objects validate missing targets",
       "oracle": "postgres",

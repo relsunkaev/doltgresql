@@ -1,8 +1,8 @@
 {
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map create_table_as_correctness_repro_test.go --force-postgres-oracle",
-  "sourceFile": "testing/go/create_table_as_correctness_repro_test.go",
+  "sourceFile": "testing/go/postgres16/create_table_as_correctness_repro_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -14,8 +14,8 @@
   ],
   "assertions": [
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataDoesNotEvaluateQuery#0001",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataDoesNotEvaluateQuery",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataDoesNotEvaluateQuery#0001",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataDoesNotEvaluateQuery",
       "ordinal": 1,
       "scriptName": "CREATE TABLE AS WITH NO DATA does not evaluate query",
       "oracle": "postgres",
@@ -30,8 +30,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataPreservesColumnSchema#0001",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataPreservesColumnSchema",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataPreservesColumnSchema#0001",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataPreservesColumnSchema",
       "ordinal": 1,
       "scriptName": "WITH NO DATA infers projection schema",
       "oracle": "postgres",
@@ -58,8 +58,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataPreservesColumnSchema#0002",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataPreservesColumnSchema",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataPreservesColumnSchema#0002",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataPreservesColumnSchema",
       "ordinal": 2,
       "scriptName": "WITH NO DATA infers projection schema",
       "oracle": "postgres",
@@ -75,8 +75,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataAcceptsUnionSource#0001",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataAcceptsUnionSource",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataAcceptsUnionSource#0001",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataAcceptsUnionSource",
       "ordinal": 1,
       "scriptName": "WITH NO DATA accepts UNION source",
       "oracle": "postgres",
@@ -91,8 +91,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsWithDataClauseRepro#0001",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsWithDataClauseRepro",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsWithDataClauseRepro#0001",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsWithDataClauseRepro",
       "ordinal": 1,
       "scriptName": "CREATE TABLE AS WITH DATA evaluates query",
       "oracle": "postgres",
@@ -113,8 +113,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsIfNotExistsDoesNotEvaluateQueryRepro#0001",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsIfNotExistsDoesNotEvaluateQueryRepro",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsIfNotExistsDoesNotEvaluateQueryRepro#0001",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsIfNotExistsDoesNotEvaluateQueryRepro",
       "ordinal": 1,
       "scriptName": "CREATE TABLE AS IF NOT EXISTS skips replacement query",
       "oracle": "postgres",
@@ -135,8 +135,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsDoesNotCopyDefaultsRepro#0001",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsDoesNotCopyDefaultsRepro",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsDoesNotCopyDefaultsRepro#0001",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsDoesNotCopyDefaultsRepro",
       "ordinal": 1,
       "scriptName": "CREATE TABLE AS does not copy defaults",
       "oracle": "postgres",
@@ -168,8 +168,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsDoesNotCopyCheckConstraintsRepro#0001",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsDoesNotCopyCheckConstraintsRepro",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsDoesNotCopyCheckConstraintsRepro#0001",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsDoesNotCopyCheckConstraintsRepro",
       "ordinal": 1,
       "scriptName": "CREATE TABLE AS does not copy check constraints",
       "oracle": "postgres",
@@ -201,8 +201,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsDoesNotCopyUniqueIndexesRepro#0001",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsDoesNotCopyUniqueIndexesRepro",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsDoesNotCopyUniqueIndexesRepro#0001",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsDoesNotCopyUniqueIndexesRepro",
       "ordinal": 1,
       "scriptName": "CREATE TABLE AS does not copy unique indexes",
       "oracle": "postgres",
@@ -234,8 +234,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsPreservesDomainColumnTypesGuard#0001",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsPreservesDomainColumnTypesGuard",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsPreservesDomainColumnTypesGuard#0001",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsPreservesDomainColumnTypesGuard",
       "ordinal": 1,
       "scriptName": "CREATE TABLE AS preserves domain column types",
       "oracle": "postgres",
@@ -251,8 +251,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsPreservesDomainColumnTypesGuard#0002",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsPreservesDomainColumnTypesGuard",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsPreservesDomainColumnTypesGuard#0002",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsPreservesDomainColumnTypesGuard",
       "ordinal": 2,
       "scriptName": "CREATE TABLE AS preserves domain column types",
       "oracle": "postgres",
@@ -276,8 +276,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTextDomainTypmodMaterializesCoercedValueRepro#0001",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTextDomainTypmodMaterializesCoercedValueRepro",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsTextDomainTypmodMaterializesCoercedValueRepro#0001",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsTextDomainTypmodMaterializesCoercedValueRepro",
       "ordinal": 1,
       "scriptName": "CREATE TABLE AS text domain typmod materializes coerced value",
       "oracle": "postgres",
@@ -313,8 +313,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTextDomainTypmodMaterializesCoercedValueRepro#0002",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTextDomainTypmodMaterializesCoercedValueRepro",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsTextDomainTypmodMaterializesCoercedValueRepro#0002",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsTextDomainTypmodMaterializesCoercedValueRepro",
       "ordinal": 2,
       "scriptName": "CREATE TABLE AS text domain typmod materializes coerced value",
       "oracle": "postgres",
@@ -340,8 +340,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimetzTypmodMaterializesRoundedValueRepro#0001",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimetzTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsTimetzTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsTimetzTypmodMaterializesRoundedValueRepro",
       "ordinal": 1,
       "scriptName": "CREATE TABLE AS timetz typmod materializes rounded value",
       "oracle": "postgres",
@@ -362,8 +362,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimetzTypmodMaterializesRoundedValueRepro#0002",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimetzTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsTimetzTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsTimetzTypmodMaterializesRoundedValueRepro",
       "ordinal": 2,
       "scriptName": "CREATE TABLE AS timetz typmod materializes rounded value",
       "oracle": "postgres",
@@ -384,8 +384,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimeTypmodMaterializesRoundedValueGuard#0001",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimeTypmodMaterializesRoundedValueGuard",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsTimeTypmodMaterializesRoundedValueGuard#0001",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsTimeTypmodMaterializesRoundedValueGuard",
       "ordinal": 1,
       "scriptName": "CREATE TABLE AS time typmod materializes rounded value",
       "oracle": "postgres",
@@ -406,8 +406,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimeTypmodMaterializesRoundedValueGuard#0002",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimeTypmodMaterializesRoundedValueGuard",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsTimeTypmodMaterializesRoundedValueGuard#0002",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsTimeTypmodMaterializesRoundedValueGuard",
       "ordinal": 2,
       "scriptName": "CREATE TABLE AS time typmod materializes rounded value",
       "oracle": "postgres",
@@ -428,8 +428,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsNumericTypmodMaterializesRoundedValueGuard#0001",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsNumericTypmodMaterializesRoundedValueGuard",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsNumericTypmodMaterializesRoundedValueGuard#0001",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsNumericTypmodMaterializesRoundedValueGuard",
       "ordinal": 1,
       "scriptName": "CREATE TABLE AS numeric typmod materializes rounded value",
       "oracle": "postgres",
@@ -450,8 +450,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsNumericTypmodMaterializesRoundedValueGuard#0002",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsNumericTypmodMaterializesRoundedValueGuard",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsNumericTypmodMaterializesRoundedValueGuard#0002",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsNumericTypmodMaterializesRoundedValueGuard",
       "ordinal": 2,
       "scriptName": "CREATE TABLE AS numeric typmod materializes rounded value",
       "oracle": "postgres",
@@ -472,8 +472,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestampTypmodMaterializesRoundedValueRepro#0001",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestampTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestampTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestampTypmodMaterializesRoundedValueRepro",
       "ordinal": 1,
       "scriptName": "CREATE TABLE AS timestamp typmod materializes rounded value",
       "oracle": "postgres",
@@ -494,8 +494,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestampTypmodMaterializesRoundedValueRepro#0002",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestampTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestampTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestampTypmodMaterializesRoundedValueRepro",
       "ordinal": 2,
       "scriptName": "CREATE TABLE AS timestamp typmod materializes rounded value",
       "oracle": "postgres",
@@ -516,8 +516,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestamptzTypmodMaterializesRoundedValueRepro#0001",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestamptzTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestamptzTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestamptzTypmodMaterializesRoundedValueRepro",
       "ordinal": 1,
       "scriptName": "CREATE TABLE AS timestamptz typmod materializes rounded value",
       "oracle": "postgres",
@@ -538,8 +538,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestamptzTypmodMaterializesRoundedValueRepro#0002",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestamptzTypmodMaterializesRoundedValueRepro",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestamptzTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestamptzTypmodMaterializesRoundedValueRepro",
       "ordinal": 2,
       "scriptName": "CREATE TABLE AS timestamptz typmod materializes rounded value",
       "oracle": "postgres",
@@ -560,8 +560,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsIntervalTypmodMaterializesRestrictedValueRepro#0001",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsIntervalTypmodMaterializesRestrictedValueRepro",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsIntervalTypmodMaterializesRestrictedValueRepro#0001",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsIntervalTypmodMaterializesRestrictedValueRepro",
       "ordinal": 1,
       "scriptName": "CREATE TABLE AS interval typmod materializes restricted value",
       "oracle": "postgres",
@@ -582,8 +582,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsIntervalTypmodMaterializesRestrictedValueRepro#0002",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsIntervalTypmodMaterializesRestrictedValueRepro",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsIntervalTypmodMaterializesRestrictedValueRepro#0002",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsIntervalTypmodMaterializesRestrictedValueRepro",
       "ordinal": 2,
       "scriptName": "CREATE TABLE AS interval typmod materializes restricted value",
       "oracle": "postgres",
@@ -604,8 +604,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsVarcharTypmodMaterializesTruncatedValueGuard#0001",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsVarcharTypmodMaterializesTruncatedValueGuard",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsVarcharTypmodMaterializesTruncatedValueGuard#0001",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsVarcharTypmodMaterializesTruncatedValueGuard",
       "ordinal": 1,
       "scriptName": "CREATE TABLE AS varchar typmod materializes truncated value",
       "oracle": "postgres",
@@ -626,8 +626,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsVarcharTypmodMaterializesTruncatedValueGuard#0002",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsVarcharTypmodMaterializesTruncatedValueGuard",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsVarcharTypmodMaterializesTruncatedValueGuard#0002",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsVarcharTypmodMaterializesTruncatedValueGuard",
       "ordinal": 2,
       "scriptName": "CREATE TABLE AS varchar typmod materializes truncated value",
       "oracle": "postgres",
@@ -648,8 +648,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsCharacterTypmodMaterializesPaddedValueRepro#0001",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsCharacterTypmodMaterializesPaddedValueRepro",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsCharacterTypmodMaterializesPaddedValueRepro#0001",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsCharacterTypmodMaterializesPaddedValueRepro",
       "ordinal": 1,
       "scriptName": "CREATE TABLE AS character typmod materializes padded value",
       "oracle": "postgres",
@@ -670,8 +670,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsCharacterTypmodMaterializesPaddedValueRepro#0002",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsCharacterTypmodMaterializesPaddedValueRepro",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsCharacterTypmodMaterializesPaddedValueRepro#0002",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsCharacterTypmodMaterializesPaddedValueRepro",
       "ordinal": 2,
       "scriptName": "CREATE TABLE AS character typmod materializes padded value",
       "oracle": "postgres",
@@ -692,8 +692,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsExplicitColumnNamesRepro#0001",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsExplicitColumnNamesRepro",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsExplicitColumnNamesRepro#0001",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsExplicitColumnNamesRepro",
       "ordinal": 1,
       "scriptName": "CREATE TABLE AS explicit column names rename output",
       "oracle": "postgres",
@@ -722,8 +722,8 @@
       "cleanupProvided": true
     },
     {
-      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsExplicitColumnNamesRepro#0002",
-      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsExplicitColumnNamesRepro",
+      "key": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsExplicitColumnNamesRepro#0002",
+      "source": "testing/go/postgres16/create_table_as_correctness_repro_test.go:TestCreateTableAsExplicitColumnNamesRepro",
       "ordinal": 2,
       "scriptName": "CREATE TABLE AS explicit column names rename output",
       "oracle": "postgres",

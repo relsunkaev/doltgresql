@@ -1,8 +1,8 @@
 {
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map do_block_probe_test.go --force-postgres-oracle",
-  "sourceFile": "testing/go/do_block_probe_test.go",
+  "sourceFile": "testing/go/postgres16/do_block_probe_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -14,8 +14,8 @@
   ],
   "assertions": [
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockProbe#0001",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockProbe",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockProbe#0001",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockProbe",
       "ordinal": 1,
       "scriptName": "DO block runs conditional CREATE",
       "oracle": "postgres",
@@ -36,8 +36,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockProbe#0002",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockProbe",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockProbe#0002",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockProbe",
       "ordinal": 2,
       "scriptName": "DO block rejects unsupported language",
       "oracle": "postgres",
@@ -53,8 +53,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0001",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0001",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 1,
       "scriptName": "DO block runs declarations loops and DML",
       "oracle": "postgres",
@@ -75,8 +75,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0002",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0002",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 2,
       "scriptName": "DO block runs SELECT INTO FOUND query loops and PERFORM",
       "oracle": "postgres",
@@ -125,8 +125,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0003",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0003",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 3,
       "scriptName": "DO block runs SELECT INTO FOUND query loops and PERFORM",
       "oracle": "postgres",
@@ -147,8 +147,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0004",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0004",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 4,
       "scriptName": "DO block runs dynamic EXECUTE format with USING parameters",
       "oracle": "postgres",
@@ -169,8 +169,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0005",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0005",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 5,
       "scriptName": "DO block evaluates dynamic EXECUTE USING expressions",
       "oracle": "postgres",
@@ -191,8 +191,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0006",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0006",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 6,
       "scriptName": "DO block runs dynamic EXECUTE format DDL",
       "oracle": "postgres",
@@ -213,8 +213,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0007",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0007",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 7,
       "scriptName": "DO block assigns dynamic EXECUTE INTO results",
       "oracle": "postgres",
@@ -235,8 +235,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0008",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0008",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 8,
       "scriptName": "DO block handles dynamic EXECUTE INTO row count semantics",
       "oracle": "postgres",
@@ -257,8 +257,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0009",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0009",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 9,
       "scriptName": "DO block handles dynamic EXECUTE INTO row count semantics",
       "oracle": "postgres",
@@ -274,8 +274,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0010",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0010",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 10,
       "scriptName": "DO block handles dynamic EXECUTE INTO row count semantics",
       "oracle": "postgres",
@@ -291,8 +291,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0011",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0011",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 11,
       "scriptName": "DO block assigns GET DIAGNOSTICS ROW_COUNT",
       "oracle": "postgres",
@@ -340,8 +340,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0012",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0012",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 12,
       "scriptName": "DO block assigns GET DIAGNOSTICS PG_CONTEXT",
       "oracle": "postgres",
@@ -365,8 +365,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0013",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0013",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 13,
       "scriptName": "DO block assigns GET DIAGNOSTICS PG_CONTEXT",
       "oracle": "postgres",
@@ -405,8 +405,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0014",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0014",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 14,
       "scriptName": "DO block assigns GET DIAGNOSTICS PG_CONTEXT",
       "oracle": "postgres",
@@ -445,8 +445,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0015",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0015",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 15,
       "scriptName": "PL/pgSQL function assigns GET DIAGNOSTICS PG_ROUTINE_OID",
       "oracle": "postgres",
@@ -467,8 +467,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0016",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0016",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 16,
       "scriptName": "PL/pgSQL function assigns GET DIAGNOSTICS PG_ROUTINE_OID",
       "oracle": "postgres",
@@ -489,8 +489,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0017",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0017",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 17,
       "scriptName": "DO block catches raised exception with stacked diagnostics",
       "oracle": "postgres",
@@ -526,8 +526,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0018",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0018",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 18,
       "scriptName": "PL/pgSQL function catches raised exception with stacked diagnostics",
       "oracle": "postgres",
@@ -548,8 +548,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0019",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0019",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 19,
       "scriptName": "GET STACKED DIAGNOSTICS requires exception handler",
       "oracle": "postgres",
@@ -565,8 +565,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0020",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0020",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 20,
       "scriptName": "GET STACKED DIAGNOSTICS rejects unsupported items",
       "oracle": "postgres",
@@ -582,8 +582,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0021",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0021",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 21,
       "scriptName": "DO block chooses first matching exception handler",
       "oracle": "postgres",
@@ -610,8 +610,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0022",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0022",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 22,
       "scriptName": "DO block matches SQLSTATE exception handler",
       "oracle": "postgres",
@@ -635,8 +635,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0023",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0023",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 23,
       "scriptName": "DO block matches non data condition class handlers",
       "oracle": "postgres",
@@ -668,8 +668,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0024",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0024",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 24,
       "scriptName": "DO block reads stacked object-name diagnostics",
       "oracle": "postgres",
@@ -702,8 +702,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0025",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0025",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 25,
       "scriptName": "DO block catches native SQL unique violation by condition name",
       "oracle": "postgres",
@@ -727,8 +727,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0026",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0026",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 26,
       "scriptName": "DO block reports native SQL exception context",
       "oracle": "postgres",
@@ -752,8 +752,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0027",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0027",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 27,
       "scriptName": "DO block catches native SQL integrity constraint category",
       "oracle": "postgres",
@@ -774,8 +774,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0028",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0028",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 28,
       "scriptName": "DO block catches native SQL data exception category",
       "oracle": "postgres",
@@ -796,8 +796,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0029",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0029",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 29,
       "scriptName": "DO block propagates unmatched native SQL unique violation",
       "oracle": "postgres",
@@ -813,8 +813,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0030",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0030",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 30,
       "scriptName": "DO block multiple exception handlers propagate when unmatched",
       "oracle": "postgres",
@@ -830,8 +830,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0031",
-      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "key": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0031",
+      "source": "testing/go/postgres16/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
       "ordinal": 31,
       "scriptName": "DO block propagates raised exception",
       "oracle": "postgres",
