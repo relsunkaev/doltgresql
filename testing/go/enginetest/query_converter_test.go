@@ -800,6 +800,7 @@ func transformCreateTable(stmt *sqlparser.DDL) ([]string, bool) {
 			Nullable: struct {
 				Nullability    tree.Nullability
 				ConstraintName tree.Name
+				NoInherit      bool
 			}{
 				Nullability: convertNullability(col.Type),
 			},
