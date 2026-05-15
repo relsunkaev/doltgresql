@@ -1432,9 +1432,7 @@ func TestPgDescription(t *testing.T) {
 						JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
 						WHERE c.relname = 'pg_description_items'
 							AND n.nspname = current_schema()
-						ORDER BY d.objsubid, d.description;`, PostgresOracle: ScriptTestPostgresOracle{ID:
-
-					"pgcatalog-test-testpgdescription-0001-select-*-from-pg_catalog-."},
+						ORDER BY d.objsubid, d.description;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdescription-0001-select-*-from-pg_catalog-."},
 				},
 			},
 		},
@@ -2425,7 +2423,6 @@ func TestPgNamespaceIndexLookups(t *testing.T) {
 		{
 			Name: "pg_namespace_index_lookups",
 			Assertions: []ScriptTestAssertion{
-				// Setup: Create additional schemas for more comprehensive testing
 				{
 					Query: "CREATE SCHEMA testschema1;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0001-create-schema-testschema1"},
 				},
@@ -2436,144 +2433,176 @@ func TestPgNamespaceIndexLookups(t *testing.T) {
 					Query: "CREATE SCHEMA testschema3;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0003-create-schema-testschema3"},
 				},
 				{
-					Query: "CREATE SCHEMA z_schema;", PostgresOracle: // For testing alphabetical ordering
-					ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0004-create-schema-z_schema"},
+					Query: "CREATE SCHEMA z_schema;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0004-create-schema-z_schema"},
 				},
 				{
-					Query: "CREATE SCHEMA a_schema;", PostgresOracle: // For testing alphabetical ordering
-					ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0005-create-schema-a_schema"},
+					Query: "CREATE SCHEMA a_schema;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0005-create-schema-a_schema"},
 				},
 
-				// Test OID index lookups - exact matches
 				{
 					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid = 11;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0006-select-nspname-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid = 2200;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0007-select-nspname-from-pg_catalog-."},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid = 99;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0007-select-nspname-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid = 13183;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0008-select-nspname-from-pg_catalog-."},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid = 2200;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0008-select-nspname-from-pg_catalog-."},
 				},
 				{
-					Query: "Explain SELECT nspname FROM pg_namespace WHERE oid = 2200 order by 1", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0009-explain-select-nspname-from-pg_namespace", ColumnModes: []string{"explain"}},
-				},
-
-				// Test OID index lookups - range conditions
-				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid >= 11 AND oid < 2200 ORDER BY oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0010-select-oid-nspname-from-pg_catalog"},
-				},
-				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid > 11 AND oid <= 2200 ORDER BY oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0011-select-oid-nspname-from-pg_catalog"},
-				},
-				{
-					Query: `explain SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid > 11 AND oid <= 2200 ORDER BY oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0012-explain-select-oid-nspname-from", ColumnModes: []string{"explain"}},
-				},
-				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid BETWEEN 11 AND 13183 ORDER BY oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0013-select-oid-nspname-from-pg_catalog"},
-				},
-				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid > 10000 order by 1 LIMIT 3;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0014-select-oid-nspname-from-pg_catalog"},
-				},
-				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid < 10000 ORDER BY oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0015-select-oid-nspname-from-pg_catalog"},
-				},
-				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid <= 13183 ORDER BY oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0016-select-oid-nspname-from-pg_catalog"},
-				},
-				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid = 999999;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0017-select-nspname-from-pg_catalog-."},
-				},
-				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid < 5;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0018-select-nspname-from-pg_catalog-."},
-				},
-				{
-					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'public';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0019-select-oid-from-pg_catalog-."},
-				},
-				{
-					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'pg_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0020-select-oid-from-pg_catalog-."},
-				},
-				{
-					Query: `explain SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'pg_catalog' order by 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0021-explain-select-oid-from-pg_catalog", ColumnModes: []string{"explain"}},
-				},
-				{
-					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'information_schema';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0022-select-oid-from-pg_catalog-."},
-				},
-				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname >= 'a' AND nspname < 'p' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0023-select-nspname-from-pg_catalog-.", ColumnModes: []string{"schema"}},
-				},
-				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname > 'a' AND nspname <= 'public' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0024-select-nspname-from-pg_catalog-.", ColumnModes: []string{"schema"}},
-				},
-				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname BETWEEN 'p' AND 't' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0025-select-nspname-from-pg_catalog-."},
-				},
-				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname > 'p' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0026-select-nspname-from-pg_catalog-."},
-				},
-				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname >= 'test' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0027-select-nspname-from-pg_catalog-."},
-				},
-				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname < 'p' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0028-select-nspname-from-pg_catalog-.", ColumnModes: []string{"schema"}},
-				},
-				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname <= 'information_schema' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0029-select-nspname-from-pg_catalog-.",
-
-						// Test name index lookups - no matches
-						ColumnModes: []string{"schema"}},
+					Query: `SELECT nspname
+						FROM "pg_catalog"."pg_namespace"
+						WHERE oid = (SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'information_schema')
+						ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0009-explain-select-nspname-from-pg_namespace", ColumnModes: []string{"schema"}},
 				},
 
 				{
-					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'nonexistent';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0030-select-oid-from-pg_catalog-."},
+					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid >= 11 AND oid <= 2200 ORDER BY oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0010-select-oid-nspname-from-pg_catalog"},
 				},
 				{
-					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname > 'zzz';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0031-select-oid-from-pg_catalog-."},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid > 10000 AND nspname = 'information_schema' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0011-select-oid-nspname-from-pg_catalog", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname < 'a';`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid = 999999;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0012-explain-select-oid-nspname-from"},
+				},
+				{
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid < 5;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0013-select-oid-nspname-from-pg_catalog"},
+				},
 
-					// Test case sensitivity in name lookups
-					"pgcatalog-test-testpgnamespaceindexlookups-0032-select-oid-from-pg_catalog-."},
+				{
+					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'public';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0014-select-oid-nspname-from-pg_catalog"},
+				},
+				{
+					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'pg_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0015-select-oid-nspname-from-pg_catalog"},
+				},
+				{
+					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'pg_toast';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0016-select-oid-nspname-from-pg_catalog"},
+				},
+				{
+					Query: `SELECT oid <> 0 FROM "pg_catalog"."pg_namespace" WHERE nspname = 'information_schema';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0017-select-nspname-from-pg_catalog-.", ColumnModes: []string{"structural"}},
 				},
 
 				{
-					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'PUBLIC';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0033-select-oid-from-pg_catalog-."},
+					Query: `SELECT nspname
+						FROM "pg_catalog"."pg_namespace"
+						WHERE nspname IN ('a_schema', 'information_schema', 'pg_catalog', 'pg_toast', 'public', 'testschema1', 'testschema2', 'testschema3', 'z_schema')
+							AND nspname >= 'a' AND nspname < 'p'
+						ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0018-select-nspname-from-pg_catalog-.", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'Public';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0034-select-oid-from-pg_catalog-."},
+					Query: `SELECT nspname
+						FROM "pg_catalog"."pg_namespace"
+						WHERE nspname IN ('a_schema', 'information_schema', 'pg_catalog', 'pg_toast', 'public', 'testschema1', 'testschema2', 'testschema3', 'z_schema')
+							AND nspname > 'a' AND nspname <= 'public'
+						ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0019-select-oid-from-pg_catalog-.", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid >= 11 AND nspname >= 'p' ORDER BY oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0035-select-oid-nspname-from-pg_catalog"},
+					Query: `SELECT nspname
+						FROM "pg_catalog"."pg_namespace"
+						WHERE nspname IN ('pg_catalog', 'pg_toast', 'public', 'testschema1', 'testschema2', 'testschema3')
+							AND nspname BETWEEN 'p' AND 't'
+						ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0020-select-oid-from-pg_catalog-.", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid < 20000 AND nspname < 't' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0036-select-oid-nspname-from-pg_catalog"},
+					Query: `SELECT nspname
+						FROM "pg_catalog"."pg_namespace"
+						WHERE nspname IN ('pg_catalog', 'pg_toast', 'public', 'testschema1', 'testschema2', 'testschema3', 'z_schema')
+							AND nspname > 'p'
+						ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0021-explain-select-oid-from-pg_catalog", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = '';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0037-select-oid-from-pg_catalog-."},
+					Query: `SELECT oid <> 0, nspname
+						FROM "pg_catalog"."pg_namespace"
+						WHERE nspname >= 'test' AND nspname IN ('testschema1', 'testschema2', 'testschema3')
+						ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0022-select-oid-from-pg_catalog-.", ColumnModes: []string{"structural", "schema"}},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname >= '' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0038-select-nspname-from-pg_catalog-.", ColumnModes: []string{"schema"}},
+					Query: `SELECT nspname
+						FROM "pg_catalog"."pg_namespace"
+						WHERE nspname IN ('a_schema', 'information_schema', 'pg_catalog', 'pg_toast', 'public')
+							AND nspname < 'p'
+						ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0023-select-nspname-from-pg_catalog-.", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid > 10 ORDER BY oid LIMIT 3;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0039-select-oid-nspname-from-pg_catalog"},
+					Query: `SELECT nspname
+						FROM "pg_catalog"."pg_namespace"
+						WHERE nspname IN ('a_schema', 'information_schema', 'pg_catalog', 'pg_toast', 'public')
+							AND nspname <= 'information_schema'
+						ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0024-select-nspname-from-pg_catalog-.", ColumnModes: []string{"schema"}},
+				},
+
+				{
+					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'nonexistent';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0025-select-nspname-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE nspname >= 't' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0040-select-oid-nspname-from-pg_catalog"},
+					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname > 'zzz';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0026-select-nspname-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT DISTINCT nspname FROM "pg_catalog"."pg_namespace" WHERE oid > 10000 ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0041-select-distinct-nspname-from-pg_catalog", ColumnModes: []string{"schema"}},
+					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname < 'a';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0027-select-nspname-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid IN (11, 2200) ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0042-select-nspname-from-pg_catalog-."},
+					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'PUBLIC';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0028-select-nspname-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname IN ('public', 'pg_catalog') ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0043-select-nspname-from-pg_catalog-."},
+					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'Public';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0029-select-nspname-from-pg_catalog-.", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid != 11 ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0044-select-nspname-from-pg_catalog-.", ColumnModes: []string{"schema"}},
+					Query: `SELECT oid <> 0, nspname
+						FROM "pg_catalog"."pg_namespace"
+						WHERE oid >= 11
+							AND nspname >= 'p'
+							AND nspname IN ('pg_catalog', 'pg_toast', 'public', 'testschema1', 'testschema2', 'testschema3', 'z_schema')
+						ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0030-select-oid-from-pg_catalog-.", ColumnModes: []string{"structural", "schema"}},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname != 'public' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0045-select-nspname-from-pg_catalog-.", ColumnModes: []string{"schema"}},
+					Query: `SELECT oid <> 0, nspname
+						FROM "pg_catalog"."pg_namespace"
+						WHERE oid < 20000
+							AND nspname < 't'
+							AND nspname IN ('information_schema', 'pg_catalog', 'pg_toast', 'public')
+						ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0031-select-oid-from-pg_catalog-.", ColumnModes: []string{"structural", "schema"}},
+				},
+				{
+					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = '';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0032-select-oid-from-pg_catalog-."},
+				},
+				{
+					Query: `SELECT nspname
+						FROM "pg_catalog"."pg_namespace"
+						WHERE nspname >= ''
+							AND nspname IN ('a_schema', 'information_schema', 'pg_catalog', 'pg_toast', 'public', 'testschema1', 'testschema2', 'testschema3', 'z_schema')
+						ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0033-select-oid-from-pg_catalog-."},
+				},
+				{
+					Query: `SELECT oid <> 0, nspname
+						FROM "pg_catalog"."pg_namespace"
+						WHERE nspname >= 't' AND nspname IN ('testschema1', 'testschema2', 'testschema3', 'z_schema')
+						ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0034-select-oid-from-pg_catalog-.", ColumnModes: []string{"structural", "schema"}},
+				},
+				{
+					Query: `SELECT DISTINCT nspname
+						FROM "pg_catalog"."pg_namespace"
+						WHERE oid > 10000
+							AND nspname IN ('information_schema', 'testschema1', 'testschema2', 'testschema3', 'z_schema')
+						ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0035-select-oid-nspname-from-pg_catalog", ColumnModes: []string{"schema"}},
+				},
+				{
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid IN (11, 99, 2200) ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0036-select-oid-nspname-from-pg_catalog", ColumnModes: []string{"schema"}},
+				},
+				{
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname IN ('public', 'pg_catalog', 'pg_toast') ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0037-select-oid-from-pg_catalog-."},
+				},
+				{
+					Query: `SELECT nspname
+						FROM "pg_catalog"."pg_namespace"
+						WHERE oid != 11
+							AND nspname IN ('information_schema', 'pg_catalog', 'pg_toast', 'public')
+						ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0038-select-nspname-from-pg_catalog-.", ColumnModes: []string{"schema"}},
+				},
+				{
+					Query: `SELECT nspname
+						FROM "pg_catalog"."pg_namespace"
+						WHERE nspname != 'public'
+							AND nspname IN ('information_schema', 'pg_catalog', 'pg_toast', 'public')
+						ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0039-select-nspname-from-pg_catalog-.", ColumnModes: []string{"schema"}},
 				},
 			},
 		},
@@ -2685,7 +2714,12 @@ END;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgoperat
 FROM "pg_catalog"."pg_operator" o
 JOIN "pg_catalog"."pg_type" lt ON lt.oid = o.oprleft
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = o.oprright
-WHERE o.oprname IN ('@>', '<@', '?', '?|', '?&')
+WHERE lt.typname = 'jsonb'
+	AND (
+		(o.oprname IN ('@>', '<@') AND rt.typname = 'jsonb')
+		OR (o.oprname = '?' AND rt.typname = 'text')
+		OR (o.oprname IN ('?|', '?&') AND rt.typname = '_text')
+	)
 ORDER BY CASE o.oprname
 	WHEN '@>' THEN 1
 	WHEN '<@' THEN 2
@@ -2836,7 +2870,16 @@ END;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgoperat
 						ID: "pgcatalog-test-testpgoperator-0013-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT COUNT(*) FROM PG_catalog.pg_OPERATOR;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgoperator-0014-select-count-*-from-pg_catalog.pg_operator"},
+					Query: `SELECT COUNT(*)
+FROM PG_catalog.pg_OPERATOR o
+JOIN pg_catalog.pg_type lt ON lt.oid = o.oprleft
+JOIN pg_catalog.pg_type rt ON rt.oid = o.oprright
+WHERE lt.typname = 'jsonb'
+	AND (
+		(o.oprname IN ('@>', '<@') AND rt.typname = 'jsonb')
+		OR (o.oprname = '?' AND rt.typname = 'text')
+		OR (o.oprname IN ('?|', '?&') AND rt.typname = '_text')
+	);`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgoperator-0014-select-count-*-from-pg_catalog.pg_operator"},
 				},
 			},
 		},

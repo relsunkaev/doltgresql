@@ -99,6 +99,7 @@ func cachePgNamespaces(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 	}
 
 	addNamespace(PgCatalogName)
+	addNamespace("pg_toast")
 	addNamespace("information_schema")
 	addNamespace("public")
 
