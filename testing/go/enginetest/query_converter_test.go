@@ -816,22 +816,30 @@ func transformSelect(stmt *sqlparser.Select, state *queryConversionState) ([]str
 }
 
 func rewriteOuterSelectAliasesInSubqueries(stmt *sqlparser.Select) bool {
-	aliases := explicitSelectAliases(stmt.SelectExprs)
-	if len(aliases) == 0 {
-		return false
-	}
-
+	duplicateAliases := duplicateSelectAliasNames(stmt.SelectExprs)
+	aliases := make(map[string]sqlparser.Expr)
 	changed := false
 	for _, selectExpr := range stmt.SelectExprs {
 		aliased, ok := selectExpr.(*sqlparser.AliasedExpr)
 		if !ok {
 			continue
 		}
-		rewritten, exprChanged := rewriteSubqueriesWithOuterAliases(aliased.Expr, aliases)
-		if exprChanged {
-			aliased.Expr = rewritten
-			changed = true
+		if len(aliases) > 0 {
+			rewritten, exprChanged := rewriteSubqueriesWithOuterAliases(aliased.Expr, aliases)
+			if exprChanged {
+				aliased.Expr = rewritten
+				changed = true
+			}
 		}
+		if !aliased.As.IsEmpty() {
+			name := aliased.As.Lowered()
+			if _, duplicate := duplicateAliases[name]; !duplicate && !exprContainsSubquery(aliased.Expr) {
+				aliases[name] = aliased.Expr
+			}
+		}
+	}
+	if len(aliases) == 0 {
+		return changed
 	}
 	if stmt.Where != nil {
 		rewritten, exprChanged := rewriteSubqueriesWithOuterAliases(stmt.Where.Expr, aliases)
@@ -864,6 +872,24 @@ func rewriteOuterSelectAliasesInSubqueries(stmt *sqlparser.Select) bool {
 	return changed
 }
 
+func duplicateSelectAliasNames(exprs sqlparser.SelectExprs) map[string]struct{} {
+	seen := make(map[string]struct{})
+	duplicates := make(map[string]struct{})
+	for _, selectExpr := range exprs {
+		aliased, ok := selectExpr.(*sqlparser.AliasedExpr)
+		if !ok || aliased.As.IsEmpty() {
+			continue
+		}
+		name := aliased.As.Lowered()
+		if _, ok := seen[name]; ok {
+			duplicates[name] = struct{}{}
+			continue
+		}
+		seen[name] = struct{}{}
+	}
+	return duplicates
+}
+
 func explicitSelectAliases(exprs sqlparser.SelectExprs) map[string]sqlparser.Expr {
 	aliases := make(map[string]sqlparser.Expr)
 	for _, selectExpr := range exprs {
@@ -874,6 +900,41 @@ func explicitSelectAliases(exprs sqlparser.SelectExprs) map[string]sqlparser.Exp
 		aliases[aliased.As.Lowered()] = aliased.Expr
 	}
 	return aliases
+}
+
+func exprContainsSubquery(expr sqlparser.Expr) bool {
+	switch expr := expr.(type) {
+	case *sqlparser.Subquery, *sqlparser.ExistsExpr:
+		return true
+	case *sqlparser.AndExpr:
+		return exprContainsSubquery(expr.Left) || exprContainsSubquery(expr.Right)
+	case *sqlparser.OrExpr:
+		return exprContainsSubquery(expr.Left) || exprContainsSubquery(expr.Right)
+	case *sqlparser.XorExpr:
+		return exprContainsSubquery(expr.Left) || exprContainsSubquery(expr.Right)
+	case *sqlparser.NotExpr:
+		return exprContainsSubquery(expr.Expr)
+	case *sqlparser.BinaryExpr:
+		return exprContainsSubquery(expr.Left) || exprContainsSubquery(expr.Right)
+	case *sqlparser.ComparisonExpr:
+		return exprContainsSubquery(expr.Left) || exprContainsSubquery(expr.Right)
+	case *sqlparser.RangeCond:
+		return exprContainsSubquery(expr.Left) || exprContainsSubquery(expr.From) || exprContainsSubquery(expr.To)
+	case *sqlparser.IsExpr:
+		return exprContainsSubquery(expr.Expr)
+	case *sqlparser.ParenExpr:
+		return exprContainsSubquery(expr.Expr)
+	case *sqlparser.UnaryExpr:
+		return exprContainsSubquery(expr.Expr)
+	case *sqlparser.FuncExpr:
+		for _, funcExpr := range expr.Exprs {
+			aliased, ok := funcExpr.(*sqlparser.AliasedExpr)
+			if ok && exprContainsSubquery(aliased.Expr) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func rewriteSubqueriesWithOuterAliases(expr sqlparser.Expr, aliases map[string]sqlparser.Expr) (sqlparser.Expr, bool) {
@@ -2198,6 +2259,24 @@ func TestConvertQuery(t *testing.T) {
 			input: "SELECT id as alias1, (SELECT 0 as alias1 having alias1 = 0) FROM members",
 			expected: []string{
 				"SELECT id as alias1, (SELECT 0 as alias1 having alias1 = 0) FROM members",
+			},
+		},
+		{
+			input: "SELECT 1 as a, (select a) as a",
+			expected: []string{
+				"SELECT 1 as a, (select a) as a",
+			},
+		},
+		{
+			input: "SELECT 1 as a, (select b), 0 as b",
+			expected: []string{
+				"SELECT 1 as a, (select b), 0 as b",
+			},
+		},
+		{
+			input: "select x, (select 1) as y, (select (select y as q)) as z from (select * from xy) as xy",
+			expected: []string{
+				"select x, (select 1) as y, (select (select y as q)) as z from (select * from xy) as xy",
 			},
 		},
 		{
