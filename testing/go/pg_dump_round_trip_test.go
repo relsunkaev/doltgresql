@@ -41,18 +41,17 @@ func TestPgDependViewTableDependencies(t *testing.T) {
 					SELECT p.id, a.email
 					FROM dep_projects p
 					JOIN dep_accounts a ON a.id = p.account_id;`,
-			},
-			Assertions: []ScriptTestAssertion{
-				{
-					Query: `SELECT view_class.relname, ref_class.relname, d.deptype
+
+				`SELECT view_class.relname, ref_class.relname, d.deptype
 FROM pg_catalog.pg_depend d
 JOIN pg_catalog.pg_class view_class ON view_class.oid = d.objid
 JOIN pg_catalog.pg_class ref_class ON ref_class.oid = d.refobjid
 WHERE d.classid = 'pg_class'::regclass
 	AND d.refclassid = 'pg_class'::regclass
 	AND view_class.relname = 'dep_active_projects'
-ORDER BY ref_class.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-dump-round-trip-test-testpgdependviewtabledependencies-0001-select-view_class.relname-ref_class.relname-d.deptype-from"},
-				},
+ORDER BY ref_class.relname;`},
+			Assertions: []ScriptTestAssertion{
+
 				{
 					Query: `SELECT
 	strpos(pg_get_viewdef('dep_active_projects'::regclass), 'public.dep_projects') > 0,

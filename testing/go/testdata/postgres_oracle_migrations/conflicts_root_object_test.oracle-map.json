@@ -2,7 +2,7 @@
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map conflicts_root_object_test.go --force-postgres-oracle",
   "sourceFile": "testing/go/conflicts_root_object_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -18,28 +18,6 @@
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
       "ordinal": 1,
       "scriptName": "Function delete \"definition\" conflict without modification",
-      "oracle": "postgres",
-      "postgresId": "conflicts-root-object-test-testconflictsrootobject-0001-select-interpreted_example-12",
-      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0001-select-interpreted_example-12",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "SELECT interpreted_example('12');",
-      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
-      "expectedRows": [
-        [
-          {
-            "value": "112"
-          }
-        ]
-      ],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0002",
-      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 2,
-      "scriptName": "Function delete \"definition\" conflict without modification",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0002-select-dolt_add-.",
       "expectedKind": "rows",
@@ -52,9 +30,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0003",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0002",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 3,
+      "ordinal": 2,
       "scriptName": "Function delete \"definition\" conflict without modification",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0003-select-length-dolt_commit-m-initial",
@@ -68,9 +46,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0004",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0003",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 4,
+      "ordinal": 3,
       "scriptName": "Function delete \"definition\" conflict without modification",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0004-select-dolt_checkout-b-other",
@@ -84,9 +62,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0005",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0004",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 5,
+      "ordinal": 4,
       "scriptName": "Function delete \"definition\" conflict without modification",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0005-create-or-replace-function-interpreted_example",
@@ -97,9 +75,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0006",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0005",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 6,
+      "ordinal": 5,
       "scriptName": "Function delete \"definition\" conflict without modification",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0006-select-interpreted_example-12",
@@ -110,9 +88,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0007",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0006",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 7,
+      "ordinal": 6,
       "scriptName": "Function delete \"definition\" conflict without modification",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0007-select-dolt_add-.",
@@ -126,9 +104,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0008",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0007",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 8,
+      "ordinal": 7,
       "scriptName": "Function delete \"definition\" conflict without modification",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0008-select-length-dolt_commit-m-other",
@@ -142,9 +120,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0009",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0008",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 9,
+      "ordinal": 8,
       "scriptName": "Function delete \"definition\" conflict without modification",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0009-select-dolt_checkout-main",
@@ -158,9 +136,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0010",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0009",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 10,
+      "ordinal": 9,
       "scriptName": "Function delete \"definition\" conflict without modification",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0010-create-or-replace-function-interpreted_example",
@@ -171,9 +149,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0011",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0010",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 11,
+      "ordinal": 10,
       "scriptName": "Function delete \"definition\" conflict without modification",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0011-select-interpreted_example-12",
@@ -184,9 +162,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0012",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0011",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 12,
+      "ordinal": 11,
       "scriptName": "Function delete \"definition\" conflict without modification",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0012-select-*-from-dolt_status",
@@ -200,9 +178,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0013",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0012",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 13,
+      "ordinal": 12,
       "scriptName": "Function delete \"definition\" conflict without modification",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0013-select-dolt_add-.",
@@ -216,9 +194,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0014",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0013",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 14,
+      "ordinal": 13,
       "scriptName": "Function delete \"definition\" conflict without modification",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0014-select-length-dolt_commit-m-next",
@@ -232,9 +210,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0015",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0014",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 15,
+      "ordinal": 14,
       "scriptName": "Function delete \"definition\" conflict without modification",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0015-select-dolt_merge-other",
@@ -248,9 +226,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0016",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0015",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 16,
+      "ordinal": 15,
       "scriptName": "Function delete \"definition\" conflict without modification",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0016-select-*-from-dolt_conflicts",
@@ -265,9 +243,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0017",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0016",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 17,
+      "ordinal": 16,
       "scriptName": "Function delete \"definition\" conflict without modification",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0017-select-base_value-our_value-our_diff_type-their_value",
@@ -281,9 +259,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0018",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0017",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 18,
+      "ordinal": 17,
       "scriptName": "Function delete \"definition\" conflict without modification",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0018-delete-from-dolt_conflicts_interpreted_example-text-where",
@@ -297,9 +275,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0019",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0018",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 19,
+      "ordinal": 18,
       "scriptName": "Function delete \"definition\" conflict without modification",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0019-select-*-from-dolt_conflicts_interpreted_example-text",
@@ -313,9 +291,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0020",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0019",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 20,
+      "ordinal": 19,
       "scriptName": "Function delete \"definition\" conflict without modification",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0020-select-interpreted_example-12",
@@ -326,31 +304,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0021",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0020",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 21,
-      "scriptName": "Function update \"definition\" with custom body",
-      "oracle": "postgres",
-      "postgresId": "conflicts-root-object-test-testconflictsrootobject-0021-select-interpreted_example-12",
-      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0021-select-interpreted_example-12",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "SELECT interpreted_example('12');",
-      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
-      "expectedRows": [
-        [
-          {
-            "value": "112"
-          }
-        ]
-      ],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0022",
-      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 22,
+      "ordinal": 20,
       "scriptName": "Function update \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0022-select-dolt_add-.",
@@ -364,9 +320,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0023",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0021",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 23,
+      "ordinal": 21,
       "scriptName": "Function update \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0023-select-length-dolt_commit-m-initial",
@@ -380,9 +336,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0024",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0022",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 24,
+      "ordinal": 22,
       "scriptName": "Function update \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0024-select-dolt_checkout-b-other",
@@ -396,9 +352,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0025",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0023",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 25,
+      "ordinal": 23,
       "scriptName": "Function update \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0025-create-or-replace-function-interpreted_example",
@@ -409,9 +365,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0026",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0024",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 26,
+      "ordinal": 24,
       "scriptName": "Function update \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0026-select-interpreted_example-12",
@@ -422,9 +378,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0027",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0025",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 27,
+      "ordinal": 25,
       "scriptName": "Function update \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0027-select-dolt_add-.",
@@ -438,9 +394,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0028",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0026",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 28,
+      "ordinal": 26,
       "scriptName": "Function update \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0028-select-length-dolt_commit-m-other",
@@ -454,9 +410,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0029",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0027",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 29,
+      "ordinal": 27,
       "scriptName": "Function update \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0029-select-dolt_checkout-main",
@@ -470,9 +426,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0030",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0028",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 30,
+      "ordinal": 28,
       "scriptName": "Function update \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0030-create-or-replace-function-interpreted_example",
@@ -483,9 +439,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0031",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0029",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 31,
+      "ordinal": 29,
       "scriptName": "Function update \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0031-select-interpreted_example-12",
@@ -496,9 +452,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0032",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0030",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 32,
+      "ordinal": 30,
       "scriptName": "Function update \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0032-select-*-from-dolt_status",
@@ -512,9 +468,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0033",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0031",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 33,
+      "ordinal": 31,
       "scriptName": "Function update \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0033-select-dolt_add-.",
@@ -528,9 +484,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0034",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0032",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 34,
+      "ordinal": 32,
       "scriptName": "Function update \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0034-select-length-dolt_commit-m-next",
@@ -544,9 +500,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0035",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0033",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 35,
+      "ordinal": 33,
       "scriptName": "Function update \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0035-select-dolt_merge-other",
@@ -560,9 +516,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0036",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0034",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 36,
+      "ordinal": 34,
       "scriptName": "Function update \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0036-select-*-from-dolt_conflicts",
@@ -577,9 +533,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0037",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0035",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 37,
+      "ordinal": 35,
       "scriptName": "Function update \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0037-select-base_value-our_value-our_diff_type-their_value",
@@ -593,9 +549,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0038",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0036",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 38,
+      "ordinal": 36,
       "scriptName": "Function update \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0038-update-dolt_conflicts_interpreted_example-text-set-our_value",
@@ -609,9 +565,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0039",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0037",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 39,
+      "ordinal": 37,
       "scriptName": "Function update \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0039-delete-from-dolt_conflicts_interpreted_example-text-where",
@@ -625,9 +581,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0040",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0038",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 40,
+      "ordinal": 38,
       "scriptName": "Function update \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0040-select-*-from-dolt_conflicts_interpreted_example-text",
@@ -641,9 +597,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0041",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0039",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 41,
+      "ordinal": 39,
       "scriptName": "Function update \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0041-select-interpreted_example-12",
@@ -654,31 +610,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0042",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0040",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 42,
-      "scriptName": "Function update \"definition\" with \"theirs\" body",
-      "oracle": "postgres",
-      "postgresId": "conflicts-root-object-test-testconflictsrootobject-0042-select-interpreted_example-12",
-      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0042-select-interpreted_example-12",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "SELECT interpreted_example('12');",
-      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
-      "expectedRows": [
-        [
-          {
-            "value": "112"
-          }
-        ]
-      ],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0043",
-      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 43,
+      "ordinal": 40,
       "scriptName": "Function update \"definition\" with \"theirs\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0043-select-dolt_add-.",
@@ -692,9 +626,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0044",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0041",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 44,
+      "ordinal": 41,
       "scriptName": "Function update \"definition\" with \"theirs\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0044-select-length-dolt_commit-m-initial",
@@ -708,9 +642,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0045",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0042",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 45,
+      "ordinal": 42,
       "scriptName": "Function update \"definition\" with \"theirs\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0045-select-dolt_checkout-b-other",
@@ -724,9 +658,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0046",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0043",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 46,
+      "ordinal": 43,
       "scriptName": "Function update \"definition\" with \"theirs\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0046-create-or-replace-function-interpreted_example",
@@ -737,9 +671,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0047",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0044",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 47,
+      "ordinal": 44,
       "scriptName": "Function update \"definition\" with \"theirs\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0047-select-interpreted_example-12",
@@ -750,9 +684,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0048",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0045",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 48,
+      "ordinal": 45,
       "scriptName": "Function update \"definition\" with \"theirs\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0048-select-dolt_add-.",
@@ -766,9 +700,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0049",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0046",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 49,
+      "ordinal": 46,
       "scriptName": "Function update \"definition\" with \"theirs\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0049-select-length-dolt_commit-m-other",
@@ -782,9 +716,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0050",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0047",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 50,
+      "ordinal": 47,
       "scriptName": "Function update \"definition\" with \"theirs\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0050-select-dolt_checkout-main",
@@ -798,9 +732,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0051",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0048",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 51,
+      "ordinal": 48,
       "scriptName": "Function update \"definition\" with \"theirs\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0051-create-or-replace-function-interpreted_example",
@@ -811,9 +745,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0052",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0049",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 52,
+      "ordinal": 49,
       "scriptName": "Function update \"definition\" with \"theirs\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0052-select-interpreted_example-12",
@@ -824,9 +758,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0053",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0050",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 53,
+      "ordinal": 50,
       "scriptName": "Function update \"definition\" with \"theirs\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0053-select-*-from-dolt_status",
@@ -840,9 +774,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0054",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0051",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 54,
+      "ordinal": 51,
       "scriptName": "Function update \"definition\" with \"theirs\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0054-select-dolt_add-.",
@@ -856,9 +790,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0055",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0052",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 55,
+      "ordinal": 52,
       "scriptName": "Function update \"definition\" with \"theirs\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0055-select-length-dolt_commit-m-next",
@@ -872,9 +806,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0056",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0053",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 56,
+      "ordinal": 53,
       "scriptName": "Function update \"definition\" with \"theirs\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0056-select-dolt_merge-other",
@@ -888,9 +822,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0057",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0054",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 57,
+      "ordinal": 54,
       "scriptName": "Function update \"definition\" with \"theirs\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0057-select-*-from-dolt_conflicts",
@@ -905,9 +839,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0058",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0055",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 58,
+      "ordinal": 55,
       "scriptName": "Function update \"definition\" with \"theirs\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0058-select-base_value-our_value-our_diff_type-their_value",
@@ -921,9 +855,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0059",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0056",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 59,
+      "ordinal": 56,
       "scriptName": "Function update \"definition\" with \"theirs\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0059-update-dolt_conflicts_interpreted_example-text-set-our_value",
@@ -937,9 +871,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0060",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0057",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 60,
+      "ordinal": 57,
       "scriptName": "Function update \"definition\" with \"theirs\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0060-delete-from-dolt_conflicts_interpreted_example-text-where",
@@ -953,9 +887,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0061",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0058",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 61,
+      "ordinal": 58,
       "scriptName": "Function update \"definition\" with \"theirs\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0061-select-*-from-dolt_conflicts_interpreted_example-text",
@@ -969,9 +903,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0062",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0059",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 62,
+      "ordinal": 59,
       "scriptName": "Function update \"definition\" with \"theirs\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0062-select-interpreted_example-12",
@@ -982,31 +916,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0063",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0060",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 63,
-      "scriptName": "Function update \"definition\" with \"ancestor\" body",
-      "oracle": "postgres",
-      "postgresId": "conflicts-root-object-test-testconflictsrootobject-0063-select-interpreted_example-12",
-      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0063-select-interpreted_example-12",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "SELECT interpreted_example('12');",
-      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
-      "expectedRows": [
-        [
-          {
-            "value": "112"
-          }
-        ]
-      ],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0064",
-      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 64,
+      "ordinal": 60,
       "scriptName": "Function update \"definition\" with \"ancestor\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0064-select-dolt_add-.",
@@ -1020,9 +932,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0065",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0061",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 65,
+      "ordinal": 61,
       "scriptName": "Function update \"definition\" with \"ancestor\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0065-select-length-dolt_commit-m-initial",
@@ -1036,9 +948,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0066",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0062",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 66,
+      "ordinal": 62,
       "scriptName": "Function update \"definition\" with \"ancestor\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0066-select-dolt_checkout-b-other",
@@ -1052,9 +964,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0067",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0063",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 67,
+      "ordinal": 63,
       "scriptName": "Function update \"definition\" with \"ancestor\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0067-create-or-replace-function-interpreted_example",
@@ -1065,9 +977,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0068",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0064",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 68,
+      "ordinal": 64,
       "scriptName": "Function update \"definition\" with \"ancestor\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0068-select-interpreted_example-12",
@@ -1078,9 +990,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0069",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0065",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 69,
+      "ordinal": 65,
       "scriptName": "Function update \"definition\" with \"ancestor\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0069-select-dolt_add-.",
@@ -1094,9 +1006,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0070",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0066",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 70,
+      "ordinal": 66,
       "scriptName": "Function update \"definition\" with \"ancestor\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0070-select-length-dolt_commit-m-other",
@@ -1110,9 +1022,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0071",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0067",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 71,
+      "ordinal": 67,
       "scriptName": "Function update \"definition\" with \"ancestor\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0071-select-dolt_checkout-main",
@@ -1126,9 +1038,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0072",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0068",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 72,
+      "ordinal": 68,
       "scriptName": "Function update \"definition\" with \"ancestor\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0072-create-or-replace-function-interpreted_example",
@@ -1139,9 +1051,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0073",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0069",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 73,
+      "ordinal": 69,
       "scriptName": "Function update \"definition\" with \"ancestor\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0073-select-interpreted_example-12",
@@ -1152,9 +1064,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0074",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0070",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 74,
+      "ordinal": 70,
       "scriptName": "Function update \"definition\" with \"ancestor\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0074-select-*-from-dolt_status",
@@ -1168,9 +1080,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0075",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0071",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 75,
+      "ordinal": 71,
       "scriptName": "Function update \"definition\" with \"ancestor\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0075-select-dolt_add-.",
@@ -1184,9 +1096,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0076",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0072",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 76,
+      "ordinal": 72,
       "scriptName": "Function update \"definition\" with \"ancestor\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0076-select-length-dolt_commit-m-next",
@@ -1200,9 +1112,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0077",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0073",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 77,
+      "ordinal": 73,
       "scriptName": "Function update \"definition\" with \"ancestor\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0077-select-dolt_merge-other",
@@ -1216,9 +1128,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0078",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0074",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 78,
+      "ordinal": 74,
       "scriptName": "Function update \"definition\" with \"ancestor\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0078-select-*-from-dolt_conflicts",
@@ -1233,9 +1145,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0079",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0075",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 79,
+      "ordinal": 75,
       "scriptName": "Function update \"definition\" with \"ancestor\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0079-select-base_value-our_value-our_diff_type-their_value",
@@ -1249,9 +1161,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0080",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0076",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 80,
+      "ordinal": 76,
       "scriptName": "Function update \"definition\" with \"ancestor\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0080-update-dolt_conflicts_interpreted_example-text-set-our_value",
@@ -1265,9 +1177,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0081",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0077",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 81,
+      "ordinal": 77,
       "scriptName": "Function update \"definition\" with \"ancestor\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0081-delete-from-dolt_conflicts_interpreted_example-text-where",
@@ -1281,9 +1193,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0082",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0078",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 82,
+      "ordinal": 78,
       "scriptName": "Function update \"definition\" with \"ancestor\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0082-select-*-from-dolt_conflicts_interpreted_example-text",
@@ -1297,9 +1209,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0083",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0079",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 83,
+      "ordinal": 79,
       "scriptName": "Function update \"definition\" with \"ancestor\" body",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0083-select-interpreted_example-12",
@@ -1310,25 +1222,77 @@
       "cleanupProvided": false
     },
     {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0080",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 80,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0085-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0081",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 81,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0086-select-length-dolt_commit-m-initial",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
+      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0082",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 82,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0087-select-dolt_checkout-b-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('-b', 'other')",
+      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0083",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 83,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0088-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS INT8 AS $$ BEGIN RETURN input || ''; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "11a519d8c8cb26cbfdb921456f33406d086b42cbb8e9743a84f31fe0b0a2113a",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
       "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0084",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
       "ordinal": 84,
       "scriptName": "Function update \"return_type\" with custom type",
-      "oracle": "postgres",
-      "postgresId": "conflicts-root-object-test-testconflictsrootobject-0084-select-interpreted_example-12",
-      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0084-select-interpreted_example-12",
-      "compare": "structural",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0089-select-interpreted_example-12",
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
-      "expectedRows": [
-        [
-          {
-            "value": "12"
-          }
-        ]
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -1337,7 +1301,7 @@
       "ordinal": 85,
       "scriptName": "Function update \"return_type\" with custom type",
       "oracle": "internal",
-      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0085-select-dolt_add-.",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0090-select-dolt_add-.",
       "expectedKind": "rows",
       "query": "SELECT dolt_add('.');",
       "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
@@ -1353,80 +1317,6 @@
       "ordinal": 86,
       "scriptName": "Function update \"return_type\" with custom type",
       "oracle": "internal",
-      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0086-select-length-dolt_commit-m-initial",
-      "expectedKind": "rows",
-      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
-      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
-      "nonLiteral": [
-        "DoltSpecific"
-      ],
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0087",
-      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 87,
-      "scriptName": "Function update \"return_type\" with custom type",
-      "oracle": "internal",
-      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0087-select-dolt_checkout-b-other",
-      "expectedKind": "rows",
-      "query": "SELECT dolt_checkout('-b', 'other')",
-      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
-      "nonLiteral": [
-        "DoltSpecific"
-      ],
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0088",
-      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 88,
-      "scriptName": "Function update \"return_type\" with custom type",
-      "oracle": "internal",
-      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0088-create-or-replace-function-interpreted_example",
-      "expectedKind": "rows",
-      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS INT8 AS $$ BEGIN RETURN input || ''; END; $$ LANGUAGE plpgsql;",
-      "querySha256": "11a519d8c8cb26cbfdb921456f33406d086b42cbb8e9743a84f31fe0b0a2113a",
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0089",
-      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 89,
-      "scriptName": "Function update \"return_type\" with custom type",
-      "oracle": "internal",
-      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0089-select-interpreted_example-12",
-      "expectedKind": "rows",
-      "query": "SELECT interpreted_example('12');",
-      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0090",
-      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 90,
-      "scriptName": "Function update \"return_type\" with custom type",
-      "oracle": "internal",
-      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0090-select-dolt_add-.",
-      "expectedKind": "rows",
-      "query": "SELECT dolt_add('.');",
-      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
-      "nonLiteral": [
-        "DoltSpecific"
-      ],
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0091",
-      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 91,
-      "scriptName": "Function update \"return_type\" with custom type",
-      "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0091-select-length-dolt_commit-m-other",
       "expectedKind": "rows",
       "query": "SELECT length(dolt_commit('-m', 'other')::text) = 34;",
@@ -1438,9 +1328,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0092",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0087",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 92,
+      "ordinal": 87,
       "scriptName": "Function update \"return_type\" with custom type",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0092-select-dolt_checkout-main",
@@ -1454,9 +1344,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0093",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0088",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 93,
+      "ordinal": 88,
       "scriptName": "Function update \"return_type\" with custom type",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0093-create-or-replace-function-interpreted_example",
@@ -1467,9 +1357,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0094",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0089",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 94,
+      "ordinal": 89,
       "scriptName": "Function update \"return_type\" with custom type",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0094-select-interpreted_example-12",
@@ -1480,9 +1370,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0095",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0090",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 95,
+      "ordinal": 90,
       "scriptName": "Function update \"return_type\" with custom type",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0095-select-*-from-dolt_status",
@@ -1496,9 +1386,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0096",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0091",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 96,
+      "ordinal": 91,
       "scriptName": "Function update \"return_type\" with custom type",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0096-select-dolt_add-.",
@@ -1512,9 +1402,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0097",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0092",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 97,
+      "ordinal": 92,
       "scriptName": "Function update \"return_type\" with custom type",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0097-select-length-dolt_commit-m-next",
@@ -1528,9 +1418,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0098",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0093",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 98,
+      "ordinal": 93,
       "scriptName": "Function update \"return_type\" with custom type",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0098-select-dolt_merge-other",
@@ -1544,9 +1434,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0099",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0094",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 99,
+      "ordinal": 94,
       "scriptName": "Function update \"return_type\" with custom type",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0099-select-*-from-dolt_conflicts",
@@ -1561,9 +1451,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0100",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0095",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 100,
+      "ordinal": 95,
       "scriptName": "Function update \"return_type\" with custom type",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0100-select-base_value-our_value-our_diff_type-their_value",
@@ -1577,9 +1467,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0101",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0096",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 101,
+      "ordinal": 96,
       "scriptName": "Function update \"return_type\" with custom type",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0101-update-dolt_conflicts_interpreted_example-text-set-our_value",
@@ -1593,9 +1483,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0102",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0097",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 102,
+      "ordinal": 97,
       "scriptName": "Function update \"return_type\" with custom type",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0102-select-base_value-our_value-our_diff_type-their_value",
@@ -1609,9 +1499,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0103",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0098",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 103,
+      "ordinal": 98,
       "scriptName": "Function update \"return_type\" with custom type",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0103-delete-from-dolt_conflicts_interpreted_example-text-where",
@@ -1625,9 +1515,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0104",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0099",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 104,
+      "ordinal": 99,
       "scriptName": "Function update \"return_type\" with custom type",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0104-select-*-from-dolt_conflicts_interpreted_example-text",
@@ -1641,9 +1531,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0105",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0100",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 105,
+      "ordinal": 100,
       "scriptName": "Function update \"return_type\" with custom type",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0105-select-interpreted_example-12",
@@ -1654,9 +1544,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0106",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0101",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 106,
+      "ordinal": 101,
       "scriptName": "Function update \"return_type\" with custom type",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0106-select-interpreted_example-123456",
@@ -1667,9 +1557,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0107",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0102",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 107,
+      "ordinal": 102,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0107-select-dolt_add-.",
@@ -1683,9 +1573,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0108",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0103",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 108,
+      "ordinal": 103,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0108-select-length-dolt_commit-m-initial",
@@ -1699,9 +1589,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0109",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0104",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 109,
+      "ordinal": 104,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0109-select-dolt_checkout-b-other",
@@ -1715,9 +1605,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0110",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0105",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 110,
+      "ordinal": 105,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0110-create-or-replace-function-interpreted_example",
@@ -1728,9 +1618,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0111",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0106",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 111,
+      "ordinal": 106,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0111-select-dolt_add-.",
@@ -1744,9 +1634,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0112",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0107",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 112,
+      "ordinal": 107,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0112-select-length-dolt_commit-m-other",
@@ -1760,9 +1650,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0113",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0108",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 113,
+      "ordinal": 108,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0113-select-dolt_checkout-main",
@@ -1776,9 +1666,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0114",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0109",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 114,
+      "ordinal": 109,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0114-drop-function-interpreted_example-input-text",
@@ -1789,9 +1679,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0115",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0110",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 115,
+      "ordinal": 110,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0115-select-dolt_add-.",
@@ -1805,9 +1695,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0116",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0111",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 116,
+      "ordinal": 111,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0116-select-length-dolt_commit-m-next",
@@ -1821,9 +1711,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0117",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0112",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 117,
+      "ordinal": 112,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0117-select-dolt_merge-other",
@@ -1837,9 +1727,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0118",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0113",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 118,
+      "ordinal": 113,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0118-select-*-from-dolt_conflicts",
@@ -1854,9 +1744,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0119",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0114",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 119,
+      "ordinal": 114,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0119-select-base_value-our_value-our_diff_type-their_value",
@@ -1870,9 +1760,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0120",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0115",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 120,
+      "ordinal": 115,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0120-update-dolt_conflicts_interpreted_example-text-set-our_value",
@@ -1886,9 +1776,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0121",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0116",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 121,
+      "ordinal": 116,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0121-delete-from-dolt_conflicts_interpreted_example-text",
@@ -1902,9 +1792,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0122",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0117",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 122,
+      "ordinal": 117,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0122-select-interpreted_example-12",
@@ -1915,9 +1805,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0123",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0118",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 123,
+      "ordinal": 118,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0123-select-dolt_add-.",
@@ -1931,9 +1821,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0124",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0119",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 124,
+      "ordinal": 119,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0124-select-length-dolt_commit-m-initial",
@@ -1947,9 +1837,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0125",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0120",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 125,
+      "ordinal": 120,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0125-select-dolt_checkout-b-other",
@@ -1963,9 +1853,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0126",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0121",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 126,
+      "ordinal": 121,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0126-create-or-replace-function-interpreted_example",
@@ -1976,9 +1866,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0127",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0122",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 127,
+      "ordinal": 122,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0127-select-dolt_add-.",
@@ -1992,9 +1882,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0128",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0123",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 128,
+      "ordinal": 123,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0128-select-length-dolt_commit-m-other",
@@ -2008,9 +1898,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0129",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0124",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 129,
+      "ordinal": 124,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0129-select-dolt_checkout-main",
@@ -2024,9 +1914,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0130",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0125",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 130,
+      "ordinal": 125,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0130-drop-function-interpreted_example-input-text",
@@ -2037,9 +1927,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0131",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0126",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 131,
+      "ordinal": 126,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0131-select-dolt_add-.",
@@ -2053,9 +1943,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0132",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0127",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 132,
+      "ordinal": 127,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0132-select-length-dolt_commit-m-next",
@@ -2069,9 +1959,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0133",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0128",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 133,
+      "ordinal": 128,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0133-select-dolt_merge-other",
@@ -2085,9 +1975,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0134",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0129",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 134,
+      "ordinal": 129,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0134-select-*-from-dolt_conflicts",
@@ -2102,9 +1992,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0135",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0130",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 135,
+      "ordinal": 130,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0135-select-base_value-our_value-our_diff_type-their_value",
@@ -2118,9 +2008,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0136",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0131",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 136,
+      "ordinal": 131,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0136-update-dolt_conflicts_interpreted_example-text-set-our_value",
@@ -2134,9 +2024,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0137",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0132",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 137,
+      "ordinal": 132,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0137-delete-from-dolt_conflicts_interpreted_example-text",
@@ -2150,9 +2040,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0138",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0133",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 138,
+      "ordinal": 133,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0138-select-interpreted_example-12",
@@ -2163,9 +2053,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0139",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0134",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 139,
+      "ordinal": 134,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0139-select-dolt_add-.",
@@ -2179,9 +2069,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0140",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0135",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 140,
+      "ordinal": 135,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0140-select-length-dolt_commit-m-initial",
@@ -2195,9 +2085,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0141",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0136",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 141,
+      "ordinal": 136,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0141-select-dolt_checkout-b-other",
@@ -2211,9 +2101,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0142",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0137",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 142,
+      "ordinal": 137,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0142-create-or-replace-function-interpreted_example",
@@ -2224,9 +2114,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0143",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0138",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 143,
+      "ordinal": 138,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0143-select-dolt_add-.",
@@ -2240,9 +2130,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0144",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0139",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 144,
+      "ordinal": 139,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0144-select-length-dolt_commit-m-other",
@@ -2256,9 +2146,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0145",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0140",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 145,
+      "ordinal": 140,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0145-select-dolt_checkout-main",
@@ -2272,9 +2162,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0146",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0141",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 146,
+      "ordinal": 141,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0146-drop-function-interpreted_example-input-text",
@@ -2285,9 +2175,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0147",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0142",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 147,
+      "ordinal": 142,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0147-select-dolt_add-.",
@@ -2301,9 +2191,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0148",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0143",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 148,
+      "ordinal": 143,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0148-select-length-dolt_commit-m-next",
@@ -2317,9 +2207,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0149",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0144",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 149,
+      "ordinal": 144,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0149-select-dolt_merge-other",
@@ -2333,9 +2223,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0150",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0145",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 150,
+      "ordinal": 145,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0150-select-*-from-dolt_conflicts",
@@ -2350,9 +2240,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0151",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0146",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 151,
+      "ordinal": 146,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0151-select-base_value-our_value-our_diff_type-their_value",
@@ -2366,9 +2256,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0152",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0147",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 152,
+      "ordinal": 147,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0152-update-dolt_conflicts_interpreted_example-text-set-our_value",
@@ -2382,9 +2272,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0153",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0148",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 153,
+      "ordinal": 148,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0153-delete-from-dolt_conflicts_interpreted_example-text",
@@ -2398,9 +2288,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0154",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0149",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 154,
+      "ordinal": 149,
       "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0154-select-interpreted_example-12",
@@ -2411,9 +2301,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0155",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0150",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 155,
+      "ordinal": 150,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0155-select-dolt_add-.",
@@ -2427,9 +2317,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0156",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0151",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 156,
+      "ordinal": 151,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0156-select-length-dolt_commit-m-initial",
@@ -2443,9 +2333,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0157",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0152",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 157,
+      "ordinal": 152,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0157-select-dolt_checkout-b-other",
@@ -2459,9 +2349,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0158",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0153",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 158,
+      "ordinal": 153,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0158-drop-function-interpreted_example-input-text",
@@ -2472,9 +2362,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0159",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0154",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 159,
+      "ordinal": 154,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0159-select-dolt_add-.",
@@ -2488,9 +2378,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0160",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0155",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 160,
+      "ordinal": 155,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0160-select-length-dolt_commit-m-other",
@@ -2504,9 +2394,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0161",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0156",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 161,
+      "ordinal": 156,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0161-select-dolt_checkout-main",
@@ -2520,9 +2410,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0162",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0157",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 162,
+      "ordinal": 157,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0162-create-or-replace-function-interpreted_example",
@@ -2533,9 +2423,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0163",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0158",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 163,
+      "ordinal": 158,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0163-select-dolt_add-.",
@@ -2549,9 +2439,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0164",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0159",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 164,
+      "ordinal": 159,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0164-select-length-dolt_commit-m-next",
@@ -2565,9 +2455,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0165",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0160",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 165,
+      "ordinal": 160,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0165-select-dolt_merge-other",
@@ -2581,9 +2471,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0166",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0161",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 166,
+      "ordinal": 161,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0166-select-*-from-dolt_conflicts",
@@ -2598,9 +2488,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0167",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0162",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 167,
+      "ordinal": 162,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0167-select-base_value-our_value-our_diff_type-their_value",
@@ -2614,9 +2504,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0168",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0163",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 168,
+      "ordinal": 163,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0168-update-dolt_conflicts_interpreted_example-text-set-our_value",
@@ -2630,9 +2520,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0169",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0164",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 169,
+      "ordinal": 164,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0169-delete-from-dolt_conflicts_interpreted_example-text",
@@ -2646,9 +2536,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0170",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0165",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 170,
+      "ordinal": 165,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0170-select-interpreted_example-12",
@@ -2659,9 +2549,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0171",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0166",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 171,
+      "ordinal": 166,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0171-select-dolt_add-.",
@@ -2675,9 +2565,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0172",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0167",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 172,
+      "ordinal": 167,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0172-select-length-dolt_commit-m-initial",
@@ -2691,9 +2581,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0173",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0168",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 173,
+      "ordinal": 168,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0173-select-dolt_checkout-b-other",
@@ -2707,9 +2597,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0174",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0169",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 174,
+      "ordinal": 169,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0174-drop-function-interpreted_example-input-text",
@@ -2720,9 +2610,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0175",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0170",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 175,
+      "ordinal": 170,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0175-select-dolt_add-.",
@@ -2736,9 +2626,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0176",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0171",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 176,
+      "ordinal": 171,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0176-select-length-dolt_commit-m-other",
@@ -2752,9 +2642,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0177",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0172",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 177,
+      "ordinal": 172,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0177-select-dolt_checkout-main",
@@ -2768,9 +2658,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0178",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0173",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 178,
+      "ordinal": 173,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0178-create-or-replace-function-interpreted_example",
@@ -2781,9 +2671,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0179",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0174",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 179,
+      "ordinal": 174,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0179-select-dolt_add-.",
@@ -2797,9 +2687,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0180",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0175",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 180,
+      "ordinal": 175,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0180-select-length-dolt_commit-m-next",
@@ -2813,9 +2703,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0181",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0176",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 181,
+      "ordinal": 176,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0181-select-dolt_merge-other",
@@ -2829,9 +2719,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0182",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0177",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 182,
+      "ordinal": 177,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0182-select-*-from-dolt_conflicts",
@@ -2846,9 +2736,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0183",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0178",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 183,
+      "ordinal": 178,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0183-select-base_value-our_value-our_diff_type-their_value",
@@ -2862,9 +2752,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0184",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0179",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 184,
+      "ordinal": 179,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0184-update-dolt_conflicts_interpreted_example-text-set-our_value",
@@ -2878,9 +2768,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0185",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0180",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 185,
+      "ordinal": 180,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0185-delete-from-dolt_conflicts_interpreted_example-text",
@@ -2894,9 +2784,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0186",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0181",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 186,
+      "ordinal": 181,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0186-select-interpreted_example-12",
@@ -2907,9 +2797,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0187",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0182",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 187,
+      "ordinal": 182,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0187-select-dolt_add-.",
@@ -2923,9 +2813,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0188",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0183",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 188,
+      "ordinal": 183,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0188-select-length-dolt_commit-m-initial",
@@ -2939,9 +2829,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0189",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0184",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 189,
+      "ordinal": 184,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0189-select-dolt_checkout-b-other",
@@ -2955,9 +2845,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0190",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0185",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 190,
+      "ordinal": 185,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0190-drop-function-interpreted_example-input-text",
@@ -2968,9 +2858,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0191",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0186",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 191,
+      "ordinal": 186,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0191-select-dolt_add-.",
@@ -2984,9 +2874,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0192",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0187",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 192,
+      "ordinal": 187,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0192-select-length-dolt_commit-m-other",
@@ -3000,9 +2890,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0193",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0188",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 193,
+      "ordinal": 188,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0193-select-dolt_checkout-main",
@@ -3016,9 +2906,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0194",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0189",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 194,
+      "ordinal": 189,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0194-create-or-replace-function-interpreted_example",
@@ -3029,9 +2919,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0195",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0190",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 195,
+      "ordinal": 190,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0195-select-dolt_add-.",
@@ -3045,9 +2935,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0196",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0191",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 196,
+      "ordinal": 191,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0196-select-length-dolt_commit-m-next",
@@ -3061,9 +2951,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0197",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0192",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 197,
+      "ordinal": 192,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0197-select-dolt_merge-other",
@@ -3077,9 +2967,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0198",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0193",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 198,
+      "ordinal": 193,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0198-select-*-from-dolt_conflicts",
@@ -3094,9 +2984,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0199",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0194",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 199,
+      "ordinal": 194,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0199-select-base_value-our_value-our_diff_type-their_value",
@@ -3110,9 +3000,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0200",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0195",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 200,
+      "ordinal": 195,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0200-update-dolt_conflicts_interpreted_example-text-set-our_value",
@@ -3126,9 +3016,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0201",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0196",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 201,
+      "ordinal": 196,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0201-delete-from-dolt_conflicts_interpreted_example-text",
@@ -3142,9 +3032,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0202",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0197",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 202,
+      "ordinal": 197,
       "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0202-select-interpreted_example-12",
@@ -3155,9 +3045,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0203",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0198",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 203,
+      "ordinal": 198,
       "scriptName": "Function update multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0203-select-dolt_add-.",
@@ -3171,9 +3061,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0204",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0199",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 204,
+      "ordinal": 199,
       "scriptName": "Function update multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0204-select-length-dolt_commit-m-initial",
@@ -3187,9 +3077,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0205",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0200",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 205,
+      "ordinal": 200,
       "scriptName": "Function update multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0205-select-dolt_checkout-b-other",
@@ -3203,9 +3093,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0206",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0201",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 206,
+      "ordinal": 201,
       "scriptName": "Function update multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0206-create-or-replace-function-interpreted_example",
@@ -3216,9 +3106,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0207",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0202",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 207,
+      "ordinal": 202,
       "scriptName": "Function update multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0207-select-dolt_add-.",
@@ -3232,9 +3122,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0208",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0203",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 208,
+      "ordinal": 203,
       "scriptName": "Function update multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0208-select-length-dolt_commit-m-other",
@@ -3248,9 +3138,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0209",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0204",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 209,
+      "ordinal": 204,
       "scriptName": "Function update multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0209-select-dolt_checkout-main",
@@ -3264,9 +3154,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0210",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0205",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 210,
+      "ordinal": 205,
       "scriptName": "Function update multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0210-create-or-replace-function-interpreted_example",
@@ -3277,9 +3167,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0211",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0206",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 211,
+      "ordinal": 206,
       "scriptName": "Function update multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0211-select-dolt_add-.",
@@ -3293,9 +3183,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0212",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0207",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 212,
+      "ordinal": 207,
       "scriptName": "Function update multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0212-select-length-dolt_commit-m-next",
@@ -3309,9 +3199,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0213",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0208",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 213,
+      "ordinal": 208,
       "scriptName": "Function update multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0213-select-dolt_merge-other",
@@ -3325,9 +3215,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0214",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0209",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 214,
+      "ordinal": 209,
       "scriptName": "Function update multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0214-select-*-from-dolt_conflicts",
@@ -3342,9 +3232,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0215",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0210",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 215,
+      "ordinal": 210,
       "scriptName": "Function update multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0215-select-base_value-our_value-our_diff_type-their_value",
@@ -3358,9 +3248,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0216",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0211",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 216,
+      "ordinal": 211,
       "scriptName": "Function update multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0216-update-dolt_conflicts_interpreted_example-text-set-our_value",
@@ -3374,9 +3264,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0217",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0212",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 217,
+      "ordinal": 212,
       "scriptName": "Function update multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0217-select-*-from-dolt_conflicts_interpreted_example-text",
@@ -3390,9 +3280,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0218",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0213",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 218,
+      "ordinal": 213,
       "scriptName": "Function update multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0218-select-interpreted_example-12",
@@ -3403,9 +3293,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0219",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0214",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 219,
+      "ordinal": 214,
       "scriptName": "Function update multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0219-select-interpreted_example-123456789012",
@@ -3416,9 +3306,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0220",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0215",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 220,
+      "ordinal": 215,
       "scriptName": "Function delete multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0220-select-dolt_add-.",
@@ -3432,9 +3322,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0221",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0216",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 221,
+      "ordinal": 216,
       "scriptName": "Function delete multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0221-select-length-dolt_commit-m-initial",
@@ -3448,9 +3338,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0222",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0217",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 222,
+      "ordinal": 217,
       "scriptName": "Function delete multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0222-select-dolt_checkout-b-other",
@@ -3464,9 +3354,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0223",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0218",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 223,
+      "ordinal": 218,
       "scriptName": "Function delete multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0223-create-or-replace-function-interpreted_example",
@@ -3477,9 +3367,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0224",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0219",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 224,
+      "ordinal": 219,
       "scriptName": "Function delete multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0224-select-dolt_add-.",
@@ -3493,9 +3383,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0225",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0220",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 225,
+      "ordinal": 220,
       "scriptName": "Function delete multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0225-select-length-dolt_commit-m-other",
@@ -3509,9 +3399,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0226",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0221",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 226,
+      "ordinal": 221,
       "scriptName": "Function delete multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0226-select-dolt_checkout-main",
@@ -3525,9 +3415,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0227",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0222",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 227,
+      "ordinal": 222,
       "scriptName": "Function delete multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0227-create-or-replace-function-interpreted_example",
@@ -3538,9 +3428,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0228",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0223",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 228,
+      "ordinal": 223,
       "scriptName": "Function delete multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0228-select-dolt_add-.",
@@ -3554,9 +3444,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0229",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0224",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 229,
+      "ordinal": 224,
       "scriptName": "Function delete multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0229-select-length-dolt_commit-m-next",
@@ -3570,9 +3460,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0230",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0225",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 230,
+      "ordinal": 225,
       "scriptName": "Function delete multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0230-select-dolt_merge-other",
@@ -3586,9 +3476,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0231",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0226",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 231,
+      "ordinal": 226,
       "scriptName": "Function delete multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0231-select-*-from-dolt_conflicts",
@@ -3603,9 +3493,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0232",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0227",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 232,
+      "ordinal": 227,
       "scriptName": "Function delete multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0232-select-base_value-our_value-our_diff_type-their_value",
@@ -3619,9 +3509,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0233",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0228",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 233,
+      "ordinal": 228,
       "scriptName": "Function delete multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0233-delete-from-dolt_conflicts_interpreted_example-text",
@@ -3635,9 +3525,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0234",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0229",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 234,
+      "ordinal": 229,
       "scriptName": "Function delete multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0234-select-*-from-dolt_conflicts_interpreted_example-text",
@@ -3651,9 +3541,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0235",
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0230",
       "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
-      "ordinal": 235,
+      "ordinal": 230,
       "scriptName": "Function delete multiple conflicts",
       "oracle": "internal",
       "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0235-select-interpreted_example-12",

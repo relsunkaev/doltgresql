@@ -23,12 +23,12 @@ import (
 func TestConflictsRootObject(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name:        `Function delete "definition" conflict without modification`,
-			SetUpScript: []string{`CREATE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '1' || input; END; $$ LANGUAGE plpgsql;`},
+			Name: `Function delete "definition" conflict without modification`,
+			SetUpScript: []string{`CREATE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '1' || input; END; $$ LANGUAGE plpgsql;`,
+
+				"SELECT interpreted_example('12');"},
 			Assertions: []ScriptTestAssertion{
-				{
-					Query: "SELECT interpreted_example('12');", PostgresOracle: ScriptTestPostgresOracle{ID: "conflicts-root-object-test-testconflictsrootobject-0001-select-interpreted_example-12"},
-				},
+
 				{
 					Query:    `SELECT dolt_add('.');`,
 					Expected: []sql.Row{{"{0}"}},
@@ -122,12 +122,12 @@ func TestConflictsRootObject(t *testing.T) {
 			},
 		},
 		{
-			Name:        `Function update "definition" with custom body`,
-			SetUpScript: []string{`CREATE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '1' || input; END; $$ LANGUAGE plpgsql;`},
+			Name: `Function update "definition" with custom body`,
+			SetUpScript: []string{`CREATE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '1' || input; END; $$ LANGUAGE plpgsql;`,
+
+				"SELECT interpreted_example('12');"},
 			Assertions: []ScriptTestAssertion{
-				{
-					Query: "SELECT interpreted_example('12');", PostgresOracle: ScriptTestPostgresOracle{ID: "conflicts-root-object-test-testconflictsrootobject-0021-select-interpreted_example-12"},
-				},
+
 				{
 					Query:    `SELECT dolt_add('.');`,
 					Expected: []sql.Row{{"{0}"}},
@@ -225,12 +225,12 @@ func TestConflictsRootObject(t *testing.T) {
 			},
 		},
 		{
-			Name:        `Function update "definition" with "theirs" body`,
-			SetUpScript: []string{`CREATE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '1' || input; END; $$ LANGUAGE plpgsql;`},
+			Name: `Function update "definition" with "theirs" body`,
+			SetUpScript: []string{`CREATE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '1' || input; END; $$ LANGUAGE plpgsql;`,
+
+				"SELECT interpreted_example('12');"},
 			Assertions: []ScriptTestAssertion{
-				{
-					Query: "SELECT interpreted_example('12');", PostgresOracle: ScriptTestPostgresOracle{ID: "conflicts-root-object-test-testconflictsrootobject-0042-select-interpreted_example-12"},
-				},
+
 				{
 					Query:    `SELECT dolt_add('.');`,
 					Expected: []sql.Row{{"{0}"}},
@@ -328,12 +328,12 @@ func TestConflictsRootObject(t *testing.T) {
 			},
 		},
 		{
-			Name:        `Function update "definition" with "ancestor" body`,
-			SetUpScript: []string{`CREATE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '1' || input; END; $$ LANGUAGE plpgsql;`},
+			Name: `Function update "definition" with "ancestor" body`,
+			SetUpScript: []string{`CREATE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '1' || input; END; $$ LANGUAGE plpgsql;`,
+
+				"SELECT interpreted_example('12');"},
 			Assertions: []ScriptTestAssertion{
-				{
-					Query: "SELECT interpreted_example('12');", PostgresOracle: ScriptTestPostgresOracle{ID: "conflicts-root-object-test-testconflictsrootobject-0063-select-interpreted_example-12"},
-				},
+
 				{
 					Query:    `SELECT dolt_add('.');`,
 					Expected: []sql.Row{{"{0}"}},
@@ -431,12 +431,12 @@ func TestConflictsRootObject(t *testing.T) {
 			},
 		},
 		{
-			Name:        `Function update "return_type" with custom type`,
-			SetUpScript: []string{`CREATE FUNCTION interpreted_example(input TEXT) RETURNS INT4 AS $$ BEGIN RETURN input || ''; END; $$ LANGUAGE plpgsql;`},
+			Name: `Function update "return_type" with custom type`,
+			SetUpScript: []string{`CREATE FUNCTION interpreted_example(input TEXT) RETURNS INT4 AS $$ BEGIN RETURN input || ''; END; $$ LANGUAGE plpgsql;`,
+
+				"SELECT interpreted_example('12');"},
 			Assertions: []ScriptTestAssertion{
-				{
-					Query: "SELECT interpreted_example('12');", PostgresOracle: ScriptTestPostgresOracle{ID: "conflicts-root-object-test-testconflictsrootobject-0084-select-interpreted_example-12"},
-				},
+
 				{
 					Query:    `SELECT dolt_add('.');`,
 					Expected: []sql.Row{{"{0}"}},

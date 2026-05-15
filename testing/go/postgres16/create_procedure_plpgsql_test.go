@@ -188,3 +188,36 @@ func TestCreateProcedureLanguagePlpgsql(t *testing.T) {
 		},
 	)
 }
+
+func TestCreateProcedureLanguagePlpgsqlPostgresOraclePrefix(t *testing.T) {
+	RunScripts(
+		t,
+		[]ScriptTest{
+			{
+				Name: "Branching",
+				SetUpScript: []string{
+					`CREATE TABLE test(v1 INT4, v2 INT4);`,
+				},
+				Assertions: []ScriptTestAssertion{
+					{
+						Query: `CREATE PROCEDURE interpreted_branch(input INT4) AS $$
+					BEGIN
+						DELETE FROM test WHERE v1 = 1;
+						INSERT INTO test VALUES (1, input + 100);
+					END;
+					$$ LANGUAGE plpgsql;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0011-create-procedure-interpreted_branch-input-int4"},
+					},
+					{
+						Query: "CALL interpreted_branch(4);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0012-call-interpreted_branch-4"},
+					},
+					{
+						Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0013-select-*-from-test"},
+					},
+					{
+						Query: "DELETE FROM test WHERE v1 = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0014-delete-from-test-where-v1"},
+					},
+				},
+			},
+		},
+	)
+}

@@ -91,6 +91,22 @@
       ],
       "needsCleanup": false,
       "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/postgres16/pg_dump_round_trip_test.go:TestPgDependViewTableDependenciesPostgresOraclePrefix#0001",
+      "source": "testing/go/postgres16/pg_dump_round_trip_test.go:TestPgDependViewTableDependenciesPostgresOraclePrefix",
+      "ordinal": 1,
+      "scriptName": "pg_depend exposes view dependencies on referenced tables",
+      "oracle": "postgres",
+      "postgresId": "pg-dump-round-trip-test-testpgdependviewtabledependencies-0001-select-view_class.relname-ref_class.relname-d.deptype-from",
+      "suggestedId": "pg-dump-round-trip-test-testpgdependviewtabledependencies-0001-select-view_class.relname-ref_class.relname-d.deptype-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT view_class.relname, ref_class.relname, d.deptype\nFROM pg_catalog.pg_depend d\nJOIN pg_catalog.pg_class view_class ON view_class.oid = d.objid\nJOIN pg_catalog.pg_class ref_class ON ref_class.oid = d.refobjid\nWHERE d.classid = 'pg_class'::regclass\n\tAND d.refclassid = 'pg_class'::regclass\n\tAND view_class.relname = 'dep_active_projects'\nORDER BY ref_class.relname;",
+      "querySha256": "38299883eb263644b78def96ed5ee4a1d0b064b531be4adc540278f6e4b0dbcf",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
     }
   ]
 }

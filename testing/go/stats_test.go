@@ -29,14 +29,12 @@ var StatsTests = []ScriptTest{
 		Name: "ANALYZE statement",
 		SetUpScript: []string{
 			"CREATE TABLE t (pk int primary key);",
-		},
+
+			"ANALYZE;",
+
+			"ANALYZE t;"},
 		Assertions: []ScriptTestAssertion{
-			{
-				Query: "ANALYZE;", PostgresOracle: ScriptTestPostgresOracle{ID: "stats-test-teststats-0001-analyze"},
-			},
-			{
-				Query: "ANALYZE t;", PostgresOracle: ScriptTestPostgresOracle{ID: "stats-test-teststats-0002-analyze-t"},
-			},
+
 			{
 				Query:    "ANALYZE public.t;",
 				Expected: []sql.Row{},
@@ -57,11 +55,10 @@ var StatsTests = []ScriptTest{
 			"CREATE TABLE stats_provider_plan (id int primary key, tenant int not null, name varchar(10));",
 			"CREATE INDEX stats_provider_plan_tenant_name_idx ON stats_provider_plan (tenant, name);",
 			"INSERT INTO stats_provider_plan VALUES (1, 1, 'a'), (2, 1, 'a'), (3, 2, 'b'), (4, 2, 'b'), (5, 3, 'c'), (6, 3, 'c');",
-		},
+
+			"ANALYZE stats_provider_plan;"},
 		Assertions: []ScriptTestAssertion{
-			{
-				Query: "ANALYZE stats_provider_plan;", PostgresOracle: ScriptTestPostgresOracle{ID: "stats-test-teststats-0006-analyze-stats_provider_plan"},
-			},
+
 			{
 				Query: `SELECT index_name, columns, row_count, distinct_count, null_count
 FROM dolt_statistics

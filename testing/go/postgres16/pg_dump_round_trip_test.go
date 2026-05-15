@@ -55,3 +55,34 @@ func TestPgDumpAlterColumnSetStorageProbe(t *testing.T) {
 		},
 	})
 }
+
+func TestPgDependViewTableDependenciesPostgresOraclePrefix(t *testing.T) {
+	RunScripts(
+		t,
+		[]ScriptTest{
+			{
+				Name: "pg_depend exposes view dependencies on referenced tables",
+				SetUpScript: []string{
+					`CREATE TABLE dep_accounts (id INT PRIMARY KEY, email TEXT);`,
+					`CREATE TABLE dep_projects (id INT PRIMARY KEY, account_id INT REFERENCES dep_accounts(id));`,
+					`CREATE VIEW dep_active_projects AS
+								SELECT p.id, a.email
+								FROM dep_projects p
+								JOIN dep_accounts a ON a.id = p.account_id;`,
+				},
+				Assertions: []ScriptTestAssertion{
+					{
+						Query: `SELECT view_class.relname, ref_class.relname, d.deptype
+					FROM pg_catalog.pg_depend d
+					JOIN pg_catalog.pg_class view_class ON view_class.oid = d.objid
+					JOIN pg_catalog.pg_class ref_class ON ref_class.oid = d.refobjid
+					WHERE d.classid = 'pg_class'::regclass
+						AND d.refclassid = 'pg_class'::regclass
+						AND view_class.relname = 'dep_active_projects'
+					ORDER BY ref_class.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-dump-round-trip-test-testpgdependviewtabledependencies-0001-select-view_class.relname-ref_class.relname-d.deptype-from"},
+					},
+				},
+			},
+		},
+	)
+}

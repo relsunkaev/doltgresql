@@ -1,0 +1,127 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map conflicts_root_object_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/conflicts_root_object_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/conflicts_root_object_test.go:TestConflictsRootObjectPostgresOraclePrefix#0001",
+      "source": "testing/go/postgres16/conflicts_root_object_test.go:TestConflictsRootObjectPostgresOraclePrefix",
+      "ordinal": 1,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "postgres",
+      "postgresId": "conflicts-root-object-test-testconflictsrootobject-0001-select-interpreted_example-12",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0001-select-interpreted_example-12",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "expectedRows": [
+        [
+          {
+            "value": "112"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/conflicts_root_object_test.go:TestConflictsRootObjectPostgresOraclePrefix#0002",
+      "source": "testing/go/postgres16/conflicts_root_object_test.go:TestConflictsRootObjectPostgresOraclePrefix",
+      "ordinal": 2,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "postgres",
+      "postgresId": "conflicts-root-object-test-testconflictsrootobject-0021-select-interpreted_example-12",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0021-select-interpreted_example-12",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "expectedRows": [
+        [
+          {
+            "value": "112"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/conflicts_root_object_test.go:TestConflictsRootObjectPostgresOraclePrefix#0003",
+      "source": "testing/go/postgres16/conflicts_root_object_test.go:TestConflictsRootObjectPostgresOraclePrefix",
+      "ordinal": 3,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "postgres",
+      "postgresId": "conflicts-root-object-test-testconflictsrootobject-0042-select-interpreted_example-12",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0042-select-interpreted_example-12",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "expectedRows": [
+        [
+          {
+            "value": "112"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/conflicts_root_object_test.go:TestConflictsRootObjectPostgresOraclePrefix#0004",
+      "source": "testing/go/postgres16/conflicts_root_object_test.go:TestConflictsRootObjectPostgresOraclePrefix",
+      "ordinal": 4,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "postgres",
+      "postgresId": "conflicts-root-object-test-testconflictsrootobject-0063-select-interpreted_example-12",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0063-select-interpreted_example-12",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "expectedRows": [
+        [
+          {
+            "value": "112"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/conflicts_root_object_test.go:TestConflictsRootObjectPostgresOraclePrefix#0005",
+      "source": "testing/go/postgres16/conflicts_root_object_test.go:TestConflictsRootObjectPostgresOraclePrefix",
+      "ordinal": 5,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "postgres",
+      "postgresId": "conflicts-root-object-test-testconflictsrootobject-0084-select-interpreted_example-12",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0084-select-interpreted_example-12",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "expectedRows": [
+        [
+          {
+            "value": "12"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

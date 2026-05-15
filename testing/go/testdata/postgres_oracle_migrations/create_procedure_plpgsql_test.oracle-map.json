@@ -18,15 +18,15 @@
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
       "ordinal": 1,
       "scriptName": "Branching",
-      "oracle": "postgres",
-      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0011-create-procedure-interpreted_branch-input-int4",
-      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0011-create-procedure-interpreted_branch-input-int4",
-      "compare": "structural",
+      "oracle": "internal",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0015-select-dolt_add-.",
       "expectedKind": "rows",
-      "query": "CREATE PROCEDURE interpreted_branch(input INT4) AS $$\nBEGIN\n\tDELETE FROM test WHERE v1 = 1;\n\tINSERT INTO test VALUES (1, input + 100);\nEND;\n$$ LANGUAGE plpgsql;",
-      "querySha256": "b0d4a80017811b50ae27b581c092630f6a5ba45689dc244d15787616f3c78549",
-      "expectedRows": [],
-      "needsCleanup": false,
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -34,15 +34,15 @@
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
       "ordinal": 2,
       "scriptName": "Branching",
-      "oracle": "postgres",
-      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0012-call-interpreted_branch-4",
-      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0012-call-interpreted_branch-4",
-      "compare": "structural",
+      "oracle": "internal",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0016-select-length-dolt_commit-m-initial",
       "expectedKind": "rows",
-      "query": "CALL interpreted_branch(4);",
-      "querySha256": "f95b4e17179e6db89d750cd724ea0db2b43c2d959c4450a7519b76903d67ac2b",
-      "expectedRows": [],
-      "needsCleanup": false,
+      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
+      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -50,24 +50,15 @@
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
       "ordinal": 3,
       "scriptName": "Branching",
-      "oracle": "postgres",
-      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0013-select-*-from-test",
-      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0013-select-*-from-test",
-      "compare": "structural",
+      "oracle": "internal",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0017-select-dolt_checkout-b-other",
       "expectedKind": "rows",
-      "query": "SELECT * FROM test;",
-      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
-      "expectedRows": [
-        [
-          {
-            "value": "1"
-          },
-          {
-            "value": "104"
-          }
-        ]
+      "query": "SELECT dolt_checkout('-b', 'other')",
+      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
+      "nonLiteral": [
+        "DoltSpecific"
       ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -75,15 +66,12 @@
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
       "ordinal": 4,
       "scriptName": "Branching",
-      "oracle": "postgres",
-      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0014-delete-from-test-where-v1",
-      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0014-delete-from-test-where-v1",
-      "compare": "structural",
+      "oracle": "internal",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0018-create-or-replace-procedure-interpreted_branch",
       "expectedKind": "rows",
-      "query": "DELETE FROM test WHERE v1 = 1;",
-      "querySha256": "662483d966be41daed57a5813e3826dd51ea768d08f6a8b31d779606ff2cd9e5",
-      "expectedRows": [],
-      "needsCleanup": false,
+      "query": "CREATE OR REPLACE PROCEDURE interpreted_branch(input INT4) AS $$\nBEGIN\n\tDELETE FROM test WHERE v1 = 2;\n\tINSERT INTO test VALUES (2, input + 1000);\nEND;\n$$ LANGUAGE plpgsql;",
+      "querySha256": "52b6c1e27c348db0f92c264614628711a15b5d9a16fd77e0fbd9094479876b39",
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -92,7 +80,7 @@
       "ordinal": 5,
       "scriptName": "Branching",
       "oracle": "internal",
-      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0015-select-dolt_add-.",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0019-select-dolt_add-.",
       "expectedKind": "rows",
       "query": "SELECT dolt_add('.');",
       "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
@@ -108,10 +96,10 @@
       "ordinal": 6,
       "scriptName": "Branching",
       "oracle": "internal",
-      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0016-select-length-dolt_commit-m-initial",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0020-select-length-dolt_commit-m-updated",
       "expectedKind": "rows",
-      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
-      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "query": "SELECT length(dolt_commit('-m', 'updated func')::text) = 34;",
+      "querySha256": "30ae714244989d2f0ac7bb00a967ca58374236309aafc110095c4b5e43994b0c",
       "nonLiteral": [
         "DoltSpecific"
       ],
@@ -124,67 +112,6 @@
       "ordinal": 7,
       "scriptName": "Branching",
       "oracle": "internal",
-      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0017-select-dolt_checkout-b-other",
-      "expectedKind": "rows",
-      "query": "SELECT dolt_checkout('-b', 'other')",
-      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
-      "nonLiteral": [
-        "DoltSpecific"
-      ],
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0008",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 8,
-      "scriptName": "Branching",
-      "oracle": "internal",
-      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0018-create-or-replace-procedure-interpreted_branch",
-      "expectedKind": "rows",
-      "query": "CREATE OR REPLACE PROCEDURE interpreted_branch(input INT4) AS $$\nBEGIN\n\tDELETE FROM test WHERE v1 = 2;\n\tINSERT INTO test VALUES (2, input + 1000);\nEND;\n$$ LANGUAGE plpgsql;",
-      "querySha256": "52b6c1e27c348db0f92c264614628711a15b5d9a16fd77e0fbd9094479876b39",
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0009",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 9,
-      "scriptName": "Branching",
-      "oracle": "internal",
-      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0019-select-dolt_add-.",
-      "expectedKind": "rows",
-      "query": "SELECT dolt_add('.');",
-      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
-      "nonLiteral": [
-        "DoltSpecific"
-      ],
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0010",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 10,
-      "scriptName": "Branching",
-      "oracle": "internal",
-      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0020-select-length-dolt_commit-m-updated",
-      "expectedKind": "rows",
-      "query": "SELECT length(dolt_commit('-m', 'updated func')::text) = 34;",
-      "querySha256": "30ae714244989d2f0ac7bb00a967ca58374236309aafc110095c4b5e43994b0c",
-      "nonLiteral": [
-        "DoltSpecific"
-      ],
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0011",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 11,
-      "scriptName": "Branching",
-      "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0021-call-interpreted_branch-56",
       "expectedKind": "rows",
       "query": "CALL interpreted_branch(56);",
@@ -193,9 +120,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0012",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0008",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 12,
+      "ordinal": 8,
       "scriptName": "Branching",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0022-select-*-from-test",
@@ -206,9 +133,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0013",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0009",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 13,
+      "ordinal": 9,
       "scriptName": "Branching",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0023-delete-from-test-where-v1",
@@ -219,9 +146,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0014",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0010",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 14,
+      "ordinal": 10,
       "scriptName": "Branching",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0024-select-dolt_checkout-main",
@@ -235,9 +162,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0015",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0011",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 15,
+      "ordinal": 11,
       "scriptName": "Branching",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0025-call-interpreted_branch-57",
@@ -248,9 +175,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0016",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0012",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 16,
+      "ordinal": 12,
       "scriptName": "Branching",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0026-select-*-from-test",
@@ -261,9 +188,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0017",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0013",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 17,
+      "ordinal": 13,
       "scriptName": "Merging No Conflict",
       "oracle": "postgres",
       "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0027-create-procedure-interpreted_merging-input-text",
@@ -277,9 +204,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0018",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0014",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 18,
+      "ordinal": 14,
       "scriptName": "Merging No Conflict",
       "oracle": "postgres",
       "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0028-call-interpreted_merging-12",
@@ -293,9 +220,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0019",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0015",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 19,
+      "ordinal": 15,
       "scriptName": "Merging No Conflict",
       "oracle": "postgres",
       "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0029-select-*-from-test",
@@ -326,9 +253,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0020",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0016",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 20,
+      "ordinal": 16,
       "scriptName": "Merging No Conflict",
       "oracle": "postgres",
       "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0030-call-interpreted_merging-55",
@@ -343,12 +270,73 @@
       "cleanupProvided": false
     },
     {
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0017",
+      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 17,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0031-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0018",
+      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 18,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0032-select-length-dolt_commit-m-initial",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
+      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0019",
+      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 19,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0033-select-dolt_checkout-b-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('-b', 'other')",
+      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0020",
+      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 20,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0034-create-procedure-interpreted_merging-input-int4",
+      "expectedKind": "rows",
+      "query": "CREATE PROCEDURE interpreted_merging(input INT4) AS $$\nBEGIN\n\tDELETE FROM test WHERE v1 = 3;\n\tINSERT INTO test VALUES (3, input::int4 + 1000);\nEND;\n$$ LANGUAGE plpgsql;",
+      "querySha256": "461b1d12a4920da153550b4e535820865c7a9923e9224c4b3a1704d307a361db",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
       "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0021",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
       "ordinal": 21,
       "scriptName": "Merging No Conflict",
       "oracle": "internal",
-      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0031-select-dolt_add-.",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0035-select-dolt_add-.",
       "expectedKind": "rows",
       "query": "SELECT dolt_add('.');",
       "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
@@ -364,67 +352,6 @@
       "ordinal": 22,
       "scriptName": "Merging No Conflict",
       "oracle": "internal",
-      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0032-select-length-dolt_commit-m-initial",
-      "expectedKind": "rows",
-      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
-      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
-      "nonLiteral": [
-        "DoltSpecific"
-      ],
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0023",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 23,
-      "scriptName": "Merging No Conflict",
-      "oracle": "internal",
-      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0033-select-dolt_checkout-b-other",
-      "expectedKind": "rows",
-      "query": "SELECT dolt_checkout('-b', 'other')",
-      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
-      "nonLiteral": [
-        "DoltSpecific"
-      ],
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0024",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 24,
-      "scriptName": "Merging No Conflict",
-      "oracle": "internal",
-      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0034-create-procedure-interpreted_merging-input-int4",
-      "expectedKind": "rows",
-      "query": "CREATE PROCEDURE interpreted_merging(input INT4) AS $$\nBEGIN\n\tDELETE FROM test WHERE v1 = 3;\n\tINSERT INTO test VALUES (3, input::int4 + 1000);\nEND;\n$$ LANGUAGE plpgsql;",
-      "querySha256": "461b1d12a4920da153550b4e535820865c7a9923e9224c4b3a1704d307a361db",
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0025",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 25,
-      "scriptName": "Merging No Conflict",
-      "oracle": "internal",
-      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0035-select-dolt_add-.",
-      "expectedKind": "rows",
-      "query": "SELECT dolt_add('.');",
-      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
-      "nonLiteral": [
-        "DoltSpecific"
-      ],
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0026",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 26,
-      "scriptName": "Merging No Conflict",
-      "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0036-select-length-dolt_commit-m-another",
       "expectedKind": "rows",
       "query": "SELECT length(dolt_commit('-m', 'another func')::text) = 34;",
@@ -436,9 +363,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0027",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0023",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 27,
+      "ordinal": 23,
       "scriptName": "Merging No Conflict",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0037-select-dolt_checkout-main",
@@ -452,9 +379,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0028",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0024",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 28,
+      "ordinal": 24,
       "scriptName": "Merging No Conflict",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0038-call-interpreted_merging-55",
@@ -465,9 +392,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0029",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0025",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 29,
+      "ordinal": 25,
       "scriptName": "Merging No Conflict",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0039-create-or-replace-procedure-interpreted_merging",
@@ -478,9 +405,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0030",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0026",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 30,
+      "ordinal": 26,
       "scriptName": "Merging No Conflict",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0040-select-dolt_add-.",
@@ -494,9 +421,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0031",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0027",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 31,
+      "ordinal": 27,
       "scriptName": "Merging No Conflict",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0041-select-length-dolt_commit-m-updated",
@@ -510,9 +437,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0032",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0028",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 32,
+      "ordinal": 28,
       "scriptName": "Merging No Conflict",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0042-select-length-dolt_merge-other-::text",
@@ -526,9 +453,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0033",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0029",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 33,
+      "ordinal": 29,
       "scriptName": "Merging No Conflict",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0043-call-interpreted_merging-33",
@@ -539,9 +466,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0034",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0030",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 34,
+      "ordinal": 30,
       "scriptName": "Merging No Conflict",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0044-call-interpreted_merging-77",
@@ -552,9 +479,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0035",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0031",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 35,
+      "ordinal": 31,
       "scriptName": "Merging No Conflict",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0045-select-*-from-test",
@@ -565,12 +492,73 @@
       "cleanupProvided": false
     },
     {
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0032",
+      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 32,
+      "scriptName": "Procedure updates \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0046-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0033",
+      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 33,
+      "scriptName": "Procedure updates \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0047-select-length-dolt_commit-m-initial",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
+      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0034",
+      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 34,
+      "scriptName": "Procedure updates \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0048-select-dolt_checkout-b-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('-b', 'other')",
+      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0035",
+      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 35,
+      "scriptName": "Procedure updates \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0049-create-or-replace-procedure-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE PROCEDURE interpreted_example(input TEXT) AS $$ BEGIN INSERT INTO test VALUES ('3' || input); END; $$ LANGUAGE plpgsql;",
+      "querySha256": "e527548b8002a399c8a63b904d2fcd3ee4ebf28a3c2a4cbeb3e10603320b4d43",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
       "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0036",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
       "ordinal": 36,
       "scriptName": "Procedure updates \"definition\" with custom body",
       "oracle": "internal",
-      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0046-select-dolt_add-.",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0050-select-dolt_add-.",
       "expectedKind": "rows",
       "query": "SELECT dolt_add('.');",
       "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
@@ -586,67 +574,6 @@
       "ordinal": 37,
       "scriptName": "Procedure updates \"definition\" with custom body",
       "oracle": "internal",
-      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0047-select-length-dolt_commit-m-initial",
-      "expectedKind": "rows",
-      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
-      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
-      "nonLiteral": [
-        "DoltSpecific"
-      ],
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0038",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 38,
-      "scriptName": "Procedure updates \"definition\" with custom body",
-      "oracle": "internal",
-      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0048-select-dolt_checkout-b-other",
-      "expectedKind": "rows",
-      "query": "SELECT dolt_checkout('-b', 'other')",
-      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
-      "nonLiteral": [
-        "DoltSpecific"
-      ],
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0039",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 39,
-      "scriptName": "Procedure updates \"definition\" with custom body",
-      "oracle": "internal",
-      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0049-create-or-replace-procedure-interpreted_example",
-      "expectedKind": "rows",
-      "query": "CREATE OR REPLACE PROCEDURE interpreted_example(input TEXT) AS $$ BEGIN INSERT INTO test VALUES ('3' || input); END; $$ LANGUAGE plpgsql;",
-      "querySha256": "e527548b8002a399c8a63b904d2fcd3ee4ebf28a3c2a4cbeb3e10603320b4d43",
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0040",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 40,
-      "scriptName": "Procedure updates \"definition\" with custom body",
-      "oracle": "internal",
-      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0050-select-dolt_add-.",
-      "expectedKind": "rows",
-      "query": "SELECT dolt_add('.');",
-      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
-      "nonLiteral": [
-        "DoltSpecific"
-      ],
-      "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0041",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 41,
-      "scriptName": "Procedure updates \"definition\" with custom body",
-      "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0051-select-length-dolt_commit-m-other",
       "expectedKind": "rows",
       "query": "SELECT length(dolt_commit('-m', 'other')::text) = 34;",
@@ -658,9 +585,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0042",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0038",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 42,
+      "ordinal": 38,
       "scriptName": "Procedure updates \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0052-select-dolt_checkout-main",
@@ -674,9 +601,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0043",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0039",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 43,
+      "ordinal": 39,
       "scriptName": "Procedure updates \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0053-create-or-replace-procedure-interpreted_example",
@@ -687,9 +614,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0044",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0040",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 44,
+      "ordinal": 40,
       "scriptName": "Procedure updates \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0054-select-*-from-dolt_status",
@@ -703,9 +630,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0045",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0041",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 45,
+      "ordinal": 41,
       "scriptName": "Procedure updates \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0055-select-dolt_add-.",
@@ -719,9 +646,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0046",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0042",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 46,
+      "ordinal": 42,
       "scriptName": "Procedure updates \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0056-select-length-dolt_commit-m-next",
@@ -735,9 +662,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0047",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0043",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 47,
+      "ordinal": 43,
       "scriptName": "Procedure updates \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0057-select-dolt_merge-other",
@@ -751,9 +678,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0048",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0044",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 48,
+      "ordinal": 44,
       "scriptName": "Procedure updates \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0058-select-*-from-dolt_conflicts",
@@ -768,9 +695,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0049",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0045",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 49,
+      "ordinal": 45,
       "scriptName": "Procedure updates \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0059-select-base_value-our_value-our_diff_type-their_value",
@@ -784,9 +711,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0050",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0046",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 50,
+      "ordinal": 46,
       "scriptName": "Procedure updates \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0060-update-dolt_conflicts_interpreted_example-text-set-our_value",
@@ -800,9 +727,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0051",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0047",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 51,
+      "ordinal": 47,
       "scriptName": "Procedure updates \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0061-delete-from-dolt_conflicts_interpreted_example-text-where",
@@ -816,9 +743,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0052",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0048",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 52,
+      "ordinal": 48,
       "scriptName": "Procedure updates \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0062-select-*-from-dolt_conflicts_interpreted_example-text",
@@ -832,9 +759,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0053",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0049",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 53,
+      "ordinal": 49,
       "scriptName": "Procedure updates \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0063-call-interpreted_example-12",
@@ -845,9 +772,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0054",
+      "key": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0050",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 54,
+      "ordinal": 50,
       "scriptName": "Procedure updates \"definition\" with custom body",
       "oracle": "internal",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0064-select-*-from-test",

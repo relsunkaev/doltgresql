@@ -2,7 +2,7 @@
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map dolt_versioning_correctness_repro_test.go --force-postgres-oracle",
   "sourceFile": "testing/go/dolt_versioning_correctness_repro_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -1056,31 +1056,6 @@
       "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedEnumTypeRepro",
       "ordinal": 1,
       "scriptName": "DOLT_RESET hard removes uncommitted enum type",
-      "oracle": "postgres",
-      "postgresId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedenumtyperepro-0001-select-count-*-from-pg_catalog.pg_type",
-      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedenumtyperepro-0001-select-count-*-from-pg_catalog.pg_type",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'reset_uncommitted_enum';",
-      "querySha256": "ec94d6a3e820efeed0e44d32ae93ae6d89728ee8cb66a1686fa163cdf85401d7",
-      "expectedRows": [
-        [
-          {
-            "value": "1"
-          }
-        ]
-      ],
-      "nonLiteral": [
-        "Expected"
-      ],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedEnumTypeRepro#0002",
-      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedEnumTypeRepro",
-      "ordinal": 2,
-      "scriptName": "DOLT_RESET hard removes uncommitted enum type",
       "oracle": "internal",
       "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedenumtyperepro-0002-select-dolt_reset-hard",
       "expectedKind": "rows",
@@ -1093,9 +1068,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedEnumTypeRepro#0003",
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedEnumTypeRepro#0002",
       "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedEnumTypeRepro",
-      "ordinal": 3,
+      "ordinal": 2,
       "scriptName": "DOLT_RESET hard removes uncommitted enum type",
       "oracle": "internal",
       "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedenumtyperepro-0003-select-count-*-from-dolt_status",
@@ -1109,9 +1084,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedEnumTypeRepro#0004",
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedEnumTypeRepro#0003",
       "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedEnumTypeRepro",
-      "ordinal": 4,
+      "ordinal": 3,
       "scriptName": "DOLT_RESET hard removes uncommitted enum type",
       "oracle": "internal",
       "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedenumtyperepro-0004-select-count-*-from-pg_catalog.pg_type",
@@ -1129,31 +1104,6 @@
       "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedCompositeTypeRepro",
       "ordinal": 1,
       "scriptName": "DOLT_RESET hard removes uncommitted composite type",
-      "oracle": "postgres",
-      "postgresId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedcompositetyperepro-0001-select-count-*-from-pg_catalog.pg_type",
-      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedcompositetyperepro-0001-select-count-*-from-pg_catalog.pg_type",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'reset_uncommitted_composite';",
-      "querySha256": "a8b331555fb357dfd5767b57c0d212447084eab264ffb7c7e0cdb6abf48fb70c",
-      "expectedRows": [
-        [
-          {
-            "value": "1"
-          }
-        ]
-      ],
-      "nonLiteral": [
-        "Expected"
-      ],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedCompositeTypeRepro#0002",
-      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedCompositeTypeRepro",
-      "ordinal": 2,
-      "scriptName": "DOLT_RESET hard removes uncommitted composite type",
       "oracle": "internal",
       "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedcompositetyperepro-0002-select-dolt_reset-hard",
       "expectedKind": "rows",
@@ -1166,9 +1116,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedCompositeTypeRepro#0003",
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedCompositeTypeRepro#0002",
       "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedCompositeTypeRepro",
-      "ordinal": 3,
+      "ordinal": 2,
       "scriptName": "DOLT_RESET hard removes uncommitted composite type",
       "oracle": "internal",
       "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedcompositetyperepro-0003-select-count-*-from-dolt_status",
@@ -1182,9 +1132,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedCompositeTypeRepro#0004",
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedCompositeTypeRepro#0003",
       "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedCompositeTypeRepro",
-      "ordinal": 4,
+      "ordinal": 3,
       "scriptName": "DOLT_RESET hard removes uncommitted composite type",
       "oracle": "internal",
       "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedcompositetyperepro-0004-select-count-*-from-pg_catalog.pg_type",
@@ -1202,31 +1152,6 @@
       "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedDomainRepro",
       "ordinal": 1,
       "scriptName": "DOLT_RESET hard removes uncommitted domain",
-      "oracle": "postgres",
-      "postgresId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommitteddomainrepro-0001-select-count-*-from-pg_catalog.pg_type",
-      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommitteddomainrepro-0001-select-count-*-from-pg_catalog.pg_type",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'reset_uncommitted_domain';",
-      "querySha256": "8d4569d451a04cb66642162eac610a920e6671a004343ef877bd5d0e25bb219f",
-      "expectedRows": [
-        [
-          {
-            "value": "1"
-          }
-        ]
-      ],
-      "nonLiteral": [
-        "Expected"
-      ],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedDomainRepro#0002",
-      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedDomainRepro",
-      "ordinal": 2,
-      "scriptName": "DOLT_RESET hard removes uncommitted domain",
       "oracle": "internal",
       "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommitteddomainrepro-0002-select-dolt_reset-hard",
       "expectedKind": "rows",
@@ -1239,9 +1164,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedDomainRepro#0003",
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedDomainRepro#0002",
       "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedDomainRepro",
-      "ordinal": 3,
+      "ordinal": 2,
       "scriptName": "DOLT_RESET hard removes uncommitted domain",
       "oracle": "internal",
       "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommitteddomainrepro-0003-select-count-*-from-dolt_status",
@@ -1255,9 +1180,9 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedDomainRepro#0004",
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedDomainRepro#0003",
       "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedDomainRepro",
-      "ordinal": 4,
+      "ordinal": 3,
       "scriptName": "DOLT_RESET hard removes uncommitted domain",
       "oracle": "internal",
       "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommitteddomainrepro-0004-select-count-*-from-pg_catalog.pg_type",

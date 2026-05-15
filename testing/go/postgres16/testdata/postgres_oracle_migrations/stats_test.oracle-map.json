@@ -1,0 +1,65 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map stats_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/stats_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/stats_test.go:TestStatsPostgresOraclePrefix#0001",
+      "source": "testing/go/postgres16/stats_test.go:TestStatsPostgresOraclePrefix",
+      "ordinal": 1,
+      "scriptName": "ANALYZE statement",
+      "oracle": "postgres",
+      "postgresId": "stats-test-teststats-0001-analyze",
+      "suggestedId": "stats-test-teststats-0001-analyze",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ANALYZE;",
+      "querySha256": "0bdac2053bec33d5ea6126091923d9236fc07c7d1e410a837c7bbaec1182a03f",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/stats_test.go:TestStatsPostgresOraclePrefix#0002",
+      "source": "testing/go/postgres16/stats_test.go:TestStatsPostgresOraclePrefix",
+      "ordinal": 2,
+      "scriptName": "ANALYZE statement",
+      "oracle": "postgres",
+      "postgresId": "stats-test-teststats-0002-analyze-t",
+      "suggestedId": "stats-test-teststats-0002-analyze-t",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ANALYZE t;",
+      "querySha256": "cd90eb041fe5a79f428da9b30113a572e77110a00c7e50b29c07eb319a9aa7ce",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/stats_test.go:TestStatsPostgresOraclePrefix#0003",
+      "source": "testing/go/postgres16/stats_test.go:TestStatsPostgresOraclePrefix",
+      "ordinal": 3,
+      "scriptName": "ANALYZE populates dolt statistics",
+      "oracle": "postgres",
+      "postgresId": "stats-test-teststats-0006-analyze-stats_provider_plan",
+      "suggestedId": "stats-test-teststats-0006-analyze-stats_provider_plan",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ANALYZE stats_provider_plan;",
+      "querySha256": "5646a72e58586ecab6491d66dc7f0b39876f2ce4004b051081687e13571d9e3c",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

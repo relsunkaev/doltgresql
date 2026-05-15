@@ -316,6 +316,79 @@
       ],
       "needsCleanup": false,
       "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsqlPostgresOraclePrefix#0001",
+      "source": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsqlPostgresOraclePrefix",
+      "ordinal": 1,
+      "scriptName": "Branching",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0011-create-procedure-interpreted_branch-input-int4",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0011-create-procedure-interpreted_branch-input-int4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE PROCEDURE interpreted_branch(input INT4) AS $$\nBEGIN\n\tDELETE FROM test WHERE v1 = 1;\n\tINSERT INTO test VALUES (1, input + 100);\nEND;\n$$ LANGUAGE plpgsql;",
+      "querySha256": "b0d4a80017811b50ae27b581c092630f6a5ba45689dc244d15787616f3c78549",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsqlPostgresOraclePrefix#0002",
+      "source": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsqlPostgresOraclePrefix",
+      "ordinal": 2,
+      "scriptName": "Branching",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0012-call-interpreted_branch-4",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0012-call-interpreted_branch-4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CALL interpreted_branch(4);",
+      "querySha256": "f95b4e17179e6db89d750cd724ea0db2b43c2d959c4450a7519b76903d67ac2b",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsqlPostgresOraclePrefix#0003",
+      "source": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsqlPostgresOraclePrefix",
+      "ordinal": 3,
+      "scriptName": "Branching",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0013-select-*-from-test",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0013-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "104"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsqlPostgresOraclePrefix#0004",
+      "source": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsqlPostgresOraclePrefix",
+      "ordinal": 4,
+      "scriptName": "Branching",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0014-delete-from-test-where-v1",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0014-delete-from-test-where-v1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DELETE FROM test WHERE v1 = 1;",
+      "querySha256": "662483d966be41daed57a5813e3826dd51ea768d08f6a8b31d779606ff2cd9e5",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
     }
   ]
 }
