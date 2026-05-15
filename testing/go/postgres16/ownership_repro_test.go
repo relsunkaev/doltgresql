@@ -648,13 +648,13 @@ func TestDropOwnedRevokesGrantedPrivilegesRepro(t *testing.T) {
 			Name: "DROP OWNED revokes granted table privileges",
 			SetUpScript: []string{
 				`CREATE USER drop_owned_grantee PASSWORD 'pw';`,
-				`CREATE TABLE drop_owned_grants (id INT PRIMARY KEY);`,
-				`INSERT INTO drop_owned_grants VALUES (1);`,
-				`GRANT SELECT ON drop_owned_grants TO drop_owned_grantee;`,
+				`CREATE TABLE public.drop_owned_grants (id INT PRIMARY KEY);`,
+				`INSERT INTO public.drop_owned_grants VALUES (1);`,
+				`GRANT SELECT ON public.drop_owned_grants TO drop_owned_grantee;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT id FROM drop_owned_grants;`,
+					Query: `SELECT id FROM public.drop_owned_grants;`,
 
 					Username: `drop_owned_grantee`,
 					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testdropownedrevokesgrantedprivilegesrepro-0001-select-id-from-drop_owned_grants", Compare: "sqlstate"},
@@ -663,7 +663,7 @@ func TestDropOwnedRevokesGrantedPrivilegesRepro(t *testing.T) {
 					Query: `DROP OWNED BY drop_owned_grantee;`,
 				},
 				{
-					Query: `SELECT id FROM drop_owned_grants;`,
+					Query: `SELECT id FROM public.drop_owned_grants;`,
 
 					Username: `drop_owned_grantee`,
 					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{

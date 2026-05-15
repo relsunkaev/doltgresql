@@ -871,6 +871,12 @@ func (*DropRole) cclOnlyStatement() {}
 func (*DropRole) hiddenFromShowQueries() {}
 
 // StatementType implements the Statement interface.
+func (*DropOwned) StatementType() StatementType { return Ack }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*DropOwned) StatementTag() string { return "DROP OWNED" }
+
+// StatementType implements the Statement interface.
 func (*ReassignOwned) StatementType() StatementType { return Ack }
 
 // StatementTag returns a short string identifying the type of statement.
@@ -1489,6 +1495,7 @@ func (n *ReleaseSavepoint) String() string          { return AsString(n) }
 func (n *Reindex) String() string                   { return AsString(n) }
 func (n *Relocate) String() string                  { return AsString(n) }
 func (n *RefreshMaterializedView) String() string   { return AsString(n) }
+func (n *DropOwned) String() string                 { return AsString(n) }
 func (n *ReassignOwned) String() string             { return AsString(n) }
 func (n *RenameColumn) String() string              { return AsString(n) }
 func (n *RenameDatabase) String() string            { return AsString(n) }

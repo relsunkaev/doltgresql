@@ -481,6 +481,29 @@ func (node *DropRole) Format(ctx *FmtCtx) {
 	ctx.FormatNode(&node.Names)
 }
 
+var _ Statement = &DropOwned{}
+
+// DropOwned represents a DROP OWNED statement.
+type DropOwned struct {
+	Roles        []string
+	DropBehavior DropBehavior
+}
+
+// Format implements the NodeFormatter interface.
+func (node *DropOwned) Format(ctx *FmtCtx) {
+	ctx.WriteString("DROP OWNED BY ")
+	for i, role := range node.Roles {
+		if i > 0 {
+			ctx.WriteString(", ")
+		}
+		ctx.WriteString(role)
+	}
+	if node.DropBehavior != DropDefault {
+		ctx.WriteByte(' ')
+		ctx.WriteString(node.DropBehavior.String())
+	}
+}
+
 var _ Statement = &ReassignOwned{}
 
 // ReassignOwned represents a REASSIGN OWNED statement.

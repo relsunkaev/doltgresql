@@ -549,11 +549,16 @@
       "suggestedId": "ownership-repro-test-testdropownedrevokesgrantedprivilegesrepro-0001-select-id-from-drop_owned_grants",
       "compare": "sqlstate",
       "expectedKind": "rows",
-      "sqlstate": "42P01",
-      "errorSeverity": "ERROR",
       "username": "drop_owned_grantee",
-      "query": "SELECT id FROM drop_owned_grants;",
-      "querySha256": "ee38b844e9d270320a4406ab1af42a639e54a7335b0ae84d60b812d2f6ac0212",
+      "query": "SELECT id FROM public.drop_owned_grants;",
+      "querySha256": "9f3c87e7a188285968e7841fb8fae5835158c1ca8b7527daed767006dd9f1fbb",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -567,11 +572,11 @@
       "suggestedId": "ownership-repro-test-testdropownedrevokesgrantedprivilegesrepro-0002-select-id-from-drop_owned_grants",
       "compare": "sqlstate",
       "expectedKind": "error",
-      "sqlstate": "42P01",
+      "sqlstate": "42501",
       "errorSeverity": "ERROR",
       "username": "drop_owned_grantee",
-      "query": "SELECT id FROM drop_owned_grants;",
-      "querySha256": "ee38b844e9d270320a4406ab1af42a639e54a7335b0ae84d60b812d2f6ac0212",
+      "query": "SELECT id FROM public.drop_owned_grants;",
+      "querySha256": "9f3c87e7a188285968e7841fb8fae5835158c1ca8b7527daed767006dd9f1fbb",
       "needsCleanup": false,
       "cleanupProvided": false
     },

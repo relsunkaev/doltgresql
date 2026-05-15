@@ -1177,6 +1177,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.Statement> restore_stmt
 %type <tree.StringOrPlaceholderOptList> string_or_placeholder_opt_list
 %type <[]tree.StringOrPlaceholderOptList> list_of_string_or_placeholder_opt_list
+%type <tree.Statement> drop_owned_stmt
 %type <tree.Statement> reassign_owned_stmt
 %type <tree.Statement> revoke_stmt
 %type <tree.Statement> refresh_stmt
@@ -1701,6 +1702,7 @@ non_transaction_stmt:
 | listen_stmt
 | notify_stmt
 | prepare_stmt      // EXTEND WITH HELP: PREPARE
+| drop_owned_stmt   // EXTEND WITH HELP: DROP OWNED
 | reassign_owned_stmt // EXTEND WITH HELP: REASSIGN OWNED
 | revoke_stmt       // EXTEND WITH HELP: REVOKE
 | savepoint_stmt    // EXTEND WITH HELP: SAVEPOINT
@@ -6841,6 +6843,19 @@ opt_granted_by:
   {
     $$ = $3
   }
+
+// %Help: DROP OWNED - remove database objects and privileges owned by a role
+// %Category: Priv
+// %Text:
+// DROP OWNED BY <role> [, ...] [ CASCADE | RESTRICT ]
+//
+// %SeeAlso: REASSIGN OWNED
+drop_owned_stmt:
+  DROP OWNED BY role_spec_list opt_drop_behavior
+  {
+    $$.val = &tree.DropOwned{Roles: $4.strs(), DropBehavior: $5.dropBehavior()}
+  }
+| DROP OWNED error // SHOW HELP: DROP OWNED
 
 // %Help: REASSIGN OWNED - change ownership of database objects owned by a role
 // %Category: Priv
