@@ -26,24 +26,40 @@ var _ sql.PrivilegeSet = (*PrivilegeSetLayer)(nil)
 
 // NewPrivilegeSetLayer creates a new PrivilegeSetLayer for the user in the given context's session.
 func NewPrivilegeSetLayer(ctx *sql.Context) *PrivilegeSetLayer {
+	var role RoleID
+	LockRead(func() {
+		role = GetRole(ctx.Client().User).id
+	})
 	return &PrivilegeSetLayer{
-		Role: GetRole(ctx.Client().User).id,
+		Role: role,
 	}
+}
+
+func roleIsSuperUser(role RoleID) bool {
+	var isSuperUser bool
+	LockRead(func() {
+		isSuperUser = IsSuperUser(role)
+	})
+	return isSuperUser
+}
+
+func (privSet *PrivilegeSetLayer) isSuperUser() bool {
+	return roleIsSuperUser(privSet.Role)
 }
 
 // Has implements the interface sql.PrivilegeSet.
 func (privSet *PrivilegeSetLayer) Has(privileges ...sql.PrivilegeType) bool {
-	return IsSuperUser(privSet.Role)
+	return privSet.isSuperUser()
 }
 
 // HasPrivileges implements the interface sql.PrivilegeSet.
 func (privSet *PrivilegeSetLayer) HasPrivileges() bool {
-	return IsSuperUser(privSet.Role)
+	return privSet.isSuperUser()
 }
 
 // Count implements the interface sql.PrivilegeSet.
 func (privSet *PrivilegeSetLayer) Count() int {
-	if IsSuperUser(privSet.Role) {
+	if privSet.isSuperUser() {
 		return 31 // The current number in GMS
 	}
 	return 0
@@ -72,7 +88,7 @@ func (privSet *PrivilegeSetLayer) Equals(otherPs sql.PrivilegeSet) bool {
 
 // ToSlice implements the interface sql.PrivilegeSet.
 func (privSet *PrivilegeSetLayer) ToSlice() []sql.PrivilegeType {
-	if IsSuperUser(privSet.Role) {
+	if privSet.isSuperUser() {
 		return []sql.PrivilegeType{sql.PrivilegeType_Select,
 			sql.PrivilegeType_Insert,
 			sql.PrivilegeType_Update,
@@ -116,6 +132,10 @@ type PrivilegeSetLayerDatabase struct {
 
 var _ sql.PrivilegeSetDatabase = (*PrivilegeSetLayerDatabase)(nil)
 
+func (privSet *PrivilegeSetLayerDatabase) isSuperUser() bool {
+	return roleIsSuperUser(privSet.Role)
+}
+
 // Name implements the interface sql.PrivilegeSetDatabase.
 func (privSet *PrivilegeSetLayerDatabase) Name() string {
 	return privSet.Db
@@ -123,17 +143,17 @@ func (privSet *PrivilegeSetLayerDatabase) Name() string {
 
 // Has implements the interface sql.PrivilegeSetDatabase.
 func (privSet *PrivilegeSetLayerDatabase) Has(privileges ...sql.PrivilegeType) bool {
-	return IsSuperUser(privSet.Role)
+	return privSet.isSuperUser()
 }
 
 // HasPrivileges implements the interface sql.PrivilegeSetDatabase.
 func (privSet *PrivilegeSetLayerDatabase) HasPrivileges() bool {
-	return IsSuperUser(privSet.Role)
+	return privSet.isSuperUser()
 }
 
 // Count implements the interface sql.PrivilegeSetDatabase.
 func (privSet *PrivilegeSetLayerDatabase) Count() int {
-	if IsSuperUser(privSet.Role) {
+	if privSet.isSuperUser() {
 		return 31 // The current number in GMS
 	}
 	return 0
@@ -169,7 +189,7 @@ func (privSet *PrivilegeSetLayerDatabase) Equals(otherPs sql.PrivilegeSetDatabas
 
 // ToSlice implements the interface sql.PrivilegeSetDatabase.
 func (privSet *PrivilegeSetLayerDatabase) ToSlice() []sql.PrivilegeType {
-	if IsSuperUser(privSet.Role) {
+	if privSet.isSuperUser() {
 		return []sql.PrivilegeType{sql.PrivilegeType_Select,
 			sql.PrivilegeType_Insert,
 			sql.PrivilegeType_Update,
