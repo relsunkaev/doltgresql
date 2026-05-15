@@ -1,0 +1,1638 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map expressions_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/expressions_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0001",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 1,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0001-select-*-from-test-where",
+      "suggestedId": "expressions-test-testin-0001-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE id IN (2, 3, 4, 5);",
+      "querySha256": "96e499f9dcb7c96f8d630373d69d6e1e4425e9c718c6a0ff7d667795949c77a5",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0002",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 2,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0002-select-*-from-test-where",
+      "suggestedId": "expressions-test-testin-0002-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE id IN (4, 3, 2, 1, 0);",
+      "querySha256": "a81267fa5997724c5c578504507015af8a677742023e21239d578490880f2e6a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0003",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 3,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0003-select-*-from-test2-where",
+      "suggestedId": "expressions-test-testin-0003-select-*-from-test2-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2 WHERE test_id IN (SELECT * FROM test WHERE id = 2);",
+      "querySha256": "2535617682065f50cd324c7f1689317001d821b5a06739542d86a3c6ec82d979",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "baz"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0004",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 4,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0004-select-*-from-test2-where",
+      "suggestedId": "expressions-test-testin-0004-select-*-from-test2-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2 WHERE test_id IN(SELECT * FROM test WHERE id > 0);",
+      "querySha256": "987d0fd64afad740dd50681ca0cf3eabea23dcf34bd10229c0c3975df4e3df50",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "foo"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "baz"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0005",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 5,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0005-select-4-in-null-1",
+      "suggestedId": "expressions-test-testin-0005-select-4-in-null-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 4 IN (null, 1, 2, 3);",
+      "querySha256": "2d4e462984fd767cd67db5e76f02e4958b533e11ddcf5d9cb81c4b6ba37eaf9f",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0006",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 6,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0006-select-4-in-null-1",
+      "suggestedId": "expressions-test-testin-0006-select-4-in-null-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 4 IN (null, 1, 2, 3, 4);",
+      "querySha256": "3737b3ade4f85a369236ed23138c68b7c7e255dfdaf39174ba61e1339c46bc44",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0007",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 7,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0007-select-null-in-null-1",
+      "suggestedId": "expressions-test-testin-0007-select-null-in-null-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT NULL IN (null, 1, 2, 3);",
+      "querySha256": "359d0311c9257e1a2d7ade7700d8d1effc9f9b7dbfb52d219e78812623a5cac1",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0008",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 8,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0008-select-4-in-1-2",
+      "suggestedId": "expressions-test-testin-0008-select-4-in-1-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 4 IN (1, 2, 3, null::int4);",
+      "querySha256": "7294c4ca9e37876d6d4fb231a21970bd3ffe087b5280e46866881fe8dc3517eb",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0009",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 9,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0009-select-4-in-1-2",
+      "suggestedId": "expressions-test-testin-0009-select-4-in-1-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 4 IN (1, 2, 3);",
+      "querySha256": "9cf1f4dbed479a3632e8c1af9ae865a06df90030182bd6480460115bfee05e33",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0010",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 10,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0010-select-4-in-1-2",
+      "suggestedId": "expressions-test-testin-0010-select-4-in-1-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 4 IN (1, 2, 3, 4);",
+      "querySha256": "b71ee141503ec023a9f08547a7130d5d4c08daa5201ada720588caf75fbba5c1",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0011",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 11,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0011-select-concat-a-b-in",
+      "suggestedId": "expressions-test-testin-0011-select-concat-a-b-in",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT concat('a', 'b') in ('a', 'b', 'ab');",
+      "querySha256": "368e80d390a83899d87b9a010181ed94b954c7897820b47644506e07c537e7ae",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0012",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 12,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0012-select-concat-a-b-in",
+      "suggestedId": "expressions-test-testin-0012-select-concat-a-b-in",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT concat('a', 'b') in ('a', 'b');",
+      "querySha256": "a01b3963513a5009ef9380fdb43d2922b3490719f75e41513c5b33c8ec3414f3",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0013",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 13,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0013-select-concat-a-b-in",
+      "suggestedId": "expressions-test-testin-0013-select-concat-a-b-in",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT concat('a', 'b') in ('a', NULL, 'b');",
+      "querySha256": "de47a56ec12d11048afddd2c52776086c18e4f0632dbdd710e7eea9762f69c1c",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0014",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 14,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0014-select-concat-a-null-in",
+      "suggestedId": "expressions-test-testin-0014-select-concat-a-null-in",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT concat('a', NULL) in ('a', 'b', 'ab');",
+      "querySha256": "c08935d1348879a5e4a6a0cf4ed4431d8a0eb3981a815db60b864b4741a21976",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0015",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 15,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0015-select-concat-a-null-in",
+      "suggestedId": "expressions-test-testin-0015-select-concat-a-null-in",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT concat('a', NULL) in ('a', NULL);",
+      "querySha256": "3d78426440bd3126812981a1011f90b6f35402adb35ae946ebb7cfd5fb43b274",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0016",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 16,
+      "scriptName": "NOT IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0016-select-*-from-test-where",
+      "suggestedId": "expressions-test-testin-0016-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE id NOT IN (2, 3, 4, 5);",
+      "querySha256": "e1b292dfb0755119da6a805dd8aff2f311e401b11e88d269eb9be4c25cc03ed1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0017",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 17,
+      "scriptName": "NOT IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0017-select-*-from-test2-where",
+      "suggestedId": "expressions-test-testin-0017-select-*-from-test2-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2 WHERE test_id NOT IN (SELECT * FROM test WHERE id = 2);",
+      "querySha256": "2d240d9d4b2ee01b8972ca42143a5803750805e1d4390ff78d39344432ab7c2d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "foo"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "bar"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0018",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 18,
+      "scriptName": "NOT IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0018-select-*-from-test2-where",
+      "suggestedId": "expressions-test-testin-0018-select-*-from-test2-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2 WHERE test_id NOT IN (SELECT * FROM test WHERE id > 0);",
+      "querySha256": "ee573d22ef510638073487a22f93934e72f9bc6f71a07fd43b8a325a262b3374",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "bar"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0019",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 19,
+      "scriptName": "NOT IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0019-select-4-not-in-null",
+      "suggestedId": "expressions-test-testin-0019-select-4-not-in-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 4 NOT IN (null, 1, 2, 3);",
+      "querySha256": "733b163bb539305db25d9cc7de90070cd4bb4b5f9697f6610665cbc4944e3267",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0020",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 20,
+      "scriptName": "NOT IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0020-select-null-not-in-null",
+      "suggestedId": "expressions-test-testin-0020-select-null-not-in-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT NULL NOT IN (null, 1, 2, 3);",
+      "querySha256": "aad4c1c4cec19fe9f30515e29af1477c57f08452cdc60c80c6dec0e83f0451b7",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0021",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 21,
+      "scriptName": "NOT IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0021-select-4-not-in-1",
+      "suggestedId": "expressions-test-testin-0021-select-4-not-in-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 4 NOT IN (1, 2, 3);",
+      "querySha256": "495f71865e88a01e5b4246e87621ef85dced750db9d069afc2d874bd607bf3e9",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0022",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 22,
+      "scriptName": "NOT IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0022-select-4-not-in-1",
+      "suggestedId": "expressions-test-testin-0022-select-4-not-in-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 4 NOT IN (1, 2, 3, 4);",
+      "querySha256": "26ee84b811dfda8ed4bec7eeaea956ada02fe680f415cabc25a307da5f0a4fff",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestIn#0023",
+      "source": "testing/go/postgres16/expressions_test.go:TestIn",
+      "ordinal": 23,
+      "scriptName": "NOT IN",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testin-0023-select-concat-a-b-not",
+      "suggestedId": "expressions-test-testin-0023-select-concat-a-b-not",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT concat('a', 'b') NOT in ('a', 'b');",
+      "querySha256": "ba43434bb18a08e2f3badec31added4bd174a741a8e90aa936f3bf4374841ca0",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0001",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 1,
+      "scriptName": "AND",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0001-select-1-=-1-and",
+      "suggestedId": "expressions-test-testbinarylogic-0001-select-1-=-1-and",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 1 = 1 AND 2 = 2;",
+      "querySha256": "cecfa75e9be781d47ce95d8dc43e2a8418913de26f88ac6c3f034f128f548db8",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0002",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 2,
+      "scriptName": "AND",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0002-select-1-=-1-and",
+      "suggestedId": "expressions-test-testbinarylogic-0002-select-1-=-1-and",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (1 = 1 AND 2 = 2) AND (false);",
+      "querySha256": "536547eacebeb45e87859e5f28ca4e9c08b043e286f622d61509bbff662f5f8f",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0003",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 3,
+      "scriptName": "AND",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0003-select-1->-1-and",
+      "suggestedId": "expressions-test-testbinarylogic-0003-select-1->-1-and",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (1 > 1 AND 2 = 2);",
+      "querySha256": "296ef7564ef524bedc83f5f89137d2728dc3401f389f36da74e21417a01cc84d",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0004",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 4,
+      "scriptName": "AND",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0004-select-1-=-1-and",
+      "suggestedId": "expressions-test-testbinarylogic-0004-select-1-=-1-and",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (1 = 1 AND 2 = 2) AND (false);",
+      "querySha256": "536547eacebeb45e87859e5f28ca4e9c08b043e286f622d61509bbff662f5f8f",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0005",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 5,
+      "scriptName": "AND",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0005-select-1-=-1-and",
+      "suggestedId": "expressions-test-testbinarylogic-0005-select-1-=-1-and",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (1 = 1 AND 2 = 2) AND (true);",
+      "querySha256": "3ae84e22f568190576d69a5e22281dbd39ba562195e384150a0e7f3a6545ecc2",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0006",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 6,
+      "scriptName": "OR",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0006-select-1-=-1-or",
+      "suggestedId": "expressions-test-testbinarylogic-0006-select-1-=-1-or",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 1 = 1 OR 2 = 2;",
+      "querySha256": "8391b962684932ce20664e1d10b5cf53c4f2e77f2a903ffc2718ad3d350e7555",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0007",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 7,
+      "scriptName": "OR",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0007-select-1-=-1-and",
+      "suggestedId": "expressions-test-testbinarylogic-0007-select-1-=-1-and",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (1 = 1 AND 2 = 2) OR (false);",
+      "querySha256": "968ec1ee2d17f68e18086cd6a95f0c0fae9896fe70d88a9640fcf92ae4a5e3d9",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0008",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 8,
+      "scriptName": "OR",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0008-select-1->-1-or",
+      "suggestedId": "expressions-test-testbinarylogic-0008-select-1->-1-or",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (1 > 1 OR 2 = 2);",
+      "querySha256": "82e5682dd00796e58064dae66494c0819e41620999c9cda346bf1f5bce46312d",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0009",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 9,
+      "scriptName": "OR",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0009-select-1->-1-or",
+      "suggestedId": "expressions-test-testbinarylogic-0009-select-1->-1-or",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (1 > 1 OR 2 > 2);",
+      "querySha256": "99af3b43fe0744800a36aabcf3570dc5384599a51060764cfee5eb24ec74570c",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0010",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 10,
+      "scriptName": "OR",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0010-select-1->-1-or",
+      "suggestedId": "expressions-test-testbinarylogic-0010-select-1->-1-or",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (1 > 1 OR 2 > 2) OR (true);",
+      "querySha256": "b550227568e8dd45ee8cc26a3c20c34d4190e171056c49824c46a368470800da",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0011",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 11,
+      "scriptName": "OR",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0011-select-1-=-1-and",
+      "suggestedId": "expressions-test-testbinarylogic-0011-select-1-=-1-and",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (1 = 1 AND 2 = 2) OR (true);",
+      "querySha256": "8491a284bf0022ffd87b031d0fad2aa1fac8668d4dbf12a2a9f8baaa7c588fda",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0012",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 12,
+      "scriptName": "IS DISTINCT FROM",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0012-select-1-is-distinct-from",
+      "suggestedId": "expressions-test-testbinarylogic-0012-select-1-is-distinct-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 1 IS DISTINCT FROM 2;",
+      "querySha256": "ec83b1b66c1528498413244f83fb894861e1c7d784b5fb56f03cf42555a0ddb5",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0013",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 13,
+      "scriptName": "IS DISTINCT FROM",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0013-select-2-is-distinct-from",
+      "suggestedId": "expressions-test-testbinarylogic-0013-select-2-is-distinct-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 2 IS DISTINCT FROM 2;",
+      "querySha256": "3ad615e3d88263c6d2c2be8a8cb771ed40db577c842de3412ac7726d1a35329b",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0014",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 14,
+      "scriptName": "IS DISTINCT FROM",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0014-select-null-is-distinct-from",
+      "suggestedId": "expressions-test-testbinarylogic-0014-select-null-is-distinct-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT null IS DISTINCT FROM 2;",
+      "querySha256": "61d337135887c7c2d5dfa0a93095fcce523c64b467d8db4c9a3e7ef0e63a3353",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0015",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 15,
+      "scriptName": "IS DISTINCT FROM",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0015-select-null-is-distinct-from",
+      "suggestedId": "expressions-test-testbinarylogic-0015-select-null-is-distinct-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT null IS DISTINCT FROM null;",
+      "querySha256": "5e8146e907110984d1e7bb3edbacff12078bb6240958a611c3e7121a28543d38",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0016",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 16,
+      "scriptName": "IS DISTINCT FROM",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0016-select-2-is-distinct-from",
+      "suggestedId": "expressions-test-testbinarylogic-0016-select-2-is-distinct-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 2 IS DISTINCT FROM null;",
+      "querySha256": "c930a1000a985b7f29b535ad5682dc2bcb0f8eeda71efff8916a3d591aaa2dc1",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0017",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 17,
+      "scriptName": "IS DISTINCT FROM",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0017-select-2-is-distinct-from",
+      "suggestedId": "expressions-test-testbinarylogic-0017-select-2-is-distinct-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 2 IS DISTINCT FROM 2.5;",
+      "querySha256": "3295504d86a591771bbfb16395b72af1004476628d44d9f0471d034c9c31a43f",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0018",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 18,
+      "scriptName": "IS DISTINCT FROM",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0018-select-2-is-distinct-from",
+      "suggestedId": "expressions-test-testbinarylogic-0018-select-2-is-distinct-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 2 IS DISTINCT FROM '2';",
+      "querySha256": "33c5b28f2c6f0de485501c09c24e9bb112c534e2d855fd9c09c942dc98748c74",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0019",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 19,
+      "scriptName": "IS DISTINCT FROM",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0019-select-2-is-distinct-from",
+      "suggestedId": "expressions-test-testbinarylogic-0019-select-2-is-distinct-from",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
+      "query": "SELECT 2 IS DISTINCT FROM 'a';",
+      "querySha256": "2d71d660525b921196ba0c70b93b76b914b8cf685c2c2f1edb130e06a333b9be",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0020",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 20,
+      "scriptName": "IS NOT DISTINCT FROM",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0020-select-1-is-not-distinct",
+      "suggestedId": "expressions-test-testbinarylogic-0020-select-1-is-not-distinct",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 1 IS NOT DISTINCT FROM 2;",
+      "querySha256": "de8a3dc9e8f61c533c454337060caafc9544aa69cbe570263663ebe9f8c91787",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0021",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 21,
+      "scriptName": "IS NOT DISTINCT FROM",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0021-select-2-is-not-distinct",
+      "suggestedId": "expressions-test-testbinarylogic-0021-select-2-is-not-distinct",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 2 IS NOT DISTINCT FROM 2;",
+      "querySha256": "c7a2b82de2fa7ec4b7e99b1c5e899e81f13be061109cf90566f768dbb4ab7c79",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0022",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 22,
+      "scriptName": "IS NOT DISTINCT FROM",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0022-select-null-is-not-distinct",
+      "suggestedId": "expressions-test-testbinarylogic-0022-select-null-is-not-distinct",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT null IS NOT DISTINCT FROM 2;",
+      "querySha256": "67225e70ab1fd77fcc33cd0159e06cffeef5961809f47508d94079b944062189",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0023",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 23,
+      "scriptName": "IS NOT DISTINCT FROM",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0023-select-null-is-not-distinct",
+      "suggestedId": "expressions-test-testbinarylogic-0023-select-null-is-not-distinct",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT null IS NOT DISTINCT FROM null;",
+      "querySha256": "8b01c5cd8f2ed3860ba29530c30bb2c5c802ce0ee353705f67ff246792cae4cd",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0024",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 24,
+      "scriptName": "IS NOT DISTINCT FROM",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0024-select-2-is-not-distinct",
+      "suggestedId": "expressions-test-testbinarylogic-0024-select-2-is-not-distinct",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 2 IS NOT DISTINCT FROM null;",
+      "querySha256": "8110139988f2cde7b7fcc911afef72e127c1711916c7042991ebee22c383396a",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0025",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 25,
+      "scriptName": "IS NOT DISTINCT FROM",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0025-select-2-is-not-distinct",
+      "suggestedId": "expressions-test-testbinarylogic-0025-select-2-is-not-distinct",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 2 IS NOT DISTINCT FROM 2.5;",
+      "querySha256": "c17c84f36f7c84bc6b082b5f685e5d59d1673490b5e169e6f6744fe7dc69c375",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0026",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 26,
+      "scriptName": "IS NOT DISTINCT FROM",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0026-select-2-is-not-distinct",
+      "suggestedId": "expressions-test-testbinarylogic-0026-select-2-is-not-distinct",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 2 IS NOT DISTINCT FROM '2';",
+      "querySha256": "20e7f4214d34814b3f2c745bdab517555444ff3f50dffff086990c6d1cd100af",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestBinaryLogic#0027",
+      "source": "testing/go/postgres16/expressions_test.go:TestBinaryLogic",
+      "ordinal": 27,
+      "scriptName": "IS NOT DISTINCT FROM",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testbinarylogic-0027-select-2-is-not-distinct",
+      "suggestedId": "expressions-test-testbinarylogic-0027-select-2-is-not-distinct",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
+      "query": "SELECT 2 IS NOT DISTINCT FROM 'a';",
+      "querySha256": "b914741caffd2422c236132819243c07e0fb474a1cdc614bf6227fa9e2f1af98",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestSubscript#0001",
+      "source": "testing/go/postgres16/expressions_test.go:TestSubscript",
+      "ordinal": 1,
+      "scriptName": "array literal",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0001-select-array[1-2-3][1]",
+      "suggestedId": "expressions-test-testsubscript-0001-select-array[1-2-3][1]",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT ARRAY[1, 2, 3][1];",
+      "querySha256": "10e95f9ded4830282812ed5eac3eb2c42df92f4726253c544e8539fe9f63f4e3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestSubscript#0002",
+      "source": "testing/go/postgres16/expressions_test.go:TestSubscript",
+      "ordinal": 2,
+      "scriptName": "array literal",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0002-select-array[1-2-3]-[3]",
+      "suggestedId": "expressions-test-testsubscript-0002-select-array[1-2-3]-[3]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (ARRAY[1, 2, 3])[3];",
+      "querySha256": "35445837d23a520b29a0a4782fe0c8c2be4c8321322acdc3a7c01697d8175166",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestSubscript#0003",
+      "source": "testing/go/postgres16/expressions_test.go:TestSubscript",
+      "ordinal": 3,
+      "scriptName": "array literal",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0003-select-array[1-2-3]-[1+1]",
+      "suggestedId": "expressions-test-testsubscript-0003-select-array[1-2-3]-[1+1]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (ARRAY[1, 2, 3])[1+1];",
+      "querySha256": "43c48ba97e8cc68da1473c5298ec34c7248c973b0bd9c10ed44eb88c286883f5",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestSubscript#0004",
+      "source": "testing/go/postgres16/expressions_test.go:TestSubscript",
+      "ordinal": 4,
+      "scriptName": "array literal",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0004-select-array[1-2-3][0]",
+      "suggestedId": "expressions-test-testsubscript-0004-select-array[1-2-3][0]",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT ARRAY[1, 2, 3][0];",
+      "querySha256": "39964d683d9bb8a4861fdc686e74a8bb0d65caef04666f0761585d86cdca18db",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestSubscript#0005",
+      "source": "testing/go/postgres16/expressions_test.go:TestSubscript",
+      "ordinal": 5,
+      "scriptName": "array literal",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0005-select-array[1-2-3][4]",
+      "suggestedId": "expressions-test-testsubscript-0005-select-array[1-2-3][4]",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT ARRAY[1, 2, 3][4];",
+      "querySha256": "25bf7905d0a2e65803ac565c5c0f78839ef5b4fd26cee66881ba6aa26299cd6c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestSubscript#0006",
+      "source": "testing/go/postgres16/expressions_test.go:TestSubscript",
+      "ordinal": 6,
+      "scriptName": "array literal",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0006-select-array[1-2-3][null]",
+      "suggestedId": "expressions-test-testsubscript-0006-select-array[1-2-3][null]",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT ARRAY[1, 2, 3][null];",
+      "querySha256": "82c3134bec7019e5a8e18ec12931e026a45c37d6e3418a932bf9f6fb329f389a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestSubscript#0007",
+      "source": "testing/go/postgres16/expressions_test.go:TestSubscript",
+      "ordinal": 7,
+      "scriptName": "array literal",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0007-select-array[-a-b-c",
+      "suggestedId": "expressions-test-testsubscript-0007-select-array[-a-b-c",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT ARRAY['a', 'b', 'c'][2];",
+      "querySha256": "a4053f535ae3df4fed50cc672c139039ab9000d12e1c3f755e99a52cb57ca856",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestSubscript#0008",
+      "source": "testing/go/postgres16/expressions_test.go:TestSubscript",
+      "ordinal": 8,
+      "scriptName": "array literal",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0008-select-array_to_string-array[1-2-3",
+      "suggestedId": "expressions-test-testsubscript-0008-select-array_to_string-array[1-2-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string((ARRAY[1, 2, 3, 4])[2:3], ','), array_to_string((ARRAY[1, 2, 3, 4])[:2], ','), array_to_string((ARRAY[1, 2, 3, 4])[3:], ',');",
+      "querySha256": "d100be9ba3c50c4e086e2f5f038ae2b08fd48e8bb3b9a34ad933c03dc2d4f8ea",
+      "expectedRows": [
+        [
+          {
+            "value": "2,3"
+          },
+          {
+            "value": "1,2"
+          },
+          {
+            "value": "3,4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestSubscript#0009",
+      "source": "testing/go/postgres16/expressions_test.go:TestSubscript",
+      "ordinal": 9,
+      "scriptName": "array literal",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0009-select-array_to_string-array[1-2-3]",
+      "suggestedId": "expressions-test-testsubscript-0009-select-array_to_string-array[1-2-3]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string((ARRAY[1, 2, 3])[3:2], ','), array_to_string((ARRAY[1, 2, 3])[4:5], ',');",
+      "querySha256": "de5ae4948f77d396216520b30c8dd8f6fade0194edc161d5254b0ba8ca4f6c55",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          },
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestSubscript#0010",
+      "source": "testing/go/postgres16/expressions_test.go:TestSubscript",
+      "ordinal": 10,
+      "scriptName": "array literal",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0010-select-array[1-2-3][-abc",
+      "suggestedId": "expressions-test-testsubscript-0010-select-array[1-2-3][-abc",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT ARRAY[1, 2, 3]['abc'];",
+      "querySha256": "782f088d6952a023f4fe8c28f2d129e028e2f39e9047d17acefe80c922bfaef6",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestSubscript#0011",
+      "source": "testing/go/postgres16/expressions_test.go:TestSubscript",
+      "ordinal": 11,
+      "scriptName": "array column",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0011-select-arr[2]-from-test-order",
+      "suggestedId": "expressions-test-testsubscript-0011-select-arr[2]-from-test-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT arr[2] FROM test order by 1;",
+      "querySha256": "e253b20b1df14abca36d9ca0117b907b6eed69be6dda34d43ffd097ad4954257",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestSubscript#0012",
+      "source": "testing/go/postgres16/expressions_test.go:TestSubscript",
+      "ordinal": 12,
+      "scriptName": "array subquery",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0012-select-array-select-id-from",
+      "suggestedId": "expressions-test-testsubscript-0012-select-array-select-id-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (array(select id from test order by 1))[2]",
+      "querySha256": "1d60f029fa0c06cb2e677646324f3f95a555119f84c2b939bb507373cee74f37",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestSubscript#0013",
+      "source": "testing/go/postgres16/expressions_test.go:TestSubscript",
+      "ordinal": 13,
+      "scriptName": "name raw array subscript",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0013-select-abc-::name-[0]",
+      "suggestedId": "expressions-test-testsubscript-0013-select-abc-::name-[0]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ('_abc'::name)[0];",
+      "querySha256": "e251751f48bc6c9a666e317fd75659e5097ff26c6f5f655f04c709b6368f1b31",
+      "expectedRows": [
+        [
+          {
+            "value": "_"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestSubscript#0014",
+      "source": "testing/go/postgres16/expressions_test.go:TestSubscript",
+      "ordinal": 14,
+      "scriptName": "name raw array subscript",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0014-select-abc-::name-[1]",
+      "suggestedId": "expressions-test-testsubscript-0014-select-abc-::name-[1]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ('_abc'::name)[1];",
+      "querySha256": "c6d0b123a8055dbb49b38524ae58a1737fc484b7faa129926bd5b33e9a562e6d",
+      "expectedRows": [
+        [
+          {
+            "value": "a"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestSubscript#0015",
+      "source": "testing/go/postgres16/expressions_test.go:TestSubscript",
+      "ordinal": 15,
+      "scriptName": "name raw array subscript",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0015-select-abc-::name-[4]",
+      "suggestedId": "expressions-test-testsubscript-0015-select-abc-::name-[4]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ('_abc'::name)[4];",
+      "querySha256": "03763112c1abe63db74972f14b5cd72ba019b47eebcf71f0c1957cee8df8e86a",
+      "expectedRows": [
+        [
+          {
+            "value": "\u0000"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestSubscript#0016",
+      "source": "testing/go/postgres16/expressions_test.go:TestSubscript",
+      "ordinal": 16,
+      "scriptName": "name raw array subscript",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0016-select-abc-::name-[0]-=",
+      "suggestedId": "expressions-test-testsubscript-0016-select-abc-::name-[0]-=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ('_abc'::name)[0] = '_'::\"char\";",
+      "querySha256": "517bc6a9dfc844f10ee4aa045aa9d94965a77e7f1c1c0f5b2d980d4a91790d3b",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestSubscript#0017",
+      "source": "testing/go/postgres16/expressions_test.go:TestSubscript",
+      "ordinal": 17,
+      "scriptName": "vector array subscript lower bound",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0017-select-1-2-3-::int2vector",
+      "suggestedId": "expressions-test-testsubscript-0017-select-1-2-3-::int2vector",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ('1 2 3'::int2vector)[0]::text, ('1 2 3'::int2vector)[1]::text, ('11 12 13'::oidvector)[0]::text;",
+      "querySha256": "017dad8c2c1053957f1bfd3a59c289922e4b2ae912b668b94c5a7eda4ec495c0",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestSubscript#0018",
+      "source": "testing/go/postgres16/expressions_test.go:TestSubscript",
+      "ordinal": 18,
+      "scriptName": "vector array subscript lower bound",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0018-select-1-2-3-::int2vector",
+      "suggestedId": "expressions-test-testsubscript-0018-select-1-2-3-::int2vector",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (('1 2 3'::int2vector)::int2[])[0]::text, array_to_string((('1 2 3'::int2vector)::int2[])[:1], ',');",
+      "querySha256": "1837a8d617638cba0051fb591e95c962c0729671b69c7315a5c98156914ea5fe",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1,2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestAnyAllComparisons#0001",
+      "source": "testing/go/postgres16/expressions_test.go:TestAnyAllComparisons",
+      "ordinal": 1,
+      "scriptName": "ANY and ALL array comparison semantics",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testanyallcomparisons-0001-select-1-=-any-array[]::int[]",
+      "suggestedId": "expressions-test-testanyallcomparisons-0001-select-1-=-any-array[]::int[]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 1 = ANY(ARRAY[]::int[]), 1 = ANY(ARRAY[NULL, 1]::int[]), 2 = ANY(ARRAY[NULL, 1]::int[]) IS NULL;",
+      "querySha256": "68df5a986f5543b6361d0b34ff790f0ce0809e13b3ad2551ca2009742e1a096e",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestAnyAllComparisons#0002",
+      "source": "testing/go/postgres16/expressions_test.go:TestAnyAllComparisons",
+      "ordinal": 2,
+      "scriptName": "ANY and ALL array comparison semantics",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testanyallcomparisons-0002-select-false-=-all-array[false",
+      "suggestedId": "expressions-test-testanyallcomparisons-0002-select-false-=-all-array[false",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT false = ALL(ARRAY[false, false]), false = ALL(ARRAY[false, true]), false = ALL(ARRAY[]::bool[]), false = ALL(ARRAY[false, NULL]::bool[]) IS NULL;",
+      "querySha256": "4101ad672912f9c9be6ed2d5fda85f902c2f0d3758d250a2d354da62c21bd08f",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expressions_test.go:TestAnyAllComparisons#0003",
+      "source": "testing/go/postgres16/expressions_test.go:TestAnyAllComparisons",
+      "ordinal": 3,
+      "scriptName": "ANY and ALL array comparison semantics",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testanyallcomparisons-0003-with-indexed-generated-as-values",
+      "suggestedId": "expressions-test-testanyallcomparisons-0003-with-indexed-generated-as-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH indexed(generated) AS (VALUES (ARRAY[false, false]::bool[]))\nSELECT false = ALL(indexed.generated) FROM indexed;",
+      "querySha256": "e2353b8903caff65938a86aecb1b5e620e076adf6820b77708af579a519e82c7",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

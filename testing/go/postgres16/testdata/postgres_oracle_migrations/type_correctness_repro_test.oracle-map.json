@@ -1,0 +1,2933 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map type_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/type_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestUnboundedVarcharPrimaryKeyPreservesRowsGuard#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestUnboundedVarcharPrimaryKeyPreservesRowsGuard",
+      "ordinal": 1,
+      "scriptName": "unbounded varchar primary key preserves rows",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testunboundedvarcharprimarykeypreservesrowsguard-0001-select-id-code-from-unbounded_varchar_pk_items",
+      "suggestedId": "type-correctness-repro-test-testunboundedvarcharprimarykeypreservesrowsguard-0001-select-id-code-from-unbounded_varchar_pk_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code\n\t\t\t\t\t\tFROM unbounded_varchar_pk_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "7319b38d627717729002687102628338c9c2af80cb8cc4f7220e67b88a767ef0",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "abcdefghij"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "klmnopqrst"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestByteaPrimaryKeySupportsLookupGuard#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestByteaPrimaryKeySupportsLookupGuard",
+      "ordinal": 1,
+      "scriptName": "bytea primary key supports equality lookup",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testbyteaprimarykeysupportslookupguard-0001-select-id-payload-from-bytea_pk_items",
+      "suggestedId": "type-correctness-repro-test-testbyteaprimarykeysupportslookupguard-0001-select-id-payload-from-bytea_pk_items",
+      "compare": "structural",
+      "columnModes": [
+        "bytea",
+        "bytea"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT id, payload\n\t\t\t\t\t\tFROM bytea_pk_items\n\t\t\t\t\t\tWHERE id = E'\\\\xCAFEBABE';",
+      "querySha256": "058d7a566ec1b538482a3090577f8150a87c5ad4e0c601d9a58b0055d7e0a4fd",
+      "expectedRows": [
+        [
+          {
+            "value": "\\xcafebabe"
+          },
+          {
+            "value": "\\xdeadbeef"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestInternalCharCastsHighBitByteToSignedIntRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestInternalCharCastsHighBitByteToSignedIntRepro",
+      "ordinal": 1,
+      "scriptName": "\"char\" high-bit byte casts to signed integer",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testinternalcharcastshighbitbytetosignedintrepro-0001-select-value::int-from-internal_char_cast_items-where",
+      "suggestedId": "type-correctness-repro-test-testinternalcharcastshighbitbytetosignedintrepro-0001-select-value::int-from-internal_char_cast_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT value::int\n\t\t\t\t\t\tFROM internal_char_cast_items\n\t\t\t\t\t\tWHERE id = 1;",
+      "querySha256": "0df9d5243cbfb0f189447c8af28d94522f6e43425a2eddfb36503cabbadcefd1",
+      "expectedRows": [
+        [
+          {
+            "value": "-29"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestDropTypeDependencyChecksSchemaQualifiedTypeRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestDropTypeDependencyChecksSchemaQualifiedTypeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP TYPE dependency checks use schema-qualified type identity",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testdroptypedependencychecksschemaqualifiedtyperepro-0001-select-n.nspname-t.typname-from-pg_catalog.pg_type",
+      "suggestedId": "type-correctness-repro-test-testdroptypedependencychecksschemaqualifiedtyperepro-0001-select-n.nspname-t.typname-from-pg_catalog.pg_type",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT n.nspname, t.typname\n\t\t\t\t\t\tFROM pg_catalog.pg_type t\n\t\t\t\t\t\tJOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\n\t\t\t\t\t\tWHERE n.nspname IN ('drop_type_schema_a', 'drop_type_schema_b')\n\t\t\t\t\t\t\tAND t.typname = 'same_named_enum'\n\t\t\t\t\t\tORDER BY n.nspname;",
+      "querySha256": "cfc0ed03bfa3ddf4bb79e30a8d373b232a62678b2270cb2fca0647d35e0ed2b7",
+      "expectedRows": [
+        [
+          {
+            "value": "drop_type_schema_b"
+          },
+          {
+            "value": "same_named_enum"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestDropTypeDependencyChecksSchemaQualifiedTypeRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestDropTypeDependencyChecksSchemaQualifiedTypeRepro",
+      "ordinal": 2,
+      "scriptName": "DROP TYPE dependency checks use schema-qualified type identity",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testdroptypedependencychecksschemaqualifiedtyperepro-0002-select-id-status::text-from-drop_type_schema_uses_b",
+      "suggestedId": "type-correctness-repro-test-testdroptypedependencychecksschemaqualifiedtyperepro-0002-select-id-status::text-from-drop_type_schema_uses_b",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, status::text\n\t\t\t\t\t\tFROM drop_type_schema_uses_b;",
+      "querySha256": "0ed99a9b8fb0401afad44edbfc0d40a2c2cf2837ff8fdd6ebf8613df5487d1f1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "two"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestDropCompositeTypeUsedByTypedTableRequiresCascadeRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestDropCompositeTypeUsedByTypedTableRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP TYPE rejects typed table dependency",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testdropcompositetypeusedbytypedtablerequirescascaderepro-0001-drop-type-typed_drop_dependency_row",
+      "suggestedId": "type-correctness-repro-test-testdropcompositetypeusedbytypedtablerequirescascaderepro-0001-drop-type-typed_drop_dependency_row",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
+      "query": "DROP TYPE typed_drop_dependency_row;",
+      "querySha256": "7020eeef34cb118c557b7df2ab59aa687f4bb13dfd3a90ea952ae663ce8e193a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestDropCompositeTypeUsedByTypedTableRequiresCascadeRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestDropCompositeTypeUsedByTypedTableRequiresCascadeRepro",
+      "ordinal": 2,
+      "scriptName": "DROP TYPE rejects typed table dependency",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testdropcompositetypeusedbytypedtablerequirescascaderepro-0002-select-c.reloftype-=-t.oid-from",
+      "suggestedId": "type-correctness-repro-test-testdropcompositetypeusedbytypedtablerequirescascaderepro-0002-select-c.reloftype-=-t.oid-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT c.reloftype = t.oid\n\t\t\t\t\t\tFROM pg_catalog.pg_class c\n\t\t\t\t\t\tJOIN pg_catalog.pg_type t ON t.typname = 'typed_drop_dependency_row'\n\t\t\t\t\t\tWHERE c.relname = 'typed_drop_dependency_items';",
+      "querySha256": "c0410d4482f9196494ef1f7ea768a84685f7f796c93864887223c99f52e70a74",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestDropCompositeTypeUsedByTypedTableRequiresCascadeRepro#0003",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestDropCompositeTypeUsedByTypedTableRequiresCascadeRepro",
+      "ordinal": 3,
+      "scriptName": "DROP TYPE rejects typed table dependency",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testdropcompositetypeusedbytypedtablerequirescascaderepro-0003-select-id-note-from-typed_drop_dependency_items",
+      "suggestedId": "type-correctness-repro-test-testdropcompositetypeusedbytypedtablerequirescascaderepro-0003-select-id-note-from-typed_drop_dependency_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, note\n\t\t\t\t\t\tFROM typed_drop_dependency_items;",
+      "querySha256": "6e6129e3cd4b99b2017d81a8d473d09716de72b258250f28890f169de17696d8",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "kept"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestDropTypeUsedByFunctionRequiresCascadeRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestDropTypeUsedByFunctionRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP TYPE rejects function signature dependencies",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testdroptypeusedbyfunctionrequirescascaderepro-0001-drop-type-type_function_dependency_status",
+      "suggestedId": "type-correctness-repro-test-testdroptypeusedbyfunctionrequirescascaderepro-0001-drop-type-type_function_dependency_status",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
+      "query": "DROP TYPE type_function_dependency_status;",
+      "querySha256": "2de8277fdfde46e1c2c0f6a12c39c42f66dbb074cde71cb506fbe556e83627e5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestDropTypeCascadeWithoutDependentsRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestDropTypeCascadeWithoutDependentsRepro",
+      "ordinal": 1,
+      "scriptName": "DROP TYPE CASCADE works without dependents",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testdroptypecascadewithoutdependentsrepro-0001-select-t.typname-from-pg_catalog.pg_type-t",
+      "suggestedId": "type-correctness-repro-test-testdroptypecascadewithoutdependentsrepro-0001-select-t.typname-from-pg_catalog.pg_type-t",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT t.typname\n\t\t\t\t\t\tFROM pg_catalog.pg_type t\n\t\t\t\t\t\tJOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\n\t\t\t\t\t\tWHERE n.nspname = 'public'\n\t\t\t\t\t\t\tAND t.typname = 'drop_type_cascade_unused';",
+      "querySha256": "52af1429f5667e4633e7567348adae4e00ea6af847aaf6f15afd192e3a124359",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNameTypeRejectsIntegerAssignmentRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNameTypeRejectsIntegerAssignmentRepro",
+      "ordinal": 1,
+      "scriptName": "name column rejects integer assignment",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnametyperejectsintegerassignmentrepro-0001-insert-into-name_assignment_items-values-1",
+      "suggestedId": "type-correctness-repro-test-testnametyperejectsintegerassignmentrepro-0001-insert-into-name_assignment_items-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO name_assignment_items VALUES (1, 12345);",
+      "querySha256": "52aed5da1c153cac0b98cccb82f8714006cf5a590a400e9bfee77ef82c574d9f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestXidRejectsInvalidInputRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestXidRejectsInvalidInputRepro",
+      "ordinal": 1,
+      "scriptName": "xid rejects invalid inputs",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testxidrejectsinvalidinputrepro-0001-insert-into-xid_input_items-values-1",
+      "suggestedId": "type-correctness-repro-test-testxidrejectsinvalidinputrepro-0001-insert-into-xid_input_items-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22003",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO xid_input_items VALUES (1, '4294967296');",
+      "querySha256": "77cbe4a0e86418d88d6e80cb7174fc19d21e65930cd15855db6ca732cc115be3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestXidRejectsInvalidInputRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestXidRejectsInvalidInputRepro",
+      "ordinal": 2,
+      "scriptName": "xid rejects invalid inputs",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testxidrejectsinvalidinputrepro-0002-insert-into-xid_input_items-values-2",
+      "suggestedId": "type-correctness-repro-test-testxidrejectsinvalidinputrepro-0002-insert-into-xid_input_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO xid_input_items VALUES (2, '-1');",
+      "querySha256": "4f1a29463863a4d67f6b3c3ef047299008c5d965e0134fc6099d5f7ae61d5f9a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestXidRejectsInvalidInputRepro#0003",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestXidRejectsInvalidInputRepro",
+      "ordinal": 3,
+      "scriptName": "xid rejects invalid inputs",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testxidrejectsinvalidinputrepro-0003-insert-into-xid_input_items-values-3",
+      "suggestedId": "type-correctness-repro-test-testxidrejectsinvalidinputrepro-0003-insert-into-xid_input_items-values-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO xid_input_items VALUES (3, 'abc');",
+      "querySha256": "6bb0f66469ce266534af3fc734bfa2336f714754caf3bb8942f7dffcc93faf83",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestXidOrderingRequiresOrderingOperatorRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestXidOrderingRequiresOrderingOperatorRepro",
+      "ordinal": 1,
+      "scriptName": "xid ORDER BY requires ordering operator",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testxidorderingrequiresorderingoperatorrepro-0001-select-id-x-from-xid_order_items",
+      "suggestedId": "type-correctness-repro-test-testxidorderingrequiresorderingoperatorrepro-0001-select-id-x-from-xid_order_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
+      "query": "SELECT id, x FROM xid_order_items ORDER BY x;",
+      "querySha256": "a46116cf2094cf09b0f513aaf7d8862004325e306030df7154cbac6006085339",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestInternalCharCastToIntegerUsesSignedByteRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestInternalCharCastToIntegerUsesSignedByteRepro",
+      "ordinal": 1,
+      "scriptName": "internal \"char\" casts high-bit bytes to signed integers",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testinternalcharcasttointegerusessignedbyterepro-0001-select-こんにちは-::-char-::int",
+      "suggestedId": "type-correctness-repro-test-testinternalcharcasttointegerusessignedbyterepro-0001-select-こんにちは-::-char-::int",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 'こんにちは'::\"char\"::int;",
+      "querySha256": "19db1596aa8da8c199cf07cfcf5e041686f9a0f011cafd870ed898471d87c564",
+      "expectedRows": [
+        [
+          {
+            "value": "-29"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestRegtypeLiteralHasRegtypeTypeGuard#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestRegtypeLiteralHasRegtypeTypeGuard",
+      "ordinal": 1,
+      "scriptName": "regtype literal exposes regtype result type",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testregtypeliteralhasregtypetypeguard-0001-select-pg_typeof-integer-::regtype-::text",
+      "suggestedId": "type-correctness-repro-test-testregtypeliteralhasregtypetypeguard-0001-select-pg_typeof-integer-::regtype-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_typeof('integer'::regtype)::text, 'integer'::regtype::text;",
+      "querySha256": "46df895510997647960bb3a5995c3dbecb5fb3dad459ffbbd6a60ccca9972695",
+      "expectedRows": [
+        [
+          {
+            "value": "regtype"
+          },
+          {
+            "value": "integer"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericPrimaryKeyEqualityLookupGuard#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericPrimaryKeyEqualityLookupGuard",
+      "ordinal": 1,
+      "scriptName": "numeric primary key equality lookup",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumericprimarykeyequalitylookupguard-0001-select-id-amount-from-numeric_pk_items",
+      "suggestedId": "type-correctness-repro-test-testnumericprimarykeyequalitylookupguard-0001-select-id-amount-from-numeric_pk_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, amount\n\t\t\t\t\t\tFROM numeric_pk_items\n\t\t\t\t\t\tWHERE id = 123.45\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "adf90a247faede5e576e23123c10e8cc5e26e8b2269ede03cfcca308a7a3099c",
+      "expectedRows": [
+        [
+          {
+            "value": "123.45"
+          },
+          {
+            "value": "67.89"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericTypmodDefaultWritePathsGuard#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericTypmodDefaultWritePathsGuard",
+      "ordinal": 1,
+      "scriptName": "numeric typmod default write paths coerce stored values",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumerictypmoddefaultwritepathsguard-0001-select-id-amount::text-from-numeric_typmod_default_items",
+      "suggestedId": "type-correctness-repro-test-testnumerictypmoddefaultwritepathsguard-0001-select-id-amount::text-from-numeric_typmod_default_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, amount::text\n\t\t\t\t\t\tFROM numeric_typmod_default_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "03b0372018843fbc0b1b3d4e295ef803cf833548b0d39e3cb93372c06ad3f237",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "123.46"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "123.46"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "123.46"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "234.57"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharTypmodEnforcesLengthGuard#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharTypmodEnforcesLengthGuard",
+      "ordinal": 1,
+      "scriptName": "varchar typmod enforces length",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testvarchartypmodenforceslengthguard-0001-insert-into-varchar_typmod_items-values-1",
+      "suggestedId": "type-correctness-repro-test-testvarchartypmodenforceslengthguard-0001-insert-into-varchar_typmod_items-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22001",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO varchar_typmod_items VALUES (1, 'abcd');",
+      "querySha256": "231213317b00037e11d33686ec6ad94856f9aec9488d130aeddfd288b993961d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharTypmodEnforcesLengthGuard#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharTypmodEnforcesLengthGuard",
+      "ordinal": 2,
+      "scriptName": "varchar typmod enforces length",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testvarchartypmodenforceslengthguard-0002-select-id-label-from-varchar_typmod_items",
+      "suggestedId": "type-correctness-repro-test-testvarchartypmodenforceslengthguard-0002-select-id-label-from-varchar_typmod_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM varchar_typmod_items;",
+      "querySha256": "b4295e23c3cce01d09d34eba1cd5330a496c1f2b05d8d8935cb5828759fbbd59",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "abc"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharTypmodTruncatesTrailingSpacesRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharTypmodTruncatesTrailingSpacesRepro",
+      "ordinal": 1,
+      "scriptName": "varchar typmod truncates trailing spaces",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testvarchartypmodtruncatestrailingspacesrepro-0001-select-id-label-length-label",
+      "suggestedId": "type-correctness-repro-test-testvarchartypmodtruncatestrailingspacesrepro-0001-select-id-label-length-label",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label, length(label) FROM varchar_trailing_space_items;",
+      "querySha256": "e142f4d5a7977911e45e25d2185de529249c993e04df1b03eba6cb11e98ff28f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "abc"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterTypmodTruncatesTrailingSpacesRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterTypmodTruncatesTrailingSpacesRepro",
+      "ordinal": 1,
+      "scriptName": "character typmod truncates trailing spaces",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharactertypmodtruncatestrailingspacesrepro-0001-select-id-label-length-label",
+      "suggestedId": "type-correctness-repro-test-testcharactertypmodtruncatestrailingspacesrepro-0001-select-id-label-length-label",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label, length(label) FROM character_trailing_space_items;",
+      "querySha256": "2cbe053f0a5c93609610a0e9419b7b581ec9e3984fe211bcd6951bdcddf1901d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "abc"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharTypmodDefaultTruncatesTrailingSpacesRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharTypmodDefaultTruncatesTrailingSpacesRepro",
+      "ordinal": 1,
+      "scriptName": "varchar typmod default truncates trailing spaces",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testvarchartypmoddefaulttruncatestrailingspacesrepro-0001-select-label-length-label-pg_typeof",
+      "suggestedId": "type-correctness-repro-test-testvarchartypmoddefaulttruncatestrailingspacesrepro-0001-select-label-length-label-pg_typeof",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label, length(label), pg_typeof(label)::text\n\t\t\t\t\t\tFROM varchar_default_trailing_space_items;",
+      "querySha256": "158732ee4b732ac37cc4f2cdefdc87e014a12fadbeb82b8938408a0971a498d9",
+      "expectedRows": [
+        [
+          {
+            "value": "abc"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "character varying"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterTypmodDefaultTruncatesTrailingSpacesRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterTypmodDefaultTruncatesTrailingSpacesRepro",
+      "ordinal": 1,
+      "scriptName": "character typmod default truncates trailing spaces",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharactertypmoddefaulttruncatestrailingspacesrepro-0001-select-label-=-abc-::character",
+      "suggestedId": "type-correctness-repro-test-testcharactertypmoddefaulttruncatestrailingspacesrepro-0001-select-label-=-abc-::character",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label = 'abc'::CHARACTER(3), octet_length(label), pg_typeof(label)::text\n\t\t\t\t\t\tFROM character_default_trailing_space_items;",
+      "querySha256": "adf2224d908fa566d7992c323f92e93eefe197be3274042b0973abda2c71cc58",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "character"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterTypmodIgnoresTrailingSpacesForUniquenessRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterTypmodIgnoresTrailingSpacesForUniquenessRepro",
+      "ordinal": 1,
+      "scriptName": "character typmod ignores trailing spaces for uniqueness",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharactertypmodignorestrailingspacesforuniquenessrepro-0001-insert-into-character_unique_padding_items-values-2",
+      "suggestedId": "type-correctness-repro-test-testcharactertypmodignorestrailingspacesforuniquenessrepro-0001-insert-into-character_unique_padding_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO character_unique_padding_items VALUES (2, 'a  ');",
+      "querySha256": "c91a272b902f4371958c6c50ca6dd90ddc03eec584683a2727df8d66edc5c33b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterTypmodIgnoresTrailingSpacesForUniquenessRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterTypmodIgnoresTrailingSpacesForUniquenessRepro",
+      "ordinal": 2,
+      "scriptName": "character typmod ignores trailing spaces for uniqueness",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharactertypmodignorestrailingspacesforuniquenessrepro-0002-select-id-label-=-a",
+      "suggestedId": "type-correctness-repro-test-testcharactertypmodignorestrailingspacesforuniquenessrepro-0002-select-id-label-=-a",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label = 'a  '::character(3) FROM character_unique_padding_items;",
+      "querySha256": "fc605703fb8ad114a21c3c080fa294e1ed6275fde6121008138426c286b3ffcf",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterTypmodStoresPaddedValuesRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterTypmodStoresPaddedValuesRepro",
+      "ordinal": 1,
+      "scriptName": "character typmod stores padded values",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharactertypmodstorespaddedvaluesrepro-0001-select-octet_length-label-from-character_storage_items",
+      "suggestedId": "type-correctness-repro-test-testcharactertypmodstorespaddedvaluesrepro-0001-select-octet_length-label-from-character_storage_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT octet_length(label)\n\t\t\t\t\t\tFROM character_storage_items;",
+      "querySha256": "5c12f228b0a733246113e076a5a46f2c74bf4ebc1523a082fc04e8698c8a9566",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterTypmodStoresPaddedValuesRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterTypmodStoresPaddedValuesRepro",
+      "ordinal": 2,
+      "scriptName": "character typmod stores padded values",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharactertypmodstorespaddedvaluesrepro-0002-select-label-=-ab-::character",
+      "suggestedId": "type-correctness-repro-test-testcharactertypmodstorespaddedvaluesrepro-0002-select-label-=-ab-::character",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label = 'ab '::CHARACTER(3)\n\t\t\t\t\t\tFROM character_storage_items;",
+      "querySha256": "d5c2de3a03622bc23537b5d89c01731affa5b13def4caf75f6c5c75f4f335122",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayTypmodTruncatesTrailingSpacesGuard#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayTypmodTruncatesTrailingSpacesGuard",
+      "ordinal": 1,
+      "scriptName": "varchar array typmod truncates trailing spaces",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testvarchararraytypmodtruncatestrailingspacesguard-0001-select-id-labels-from-varchar_array_trailing_space_items",
+      "suggestedId": "type-correctness-repro-test-testvarchararraytypmodtruncatestrailingspacesguard-0001-select-id-labels-from-varchar_array_trailing_space_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, labels FROM varchar_array_trailing_space_items;",
+      "querySha256": "add3dfce94952fab7cb6d434103b3c17e796984988a277ccc621973166d1b8a8",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "{abc}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayAppendValidatesElementTypmodRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayAppendValidatesElementTypmodRepro",
+      "ordinal": 1,
+      "scriptName": "varchar array_append validates element typmod",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testvarchararrayappendvalidateselementtypmodrepro-0001-update-varchar_array_append_typmod_items-set-labels-=",
+      "suggestedId": "type-correctness-repro-test-testvarchararrayappendvalidateselementtypmodrepro-0001-update-varchar_array_append_typmod_items-set-labels-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22001",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE varchar_array_append_typmod_items\n\t\t\t\t\t\tSET labels = array_append(labels, 'abcd')\n\t\t\t\t\t\tWHERE id = 1;",
+      "querySha256": "44838adfe601220cec04db189d85c75592ec6bd3298fe8b4301e89138ee91654",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayAppendValidatesElementTypmodRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayAppendValidatesElementTypmodRepro",
+      "ordinal": 2,
+      "scriptName": "varchar array_append validates element typmod",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testvarchararrayappendvalidateselementtypmodrepro-0002-select-labels::text-from-varchar_array_append_typmod_items",
+      "suggestedId": "type-correctness-repro-test-testvarchararrayappendvalidateselementtypmodrepro-0002-select-labels::text-from-varchar_array_append_typmod_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT labels::text\n\t\t\t\t\t\tFROM varchar_array_append_typmod_items;",
+      "querySha256": "c2eec4f66dcfd5a3b9d32b0f8cbd8e9fee7fa89fa56a47e02ac53872a08f2bf7",
+      "expectedRows": [
+        [
+          {
+            "value": "{abc}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayPrependValidatesElementTypmodRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayPrependValidatesElementTypmodRepro",
+      "ordinal": 1,
+      "scriptName": "varchar array_prepend validates element typmod",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testvarchararrayprependvalidateselementtypmodrepro-0001-update-varchar_array_prepend_typmod_items-set-labels-=",
+      "suggestedId": "type-correctness-repro-test-testvarchararrayprependvalidateselementtypmodrepro-0001-update-varchar_array_prepend_typmod_items-set-labels-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22001",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE varchar_array_prepend_typmod_items\n\t\t\t\t\t\tSET labels = array_prepend('abcd', labels)\n\t\t\t\t\t\tWHERE id = 1;",
+      "querySha256": "b34d34639c41c611832e27474a787922a6a5c7a527462cc1572179ba74c8360c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayPrependValidatesElementTypmodRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayPrependValidatesElementTypmodRepro",
+      "ordinal": 2,
+      "scriptName": "varchar array_prepend validates element typmod",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testvarchararrayprependvalidateselementtypmodrepro-0002-select-labels::text-from-varchar_array_prepend_typmod_items",
+      "suggestedId": "type-correctness-repro-test-testvarchararrayprependvalidateselementtypmodrepro-0002-select-labels::text-from-varchar_array_prepend_typmod_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT labels::text\n\t\t\t\t\t\tFROM varchar_array_prepend_typmod_items;",
+      "querySha256": "e32b3ac1ebdd2e49f0cf8ca2902b32cc6842b8317715351a9a0b16df1768152b",
+      "expectedRows": [
+        [
+          {
+            "value": "{abc}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayCatReportsAssignmentTypmodErrorRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayCatReportsAssignmentTypmodErrorRepro",
+      "ordinal": 1,
+      "scriptName": "varchar array_cat reports assignment typmod error",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testvarchararraycatreportsassignmenttypmoderrorrepro-0001-update-varchar_array_cat_typmod_items-set-labels-=",
+      "suggestedId": "type-correctness-repro-test-testvarchararraycatreportsassignmenttypmoderrorrepro-0001-update-varchar_array_cat_typmod_items-set-labels-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22001",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE varchar_array_cat_typmod_items\n\t\t\t\t\t\tSET labels = array_cat(labels, ARRAY['abcd'])\n\t\t\t\t\t\tWHERE id = 1;",
+      "querySha256": "4d6bffbfaec159dba6774382a1ce371ce5653b659a45615c6fce8d521869771b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayCatReportsAssignmentTypmodErrorRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayCatReportsAssignmentTypmodErrorRepro",
+      "ordinal": 2,
+      "scriptName": "varchar array_cat reports assignment typmod error",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testvarchararraycatreportsassignmenttypmoderrorrepro-0002-select-labels::text-from-varchar_array_cat_typmod_items",
+      "suggestedId": "type-correctness-repro-test-testvarchararraycatreportsassignmenttypmoderrorrepro-0002-select-labels::text-from-varchar_array_cat_typmod_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT labels::text\n\t\t\t\t\t\tFROM varchar_array_cat_typmod_items;",
+      "querySha256": "8d77d1ae1533816fbb79c16e0d5be4dfb904958534d0ac1d273b6f90c34755b1",
+      "expectedRows": [
+        [
+          {
+            "value": "{abc}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayAppendAppliesElementTypmodRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayAppendAppliesElementTypmodRepro",
+      "ordinal": 1,
+      "scriptName": "character array_append applies element typmod",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharacterarrayappendapplieselementtypmodrepro-0001-select-labels::text-octet_length-labels[2]-labels[2]",
+      "suggestedId": "type-correctness-repro-test-testcharacterarrayappendapplieselementtypmodrepro-0001-select-labels::text-octet_length-labels[2]-labels[2]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT labels::text, octet_length(labels[2]), labels[2] = 'ab '::CHARACTER(3)\n\t\t\t\t\t\tFROM character_array_append_typmod_items;",
+      "querySha256": "bcfa733af4e03c59a75082c578868bd5aba25a76e8a030a8ad2c947474690c38",
+      "expectedRows": [
+        [
+          {
+            "value": "{abc,\"ab \"}"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayAppendAppliesElementTypmodRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayAppendAppliesElementTypmodRepro",
+      "ordinal": 2,
+      "scriptName": "character array_append applies element typmod",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharacterarrayappendapplieselementtypmodrepro-0002-update-character_array_append_typmod_items-set-labels-=",
+      "suggestedId": "type-correctness-repro-test-testcharacterarrayappendapplieselementtypmodrepro-0002-update-character_array_append_typmod_items-set-labels-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22001",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE character_array_append_typmod_items\n\t\t\t\t\t\tSET labels = array_append(labels, 'abcd')\n\t\t\t\t\t\tWHERE id = 1;",
+      "querySha256": "ae2881f063e2f220c0384c6f30781f722f99758372dba80b7f8762b095a43714",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayAppendAppliesElementTypmodRepro#0003",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayAppendAppliesElementTypmodRepro",
+      "ordinal": 3,
+      "scriptName": "character array_append applies element typmod",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharacterarrayappendapplieselementtypmodrepro-0003-select-labels::text-from-character_array_append_typmod_items",
+      "suggestedId": "type-correctness-repro-test-testcharacterarrayappendapplieselementtypmodrepro-0003-select-labels::text-from-character_array_append_typmod_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT labels::text\n\t\t\t\t\t\tFROM character_array_append_typmod_items;",
+      "querySha256": "072592be8cd8109c5e5318e80c07734bd4632f256ce488be8c38ae09d1cfd8cf",
+      "expectedRows": [
+        [
+          {
+            "value": "{abc,\"ab \"}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayPrependAppliesElementTypmodRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayPrependAppliesElementTypmodRepro",
+      "ordinal": 1,
+      "scriptName": "character array_prepend applies element typmod",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharacterarrayprependapplieselementtypmodrepro-0001-select-labels::text-octet_length-labels[1]-labels[1]",
+      "suggestedId": "type-correctness-repro-test-testcharacterarrayprependapplieselementtypmodrepro-0001-select-labels::text-octet_length-labels[1]-labels[1]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT labels::text, octet_length(labels[1]), labels[1] = 'ab '::CHARACTER(3)\n\t\t\t\t\t\tFROM character_array_prepend_typmod_items;",
+      "querySha256": "cfc77f41a9ee86c4d6860d4556ab7881fe5b4827b69fa505da8e52a1075df15b",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"ab \",abc}"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayPrependAppliesElementTypmodRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayPrependAppliesElementTypmodRepro",
+      "ordinal": 2,
+      "scriptName": "character array_prepend applies element typmod",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharacterarrayprependapplieselementtypmodrepro-0002-update-character_array_prepend_typmod_items-set-labels-=",
+      "suggestedId": "type-correctness-repro-test-testcharacterarrayprependapplieselementtypmodrepro-0002-update-character_array_prepend_typmod_items-set-labels-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22001",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE character_array_prepend_typmod_items\n\t\t\t\t\t\tSET labels = array_prepend('abcd', labels)\n\t\t\t\t\t\tWHERE id = 1;",
+      "querySha256": "044c1800c8b8dcdc6ecbaa23f3c663f9537b838c0e5161ecd295105168cc4a35",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayPrependAppliesElementTypmodRepro#0003",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayPrependAppliesElementTypmodRepro",
+      "ordinal": 3,
+      "scriptName": "character array_prepend applies element typmod",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharacterarrayprependapplieselementtypmodrepro-0003-select-labels::text-from-character_array_prepend_typmod_items",
+      "suggestedId": "type-correctness-repro-test-testcharacterarrayprependapplieselementtypmodrepro-0003-select-labels::text-from-character_array_prepend_typmod_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT labels::text\n\t\t\t\t\t\tFROM character_array_prepend_typmod_items;",
+      "querySha256": "d5f85e9f03704e8ff627f1cc5210e687a03e2e22c62ad3ad7e5f526c595a8158",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"ab \",abc}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayCatResolvesTypmodArrayRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayCatResolvesTypmodArrayRepro",
+      "ordinal": 1,
+      "scriptName": "character array_cat resolves typmod array arguments",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharacterarraycatresolvestypmodarrayrepro-0001-select-labels::text-octet_length-labels[2]-labels[2]",
+      "suggestedId": "type-correctness-repro-test-testcharacterarraycatresolvestypmodarrayrepro-0001-select-labels::text-octet_length-labels[2]-labels[2]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT labels::text, octet_length(labels[2]), labels[2] = 'ab '::CHARACTER(3)\n\t\t\t\t\t\tFROM character_array_cat_typmod_items;",
+      "querySha256": "431c389f32d729d9deff6bb97a194a2ae941a445949d66cd99cc881efa46d028",
+      "expectedRows": [
+        [
+          {
+            "value": "{abc,\"ab \"}"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayTypmodSupportsEqualityRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayTypmodSupportsEqualityRepro",
+      "ordinal": 1,
+      "scriptName": "character array typmod supports equality",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharacterarraytypmodsupportsequalityrepro-0001-select-array[-a-]::character-3",
+      "suggestedId": "type-correctness-repro-test-testcharacterarraytypmodsupportsequalityrepro-0001-select-array[-a-]::character-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ARRAY['a']::character(3)[] = ARRAY['a  ']::character(3)[];",
+      "querySha256": "041580cf98da04913e62df6548bf55cc76b25b8bed0fd86fc0e10a5241227cc0",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayTypmodStoresPaddedElementsRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayTypmodStoresPaddedElementsRepro",
+      "ordinal": 1,
+      "scriptName": "character array typmod stores padded elements",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharacterarraytypmodstorespaddedelementsrepro-0001-select-octet_length-labels[1]-from-character_array_storage_items",
+      "suggestedId": "type-correctness-repro-test-testcharacterarraytypmodstorespaddedelementsrepro-0001-select-octet_length-labels[1]-from-character_array_storage_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT octet_length(labels[1])\n\t\t\t\t\t\tFROM character_array_storage_items;",
+      "querySha256": "c7b80e7fc515dd0af8768fea8bc43d9feaf4615bb6f1bded147cde4cf831f23b",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayTypmodStoresPaddedElementsRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayTypmodStoresPaddedElementsRepro",
+      "ordinal": 2,
+      "scriptName": "character array typmod stores padded elements",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharacterarraytypmodstorespaddedelementsrepro-0002-select-labels[1]-=-ab-::character",
+      "suggestedId": "type-correctness-repro-test-testcharacterarraytypmodstorespaddedelementsrepro-0002-select-labels[1]-=-ab-::character",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT labels[1] = 'ab '::CHARACTER(3)\n\t\t\t\t\t\tFROM character_array_storage_items;",
+      "querySha256": "655ff5770ccfbff46070250285ac1a35eb490b97b5aa302b226f533f8e8d379a",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayTypmodSupportsEqualityRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayTypmodSupportsEqualityRepro",
+      "ordinal": 1,
+      "scriptName": "varchar array typmod supports equality",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testvarchararraytypmodsupportsequalityrepro-0001-select-array[-abc-]::varchar-3",
+      "suggestedId": "type-correctness-repro-test-testvarchararraytypmodsupportsequalityrepro-0001-select-array[-abc-]::varchar-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ARRAY['abc']::varchar(3)[] = ARRAY['abc']::varchar(3)[];",
+      "querySha256": "552adc79df227a0697d28e08bcce34c2b24f95af77f809d6b4c01515cd4ab80d",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericArrayTypmodSupportsEqualityRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericArrayTypmodSupportsEqualityRepro",
+      "ordinal": 1,
+      "scriptName": "numeric array typmod supports equality",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumericarraytypmodsupportsequalityrepro-0001-select-array[1.23]::numeric-5-2-[]",
+      "suggestedId": "type-correctness-repro-test-testnumericarraytypmodsupportsequalityrepro-0001-select-array[1.23]::numeric-5-2-[]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ARRAY[1.23]::numeric(5,2)[] = ARRAY[1.23]::numeric(5,2)[];",
+      "querySha256": "de6d9dc4e7d7779419782cbb0d71d3a0fda16d142d9d5187b4e597b8a0f2d9cd",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestTypmodArrayContainmentOperatorsGuard#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestTypmodArrayContainmentOperatorsGuard",
+      "ordinal": 1,
+      "scriptName": "typmod array containment operators",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testtypmodarraycontainmentoperatorsguard-0001-select-array[-abc-]::varchar-3",
+      "suggestedId": "type-correctness-repro-test-testtypmodarraycontainmentoperatorsguard-0001-select-array[-abc-]::varchar-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ARRAY['abc']::varchar(3)[] @> ARRAY['abc']::varchar(3)[],\n\t\t\t\t\t\t\tARRAY['a']::character(3)[] @> ARRAY['a  ']::character(3)[],\n\t\t\t\t\t\t\tARRAY[1.23]::numeric(5,2)[] && ARRAY[1.23]::numeric(5,2)[];",
+      "querySha256": "f12235451d6f16939cd333c81634794f069a09f929cd6160f91aca8a2cf6091d",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestTypmodArrayDistinctUsesElementEqualityRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestTypmodArrayDistinctUsesElementEqualityRepro",
+      "ordinal": 1,
+      "scriptName": "character typmod array distinct uses element equality",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testtypmodarraydistinctuseselementequalityrepro-0001-select-count-distinct-labels-from",
+      "suggestedId": "type-correctness-repro-test-testtypmodarraydistinctuseselementequalityrepro-0001-select-count-distinct-labels-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(DISTINCT labels)\n\t\t\t\t\t\tFROM (VALUES\n\t\t\t\t\t\t\t(ARRAY['a']::character(3)[]),\n\t\t\t\t\t\t\t(ARRAY['a  ']::character(3)[])\n\t\t\t\t\t\t) AS v(labels);",
+      "querySha256": "bb8f06205d15085a85274f45d12f5e7359c1d188262b73e38f2b28f9dcbd0cde",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayDistinctUsesElementEqualityRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayDistinctUsesElementEqualityRepro",
+      "ordinal": 1,
+      "scriptName": "varchar typmod array distinct uses element equality",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testvarchararraydistinctuseselementequalityrepro-0001-select-count-distinct-labels-from",
+      "suggestedId": "type-correctness-repro-test-testvarchararraydistinctuseselementequalityrepro-0001-select-count-distinct-labels-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(DISTINCT labels)\n\t\t\t\t\t\tFROM (VALUES\n\t\t\t\t\t\t\t(ARRAY['abc']::varchar(3)[]),\n\t\t\t\t\t\t\t(ARRAY['abc']::varchar(3)[])\n\t\t\t\t\t\t) AS v(labels);",
+      "querySha256": "2162e5c66571a101fbcc7c11e3bb1c69ffe40a7c593dc5cd6b341c28032b9f83",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericArrayDistinctUsesElementEqualityRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericArrayDistinctUsesElementEqualityRepro",
+      "ordinal": 1,
+      "scriptName": "numeric typmod array distinct uses element equality",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumericarraydistinctuseselementequalityrepro-0001-select-count-distinct-labels-from",
+      "suggestedId": "type-correctness-repro-test-testnumericarraydistinctuseselementequalityrepro-0001-select-count-distinct-labels-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(DISTINCT labels)\n\t\t\t\t\t\tFROM (VALUES\n\t\t\t\t\t\t\t(ARRAY[1.23]::numeric(5,2)[]),\n\t\t\t\t\t\t\t(ARRAY[1.23]::numeric(5,2)[])\n\t\t\t\t\t\t) AS v(labels);",
+      "querySha256": "27c3ae8d2582de52946ac7315001e6995c47be4e1b7b7a379479678d066ffb69",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestTypmodArrayGroupByUsesElementEqualityGuard#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestTypmodArrayGroupByUsesElementEqualityGuard",
+      "ordinal": 1,
+      "scriptName": "typmod array group by uses element equality",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testtypmodarraygroupbyuseselementequalityguard-0001-select-count-*-from-values",
+      "suggestedId": "type-correctness-repro-test-testtypmodarraygroupbyuseselementequalityguard-0001-select-count-*-from-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM (VALUES\n\t\t\t\t\t\t\t(ARRAY['abc']::varchar(3)[]),\n\t\t\t\t\t\t\t(ARRAY['abc']::varchar(3)[])\n\t\t\t\t\t\t) AS v(labels)\n\t\t\t\t\t\tGROUP BY labels;",
+      "querySha256": "23f4dfa0082a90c082469e52dd7953fbd3f50ab31b6af8a31c9ddd95951b432b",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayTypmodWherePredicateUsesElementEqualityRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayTypmodWherePredicateUsesElementEqualityRepro",
+      "ordinal": 1,
+      "scriptName": "varchar typmod array WHERE predicate uses element equality",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testvarchararraytypmodwherepredicateuseselementequalityrepro-0001-select-id-from-varchar_array_where_items-where",
+      "suggestedId": "type-correctness-repro-test-testvarchararraytypmodwherepredicateuseselementequalityrepro-0001-select-id-from-varchar_array_where_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id\n\t\t\t\t\t\tFROM varchar_array_where_items\n\t\t\t\t\t\tWHERE labels = ARRAY['abc']::varchar(3)[];",
+      "querySha256": "b90c45597d0164af6fdb2d42af07fe0a50d560e17fb5a570078290e06ec7f28a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayTypmodOrderByUsesElementOrderingGuard#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestVarcharArrayTypmodOrderByUsesElementOrderingGuard",
+      "ordinal": 1,
+      "scriptName": "varchar typmod array ORDER BY uses element ordering",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testvarchararraytypmodorderbyuseselementorderingguard-0001-select-id-labels-from-varchar_array_order_items",
+      "suggestedId": "type-correctness-repro-test-testvarchararraytypmodorderbyuseselementorderingguard-0001-select-id-labels-from-varchar_array_order_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, labels\n\t\t\t\t\t\tFROM varchar_array_order_items\n\t\t\t\t\t\tORDER BY labels;",
+      "querySha256": "d380f6003cec30e302f013c54ee6a677a9a3d5f98dee8d273356d8860bd0b08f",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "{aaa}"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "{bbb}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayTypmodUniqueUsesPaddingEqualityGuard#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayTypmodUniqueUsesPaddingEqualityGuard",
+      "ordinal": 1,
+      "scriptName": "character array typmod ignores trailing spaces for uniqueness",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharacterarraytypmoduniqueusespaddingequalityguard-0001-insert-into-character_array_unique_padding_items-values-2",
+      "suggestedId": "type-correctness-repro-test-testcharacterarraytypmoduniqueusespaddingequalityguard-0001-insert-into-character_array_unique_padding_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO character_array_unique_padding_items\n\t\t\t\t\t\tVALUES (2, ARRAY['a  ']::character(3)[]);",
+      "querySha256": "a3c92589a80777139d8313b6f63513edb1c6979709e82ab7f7b913697de875e3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayTypmodUniqueUsesPaddingEqualityGuard#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterArrayTypmodUniqueUsesPaddingEqualityGuard",
+      "ordinal": 2,
+      "scriptName": "character array typmod ignores trailing spaces for uniqueness",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharacterarraytypmoduniqueusespaddingequalityguard-0002-select-count-*-from-character_array_unique_padding_items",
+      "suggestedId": "type-correctness-repro-test-testcharacterarraytypmoduniqueusespaddingequalityguard-0002-select-count-*-from-character_array_unique_padding_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM character_array_unique_padding_items;",
+      "querySha256": "931f26ba5ae430fc6a661b0c60e0a25065eb210de54a45df98cf00302621cca6",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterTypmodExplicitCastTruncatesGuard#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterTypmodExplicitCastTruncatesGuard",
+      "ordinal": 1,
+      "scriptName": "character typmod explicit cast truncates",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharactertypmodexplicitcasttruncatesguard-0001-select-abcd-::character-3",
+      "suggestedId": "type-correctness-repro-test-testcharactertypmodexplicitcasttruncatesguard-0001-select-abcd-::character-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 'abcd'::character(3);",
+      "querySha256": "d402934f034f50e645c7a32fbfcc7990b3ada48029c40dd152415d2c02d2d90f",
+      "expectedRows": [
+        [
+          {
+            "value": "abc"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterTypmodLiteralCastPadsToDeclaredLengthRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterTypmodLiteralCastPadsToDeclaredLengthRepro",
+      "ordinal": 1,
+      "scriptName": "character typmod literal cast pads to declared length",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharactertypmodliteralcastpadstodeclaredlengthrepro-0001-select-octet_length-cast-ab-as",
+      "suggestedId": "type-correctness-repro-test-testcharactertypmodliteralcastpadstodeclaredlengthrepro-0001-select-octet_length-cast-ab-as",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT octet_length(CAST('ab' AS CHARACTER(3)));",
+      "querySha256": "323f5b4e8f5790cfe7e3e782c0f01722d7afe7592599d0ef3ca11bd3fd59f946",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterTypmodLiteralCastPadsToDeclaredLengthRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterTypmodLiteralCastPadsToDeclaredLengthRepro",
+      "ordinal": 2,
+      "scriptName": "character typmod literal cast pads to declared length",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharactertypmodliteralcastpadstodeclaredlengthrepro-0002-select-cast-ab-as-character",
+      "suggestedId": "type-correctness-repro-test-testcharactertypmodliteralcastpadstodeclaredlengthrepro-0002-select-cast-ab-as-character",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT CAST('ab' AS CHARACTER(3)) = 'ab '::CHARACTER(3);",
+      "querySha256": "36d48e0b3380285afcb16b50c03505b804318ded0d8427101c7ed4baa060acbe",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterTypmodColumnCastPadsToDeclaredLengthRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCharacterTypmodColumnCastPadsToDeclaredLengthRepro",
+      "ordinal": 1,
+      "scriptName": "character typmod column cast pads to declared length",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcharactertypmodcolumncastpadstodeclaredlengthrepro-0001-select-octet_length-cast-label-as",
+      "suggestedId": "type-correctness-repro-test-testcharactertypmodcolumncastpadstodeclaredlengthrepro-0001-select-octet_length-cast-label-as",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT octet_length(CAST(label AS CHARACTER(3)))\n\t\t\t\t\t\tFROM character_column_cast_items;",
+      "querySha256": "6fbcb2c19d3876ba41ae3de5972eb0e2fbcf477e72728d0ec80e1586c1ea0c27",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericTypmodRoundsAndRejectsOverflowGuard#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericTypmodRoundsAndRejectsOverflowGuard",
+      "ordinal": 1,
+      "scriptName": "numeric typmod rounds and rejects overflow",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumerictypmodroundsandrejectsoverflowguard-0001-insert-into-numeric_typmod_items-values-2",
+      "suggestedId": "type-correctness-repro-test-testnumerictypmodroundsandrejectsoverflowguard-0001-insert-into-numeric_typmod_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22003",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO numeric_typmod_items VALUES (2, 1000.00);",
+      "querySha256": "7deb00a67046fba38120149196ea6f48f3b74fe80e5bdaff9c980fc8d6ca2107",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericTypmodRoundsAndRejectsOverflowGuard#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericTypmodRoundsAndRejectsOverflowGuard",
+      "ordinal": 2,
+      "scriptName": "numeric typmod rounds and rejects overflow",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumerictypmodroundsandrejectsoverflowguard-0002-select-id-amount-from-numeric_typmod_items",
+      "suggestedId": "type-correctness-repro-test-testnumerictypmodroundsandrejectsoverflowguard-0002-select-id-amount-from-numeric_typmod_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, amount FROM numeric_typmod_items;",
+      "querySha256": "9f518357ca496c100da1a49e749d25f1762839a032e96b4dd4bf3ce0a97ffa3a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "123.46"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericTypmodRejectsOverflowAfterRoundingGuard#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericTypmodRejectsOverflowAfterRoundingGuard",
+      "ordinal": 1,
+      "scriptName": "numeric typmod rejects overflow after rounding",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumerictypmodrejectsoverflowafterroundingguard-0001-insert-into-numeric_round_overflow_items-values-1",
+      "suggestedId": "type-correctness-repro-test-testnumerictypmodrejectsoverflowafterroundingguard-0001-insert-into-numeric_round_overflow_items-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22003",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO numeric_round_overflow_items VALUES (1, 999.995);",
+      "querySha256": "828bebacb4ee983658b3c2e9ae5066de2b04792aafbd528dadeaa30f4b027dac",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericTypmodRejectsOverflowAfterRoundingGuard#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericTypmodRejectsOverflowAfterRoundingGuard",
+      "ordinal": 2,
+      "scriptName": "numeric typmod rejects overflow after rounding",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumerictypmodrejectsoverflowafterroundingguard-0002-select-count-*-from-numeric_round_overflow_items",
+      "suggestedId": "type-correctness-repro-test-testnumerictypmodrejectsoverflowafterroundingguard-0002-select-count-*-from-numeric_round_overflow_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM numeric_round_overflow_items;",
+      "querySha256": "e203cbed22dadad66beae270158dd8f8c886674a04989a2264f9bcd7c8d01d43",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericArrayTypmodsRoundStoredElementsGuard#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericArrayTypmodsRoundStoredElementsGuard",
+      "ordinal": 1,
+      "scriptName": "numeric array typmods round stored elements",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumericarraytypmodsroundstoredelementsguard-0001-select-amounts::text-from-numeric_array_typmod_items-order",
+      "suggestedId": "type-correctness-repro-test-testnumericarraytypmodsroundstoredelementsguard-0001-select-amounts::text-from-numeric_array_typmod_items-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT amounts::text\n\t\t\t\t\t\tFROM numeric_array_typmod_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "30adc24a7a05e08c21c5d9e77c158595dd9548c3cddd5eae69aa904aad9c5230",
+      "expectedRows": [
+        [
+          {
+            "value": "{123.46,7.89}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericArrayTypmodsRoundStoredElementsGuard#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericArrayTypmodsRoundStoredElementsGuard",
+      "ordinal": 2,
+      "scriptName": "numeric array typmods round stored elements",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumericarraytypmodsroundstoredelementsguard-0002-insert-into-numeric_array_typmod_items-values-2",
+      "suggestedId": "type-correctness-repro-test-testnumericarraytypmodsroundstoredelementsguard-0002-insert-into-numeric_array_typmod_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22003",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO numeric_array_typmod_items VALUES (2, ARRAY[999.995]::numeric[]);",
+      "querySha256": "0b218c1d14fe3116d3923dfce22d3f8036a80b0682eceb131f5920b135b91bf6",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericArrayAppendValidatesElementTypmodRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericArrayAppendValidatesElementTypmodRepro",
+      "ordinal": 1,
+      "scriptName": "numeric array_append validates element typmod",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumericarrayappendvalidateselementtypmodrepro-0001-update-numeric_array_append_typmod_items-set-amounts-=",
+      "suggestedId": "type-correctness-repro-test-testnumericarrayappendvalidateselementtypmodrepro-0001-update-numeric_array_append_typmod_items-set-amounts-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22003",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE numeric_array_append_typmod_items\n\t\t\t\t\t\tSET amounts = array_append(amounts, 999.995)\n\t\t\t\t\t\tWHERE id = 1;",
+      "querySha256": "bb272cdccdbe1482d4b669c94bf6aaf9086be6737f2aa211fe2e8337805d5794",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericArrayAppendValidatesElementTypmodRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericArrayAppendValidatesElementTypmodRepro",
+      "ordinal": 2,
+      "scriptName": "numeric array_append validates element typmod",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumericarrayappendvalidateselementtypmodrepro-0002-select-amounts::text-from-numeric_array_append_typmod_items",
+      "suggestedId": "type-correctness-repro-test-testnumericarrayappendvalidateselementtypmodrepro-0002-select-amounts::text-from-numeric_array_append_typmod_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT amounts::text\n\t\t\t\t\t\tFROM numeric_array_append_typmod_items;",
+      "querySha256": "8fccae8f11cb51ddf8ab82b8daed6804292b66917dd1196aff65f7c8bea2c8e4",
+      "expectedRows": [
+        [
+          {
+            "value": "{1.23}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericArrayPrependValidatesElementTypmodGuard#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericArrayPrependValidatesElementTypmodGuard",
+      "ordinal": 1,
+      "scriptName": "numeric array_prepend validates element typmod",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumericarrayprependvalidateselementtypmodguard-0001-update-numeric_array_prepend_typmod_items-set-amounts-=",
+      "suggestedId": "type-correctness-repro-test-testnumericarrayprependvalidateselementtypmodguard-0001-update-numeric_array_prepend_typmod_items-set-amounts-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22003",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE numeric_array_prepend_typmod_items\n\t\t\t\t\t\tSET amounts = array_prepend(999.995, amounts)\n\t\t\t\t\t\tWHERE id = 1;",
+      "querySha256": "29c98b2748117096eca95aaa742973a4bf6a5bfa20b719b0da57b4c87e815ad6",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericArrayPrependValidatesElementTypmodGuard#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericArrayPrependValidatesElementTypmodGuard",
+      "ordinal": 2,
+      "scriptName": "numeric array_prepend validates element typmod",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumericarrayprependvalidateselementtypmodguard-0002-select-amounts::text-from-numeric_array_prepend_typmod_items",
+      "suggestedId": "type-correctness-repro-test-testnumericarrayprependvalidateselementtypmodguard-0002-select-amounts::text-from-numeric_array_prepend_typmod_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT amounts::text\n\t\t\t\t\t\tFROM numeric_array_prepend_typmod_items;",
+      "querySha256": "e3cf8ee2fdde77768e3dab678252e6ebf4161a646354dcb44db5a919858bd0f0",
+      "expectedRows": [
+        [
+          {
+            "value": "{1.23}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericArrayCatValidatesElementTypmodRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericArrayCatValidatesElementTypmodRepro",
+      "ordinal": 1,
+      "scriptName": "numeric array_cat validates element typmod",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumericarraycatvalidateselementtypmodrepro-0001-update-numeric_array_cat_typmod_items-set-amounts-=",
+      "suggestedId": "type-correctness-repro-test-testnumericarraycatvalidateselementtypmodrepro-0001-update-numeric_array_cat_typmod_items-set-amounts-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22003",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE numeric_array_cat_typmod_items\n\t\t\t\t\t\tSET amounts = array_cat(amounts, ARRAY[999.995])\n\t\t\t\t\t\tWHERE id = 1;",
+      "querySha256": "647d25afc4024280e47ec019d1a0c7ba89ac4cac2f725df0faee51490889833b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericArrayCatValidatesElementTypmodRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericArrayCatValidatesElementTypmodRepro",
+      "ordinal": 2,
+      "scriptName": "numeric array_cat validates element typmod",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumericarraycatvalidateselementtypmodrepro-0002-select-amounts::text-from-numeric_array_cat_typmod_items",
+      "suggestedId": "type-correctness-repro-test-testnumericarraycatvalidateselementtypmodrepro-0002-select-amounts::text-from-numeric_array_cat_typmod_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT amounts::text\n\t\t\t\t\t\tFROM numeric_array_cat_typmod_items;",
+      "querySha256": "f3d3f5b580b9b094e5394e0d59f02cab33dfa0761e53a1df8f1ab1202b4b6a5f",
+      "expectedRows": [
+        [
+          {
+            "value": "{1.23}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericNegativeScaleRoundsStoredValuesRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericNegativeScaleRoundsStoredValuesRepro",
+      "ordinal": 1,
+      "scriptName": "numeric negative scale rounds stored values",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumericnegativescaleroundsstoredvaluesrepro-0001-insert-into-numeric_negative_scale_items-values-3",
+      "suggestedId": "type-correctness-repro-test-testnumericnegativescaleroundsstoredvaluesrepro-0001-insert-into-numeric_negative_scale_items-values-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22003",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO numeric_negative_scale_items VALUES (3, 99500);",
+      "querySha256": "a3fcf776120b4aec80a937d0c6f8b284142866ba91e0713a65714d1ebf020fd6",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericNegativeScaleRoundsStoredValuesRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericNegativeScaleRoundsStoredValuesRepro",
+      "ordinal": 2,
+      "scriptName": "numeric negative scale rounds stored values",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumericnegativescaleroundsstoredvaluesrepro-0002-select-id-amount::text-from-numeric_negative_scale_items",
+      "suggestedId": "type-correctness-repro-test-testnumericnegativescaleroundsstoredvaluesrepro-0002-select-id-amount::text-from-numeric_negative_scale_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, amount::text\n\t\t\t\t\t\tFROM numeric_negative_scale_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "3d60e3f815fbb91a67a83dca35226f9c9ab2e447a83b8c98ae671cabe810f84c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "12000"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "99000"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericScaleGreaterThanPrecisionRoundsStoredValuesRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericScaleGreaterThanPrecisionRoundsStoredValuesRepro",
+      "ordinal": 1,
+      "scriptName": "numeric scale greater than precision rounds stored values",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumericscalegreaterthanprecisionroundsstoredvaluesrepro-0001-insert-into-numeric_large_scale_items-values-3",
+      "suggestedId": "type-correctness-repro-test-testnumericscalegreaterthanprecisionroundsstoredvaluesrepro-0001-insert-into-numeric_large_scale_items-values-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22003",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO numeric_large_scale_items VALUES (3, 0.09999);",
+      "querySha256": "9a9e3dcd26d9648d39889570a3d42d4ada103d152e16f1c4d6cbfee72088cfd2",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericScaleGreaterThanPrecisionRoundsStoredValuesRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericScaleGreaterThanPrecisionRoundsStoredValuesRepro",
+      "ordinal": 2,
+      "scriptName": "numeric scale greater than precision rounds stored values",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumericscalegreaterthanprecisionroundsstoredvaluesrepro-0002-select-id-amount::text-from-numeric_large_scale_items",
+      "suggestedId": "type-correctness-repro-test-testnumericscalegreaterthanprecisionroundsstoredvaluesrepro-0002-select-id-amount::text-from-numeric_large_scale_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, amount::text\n\t\t\t\t\t\tFROM numeric_large_scale_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "15989d6d99dfe9dde5d942a0a6ef01677182aacb5784ec108c33e1117546ee1b",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "0.00123"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "0.00999"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericSpecialValuesRoundTripRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericSpecialValuesRoundTripRepro",
+      "ordinal": 1,
+      "scriptName": "numeric special values round trip",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumericspecialvaluesroundtriprepro-0001-select-id-amount::text-from-numeric_special_value_items",
+      "suggestedId": "type-correctness-repro-test-testnumericspecialvaluesroundtriprepro-0001-select-id-amount::text-from-numeric_special_value_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, amount::text\n\t\t\t\t\t\tFROM numeric_special_value_items\n\t\t\t\t\t\tORDER BY amount;",
+      "querySha256": "8669934852d0b0136e7a64f9c51d5c1c28ece5e541adcea1e49976d450c10b57",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "-Infinity"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "1.5"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "Infinity"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "NaN"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericSpecialValuesRoundTripRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNumericSpecialValuesRoundTripRepro",
+      "ordinal": 2,
+      "scriptName": "numeric special values round trip",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnumericspecialvaluesroundtriprepro-0002-select-nan-::numeric-=-nan",
+      "suggestedId": "type-correctness-repro-test-testnumericspecialvaluesroundtriprepro-0002-select-nan-::numeric-=-nan",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 'NaN'::numeric = 'NaN'::numeric,\n\t\t\t\t\t\t\t'Infinity'::numeric > 999999999999999999999999999999::numeric,\n\t\t\t\t\t\t\t'-Infinity'::numeric < -999999999999999999999999999999::numeric;",
+      "querySha256": "642447c231aedda7675706139929a7ee9778a2af701cbb4b7d9d9fd72f3e77d7",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestMultidimensionalArrayColumnRoundTripRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestMultidimensionalArrayColumnRoundTripRepro",
+      "ordinal": 1,
+      "scriptName": "multidimensional array column round trip",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testmultidimensionalarraycolumnroundtriprepro-0001-select-labels-from-multidimensional_array_items-where",
+      "suggestedId": "type-correctness-repro-test-testmultidimensionalarraycolumnroundtriprepro-0001-select-labels-from-multidimensional_array_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT labels\n\t\t\t\t\t\tFROM multidimensional_array_items\n\t\t\t\t\t\tWHERE id = 1;",
+      "querySha256": "c3b307977d1e018d5088909619a8d487cf05986188e3556be37674f3e6ab27d8",
+      "expectedRows": [
+        [
+          {
+            "value": "{abc,def,ghi,jkl}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayLiteralPreservesLowerBoundsRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayLiteralPreservesLowerBoundsRepro",
+      "ordinal": 1,
+      "scriptName": "array literal preserves lower bounds",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testarrayliteralpreserveslowerboundsrepro-0001-select-values_int[0]-values_int[1]-values_int[2]-array_upper",
+      "suggestedId": "type-correctness-repro-test-testarrayliteralpreserveslowerboundsrepro-0001-select-values_int[0]-values_int[1]-values_int[2]-array_upper",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT values_int[0], values_int[1], values_int[2],\n\t\t\t\t\t\t\tarray_upper(values_int, 1)\n\t\t\t\t\t\tFROM array_lower_bound_items;",
+      "querySha256": "f206b2ab6af4df18173867a136a37c68449cf6f72050ea6c028ecdeb3258a367",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "30"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayLowerReportsDefaultLowerBoundRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayLowerReportsDefaultLowerBoundRepro",
+      "ordinal": 1,
+      "scriptName": "array_lower reports default lower bound",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testarraylowerreportsdefaultlowerboundrepro-0001-select-array_lower-array[10-20-30]",
+      "suggestedId": "type-correctness-repro-test-testarraylowerreportsdefaultlowerboundrepro-0001-select-array_lower-array[10-20-30]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_lower(ARRAY[10,20,30], 1);",
+      "querySha256": "e5735b5a7734d5838ad98e3e6c29653491da41cba5b499511381d881801e3c7d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayLowerReportsDefaultLowerBoundRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayLowerReportsDefaultLowerBoundRepro",
+      "ordinal": 2,
+      "scriptName": "array_lower reports default lower bound",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testarraylowerreportsdefaultlowerboundrepro-0002-select-array_lower-array[10-20-30]",
+      "suggestedId": "type-correctness-repro-test-testarraylowerreportsdefaultlowerboundrepro-0002-select-array_lower-array[10-20-30]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_lower(ARRAY[10,20,30], 2);",
+      "querySha256": "0809edb751c9472c13462e4e53f2c13573586c1f2f19f43668cd720d203e0bc2",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayDimsReportsDimensionsRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayDimsReportsDimensionsRepro",
+      "ordinal": 1,
+      "scriptName": "array_dims reports dimensions",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testarraydimsreportsdimensionsrepro-0001-select-array_dims-array[10-20-30]",
+      "suggestedId": "type-correctness-repro-test-testarraydimsreportsdimensionsrepro-0001-select-array_dims-array[10-20-30]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_dims(ARRAY[10,20,30]);",
+      "querySha256": "8031f51c0ea0b98d4199fe5c937f2ecb219ee4baed22c9c480e1e30030ae77e1",
+      "expectedRows": [
+        [
+          {
+            "value": "[1:3]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayDimsReportsDimensionsRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayDimsReportsDimensionsRepro",
+      "ordinal": 2,
+      "scriptName": "array_dims reports dimensions",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testarraydimsreportsdimensionsrepro-0002-select-array_dims-array[[1-2]-[3",
+      "suggestedId": "type-correctness-repro-test-testarraydimsreportsdimensionsrepro-0002-select-array_dims-array[[1-2]-[3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_dims(ARRAY[[1,2],[3,4]]);",
+      "querySha256": "0262282f8f619ca63149f1faa8232541975b6ae0d1c2a1d5d819c481f919256e",
+      "expectedRows": [
+        [
+          {
+            "value": "[1:2][1:2]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestNestedArrayConstructorReportsDimensionsRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestNestedArrayConstructorReportsDimensionsRepro",
+      "ordinal": 1,
+      "scriptName": "nested array constructor reports dimensions",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testnestedarrayconstructorreportsdimensionsrepro-0001-select-array_length-array[[1-2]-[3",
+      "suggestedId": "type-correctness-repro-test-testnestedarrayconstructorreportsdimensionsrepro-0001-select-array_length-array[[1-2]-[3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_length(ARRAY[[1,2],[3,4]], 1),\n\t\t\t\t\t\t\tarray_length(ARRAY[[1,2],[3,4]], 2),\n\t\t\t\t\t\t\tarray_upper(ARRAY[[1,2],[3,4]], 1),\n\t\t\t\t\t\t\tarray_upper(ARRAY[[1,2],[3,4]], 2);",
+      "querySha256": "63472be3b2541a3a76083ae626162323abe1834c675792a711435629069cbd47",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayNdimsReportsDimensionCountRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayNdimsReportsDimensionCountRepro",
+      "ordinal": 1,
+      "scriptName": "array_ndims reports dimension count",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testarrayndimsreportsdimensioncountrepro-0001-select-array_ndims-array[10-20-30]",
+      "suggestedId": "type-correctness-repro-test-testarrayndimsreportsdimensioncountrepro-0001-select-array_ndims-array[10-20-30]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_ndims(ARRAY[10,20,30]),\n\t\t\t\t\t\t\tarray_ndims(ARRAY[]::int[]),\n\t\t\t\t\t\t\tarray_ndims(NULL::int[]);",
+      "querySha256": "4f8b6e5322167d0001c61c3113d019a4a10a9f88cd59acf9cd410f3ef4beb302",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCardinalityCountsArrayElementsRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCardinalityCountsArrayElementsRepro",
+      "ordinal": 1,
+      "scriptName": "cardinality counts array elements",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcardinalitycountsarrayelementsrepro-0001-select-cardinality-null::int[]-cardinality-{}",
+      "suggestedId": "type-correctness-repro-test-testcardinalitycountsarrayelementsrepro-0001-select-cardinality-null::int[]-cardinality-{}",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT cardinality(NULL::int[]),\n\t\t\t\t\t\t\tcardinality('{}'::int[]),\n\t\t\t\t\t\t\tcardinality(ARRAY[10,20,30]);",
+      "querySha256": "6963ed04914cf18bd9f640e9ea7b580fb387fd7ee6854498f9c43f8999e765ea",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayPositionFindsNullElementsGuard#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayPositionFindsNullElementsGuard",
+      "ordinal": 1,
+      "scriptName": "array_position finds null elements",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testarraypositionfindsnullelementsguard-0001-select-array_position-array[1-null-3",
+      "suggestedId": "type-correctness-repro-test-testarraypositionfindsnullelementsguard-0001-select-array_position-array[1-null-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_position(ARRAY[1,NULL,3,NULL], NULL),\n\t\t\t\t\t\t\tarray_positions(ARRAY[1,NULL,3,NULL], NULL);",
+      "querySha256": "bd267078699db76d10c03c4e8d46397867df9ffa49dae3a52a7a076942604542",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "{2,4}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestArraySubscriptAssignmentPersistsElementRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestArraySubscriptAssignmentPersistsElementRepro",
+      "ordinal": 1,
+      "scriptName": "array subscript assignment persists element",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testarraysubscriptassignmentpersistselementrepro-0001-select-values_int::text-from-array_subscript_assignment_items",
+      "suggestedId": "type-correctness-repro-test-testarraysubscriptassignmentpersistselementrepro-0001-select-values_int::text-from-array_subscript_assignment_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT values_int::text\n\t\t\t\t\t\tFROM array_subscript_assignment_items;",
+      "querySha256": "59b178b9d02ecd8871d89418f689b8327efb6734f837a405125113261311209e",
+      "expectedRows": [
+        [
+          {
+            "value": "{1,22,3}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestStringToArraySplitsTextRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestStringToArraySplitsTextRepro",
+      "ordinal": 1,
+      "scriptName": "string_to_array splits text",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-teststringtoarraysplitstextrepro-0001-select-string_to_array-1|2|3-|-string_to_array",
+      "suggestedId": "type-correctness-repro-test-teststringtoarraysplitstextrepro-0001-select-string_to_array-1|2|3-|-string_to_array",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT string_to_array('1|2|3', '|'),\n\t\t\t\t\t\t\tstring_to_array('abc', NULL),\n\t\t\t\t\t\t\tstring_to_array('1,*,3', ',', '*');",
+      "querySha256": "ed1bb5440d65bffd0a49abd8969162afb08b2e80c23e141ba684a95d52f22b43",
+      "expectedRows": [
+        [
+          {
+            "value": "{1,2,3}"
+          },
+          {
+            "value": "{a,b,c}"
+          },
+          {
+            "value": "{1,NULL,3}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayToStringNullArrayWithNullReplacementRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayToStringNullArrayWithNullReplacementRepro",
+      "ordinal": 1,
+      "scriptName": "array_to_string handles null array with null replacement",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testarraytostringnullarraywithnullreplacementrepro-0001-select-array_to_string-null::int[]-*-is",
+      "suggestedId": "type-correctness-repro-test-testarraytostringnullarraywithnullreplacementrepro-0001-select-array_to_string-null::int[]-*-is",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(NULL::int[], ',', '*') IS NULL;",
+      "querySha256": "662dd10aaad334b709f3cfe9ee2d360c0a1ca1f91fc5d61e944540f677e41b1b",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayRemoveRejectsMultidimensionalArraysRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayRemoveRejectsMultidimensionalArraysRepro",
+      "ordinal": 1,
+      "scriptName": "array_remove rejects multidimensional arrays",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testarrayremoverejectsmultidimensionalarraysrepro-0001-select-array_remove-{{1-2-2}",
+      "suggestedId": "type-correctness-repro-test-testarrayremoverejectsmultidimensionalarraysrepro-0001-select-array_remove-{{1-2-2}",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "SELECT array_remove('{{1,2,2},{1,4,3}}'::int[], 2);",
+      "querySha256": "7797eddee2a9ab7f8b966536662bc7ef9fef56d42a36761616b779f9e7883904",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayReplaceReplacesMatchingElementsRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayReplaceReplacesMatchingElementsRepro",
+      "ordinal": 1,
+      "scriptName": "array_replace replaces matching elements",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testarrayreplacereplacesmatchingelementsrepro-0001-select-array_replace-array[1-2-1]",
+      "suggestedId": "type-correctness-repro-test-testarrayreplacereplacesmatchingelementsrepro-0001-select-array_replace-array[1-2-1]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_replace(ARRAY[1,2,1], 1, 9),\n\t\t\t\t\t\t\tarray_replace(ARRAY[1,NULL,3,NULL], NULL, 0);",
+      "querySha256": "cf865bebe4ff13db9657431a652b36d8a3359ad452af851baa3185929ad4d391",
+      "expectedRows": [
+        [
+          {
+            "value": "{9,2,9}"
+          },
+          {
+            "value": "{1,0,3,0}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayReplaceReplacesMatchingElementsRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayReplaceReplacesMatchingElementsRepro",
+      "ordinal": 2,
+      "scriptName": "array_replace replaces matching elements",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testarrayreplacereplacesmatchingelementsrepro-0002-select-array_replace-array[1-2-3]",
+      "suggestedId": "type-correctness-repro-test-testarrayreplacereplacesmatchingelementsrepro-0002-select-array_replace-array[1-2-3]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_replace(ARRAY[1,2,3], 2, NULL),\n\t\t\t\t\t\t\tarray_replace(ARRAY[1,2,3], 9, 0);",
+      "querySha256": "87c446317353b6188fee8fa2bc7dae0b9ccb7f35b05f27b35d63adc84f1d1cf4",
+      "expectedRows": [
+        [
+          {
+            "value": "{1,NULL,3}"
+          },
+          {
+            "value": "{1,2,3}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayFillConstructsArraysRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayFillConstructsArraysRepro",
+      "ordinal": 1,
+      "scriptName": "array_fill constructs arrays",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testarrayfillconstructsarraysrepro-0001-select-array_fill-7-array[3]",
+      "suggestedId": "type-correctness-repro-test-testarrayfillconstructsarraysrepro-0001-select-array_fill-7-array[3]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_fill(7, ARRAY[3]);",
+      "querySha256": "0a4fb8238ee42f5559e5800cdc5839b12c9c78ac792f7182d364472c008fb791",
+      "expectedRows": [
+        [
+          {
+            "value": "{7,7,7}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayFillConstructsArraysRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayFillConstructsArraysRepro",
+      "ordinal": 2,
+      "scriptName": "array_fill constructs arrays",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testarrayfillconstructsarraysrepro-0002-select-array_fill-null::int-array[2]",
+      "suggestedId": "type-correctness-repro-test-testarrayfillconstructsarraysrepro-0002-select-array_fill-null::int-array[2]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_fill(NULL::int, ARRAY[2]);",
+      "querySha256": "9040c1dd40bcd480d95901bfbe7f5b82011473bd29a3990b0742878770a74428",
+      "expectedRows": [
+        [
+          {
+            "value": "{NULL,NULL}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayFillConstructsArraysRepro#0003",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayFillConstructsArraysRepro",
+      "ordinal": 3,
+      "scriptName": "array_fill constructs arrays",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testarrayfillconstructsarraysrepro-0003-select-array_fill-7-array[0]",
+      "suggestedId": "type-correctness-repro-test-testarrayfillconstructsarraysrepro-0003-select-array_fill-7-array[0]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_fill(7, ARRAY[0]);",
+      "querySha256": "698930aa2b98cadd7ed796a7bc7aa3448720b4ca460d30095942a93dd8ae10f3",
+      "expectedRows": [
+        [
+          {
+            "value": "{}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayFillConstructsArraysRepro#0004",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestArrayFillConstructsArraysRepro",
+      "ordinal": 4,
+      "scriptName": "array_fill constructs arrays",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testarrayfillconstructsarraysrepro-0004-select-array_fill-7-array[-1]",
+      "suggestedId": "type-correctness-repro-test-testarrayfillconstructsarraysrepro-0004-select-array_fill-7-array[-1]",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "54000",
+      "errorSeverity": "ERROR",
+      "query": "SELECT array_fill(7, ARRAY[-1]);",
+      "querySha256": "e02c6f5a8f7861eea2e4375c0910ee9c9d58022fd13bd027ba991074314d5beb",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestTrimArrayRemovesTrailingElementsRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestTrimArrayRemovesTrailingElementsRepro",
+      "ordinal": 1,
+      "scriptName": "trim_array removes trailing elements",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testtrimarrayremovestrailingelementsrepro-0001-select-trim_array-array[1-2-3",
+      "suggestedId": "type-correctness-repro-test-testtrimarrayremovestrailingelementsrepro-0001-select-trim_array-array[1-2-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT trim_array(ARRAY[1,2,3,4], 2);",
+      "querySha256": "e785a75009a43da7ca04ef6a55246b9e27e0e8a44fd87c09ba8c9c1418d92e83",
+      "expectedRows": [
+        [
+          {
+            "value": "{1,2}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestTrimArrayRemovesTrailingElementsRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestTrimArrayRemovesTrailingElementsRepro",
+      "ordinal": 2,
+      "scriptName": "trim_array removes trailing elements",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testtrimarrayremovestrailingelementsrepro-0002-select-trim_array-array[1-2-3",
+      "suggestedId": "type-correctness-repro-test-testtrimarrayremovestrailingelementsrepro-0002-select-trim_array-array[1-2-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT trim_array(ARRAY[1,2,3,4], 0),\n\t\t\t\t\t\t\ttrim_array(ARRAY[1,2,3,4], 4);",
+      "querySha256": "898e911a14e683f486e0b95963a13b79963e514a8ee7a494c5fdc8ee88431cae",
+      "expectedRows": [
+        [
+          {
+            "value": "{1,2,3,4}"
+          },
+          {
+            "value": "{}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestTrimArrayRemovesTrailingElementsRepro#0003",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestTrimArrayRemovesTrailingElementsRepro",
+      "ordinal": 3,
+      "scriptName": "trim_array removes trailing elements",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testtrimarrayremovestrailingelementsrepro-0003-select-trim_array-array[1-2-3",
+      "suggestedId": "type-correctness-repro-test-testtrimarrayremovestrailingelementsrepro-0003-select-trim_array-array[1-2-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2202E",
+      "errorSeverity": "ERROR",
+      "query": "SELECT trim_array(ARRAY[1,2,3,4], -1);",
+      "querySha256": "675e298c975eaf7f928bbd4b07dddfeb13ad8ddf2bbad5ecda51b080b3dd3221",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestTrimArrayRemovesTrailingElementsRepro#0004",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestTrimArrayRemovesTrailingElementsRepro",
+      "ordinal": 4,
+      "scriptName": "trim_array removes trailing elements",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testtrimarrayremovestrailingelementsrepro-0004-select-trim_array-array[1-2-3",
+      "suggestedId": "type-correctness-repro-test-testtrimarrayremovestrailingelementsrepro-0004-select-trim_array-array[1-2-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2202E",
+      "errorSeverity": "ERROR",
+      "query": "SELECT trim_array(ARRAY[1,2,3,4], 5);",
+      "querySha256": "b58178838d3e3b7dc08cde8d87ca36f640b91138ecf4ef06902c9a2b0c3e2669",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestBuiltinRangeTypesRoundTripRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestBuiltinRangeTypesRoundTripRepro",
+      "ordinal": 1,
+      "scriptName": "built-in range types round trip",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testbuiltinrangetypesroundtriprepro-0001-select-int_span::text-num_span::text-date_span::text-from",
+      "suggestedId": "type-correctness-repro-test-testbuiltinrangetypesroundtriprepro-0001-select-int_span::text-num_span::text-date_span::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT int_span::text, num_span::text, date_span::text\n\t\t\t\t\t\tFROM range_round_trip_items;",
+      "querySha256": "0b26c4d576283f0e6f054146f7a7ea93c0070ec20abe6afbec461f605f9a2961",
+      "expectedRows": [
+        [
+          {
+            "value": "[1,3)"
+          },
+          {
+            "value": "[1.5,3.5)"
+          },
+          {
+            "value": "[2026-01-01,2026-02-01)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestBuiltinMultirangeTypesRoundTripRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestBuiltinMultirangeTypesRoundTripRepro",
+      "ordinal": 1,
+      "scriptName": "built-in multirange types round trip",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testbuiltinmultirangetypesroundtriprepro-0001-select-int_spans::text-num_spans::text-from-multirange_round_trip_items",
+      "suggestedId": "type-correctness-repro-test-testbuiltinmultirangetypesroundtriprepro-0001-select-int_spans::text-num_spans::text-from-multirange_round_trip_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT int_spans::text, num_spans::text\n\t\t\t\t\t\tFROM multirange_round_trip_items;",
+      "querySha256": "42cc10320a1a897a9b234d4a4ec1a302561dc976f47b865eb6b16ca6ecdd5da9",
+      "expectedRows": [
+        [
+          {
+            "value": "{[1,3),[5,7)}"
+          },
+          {
+            "value": "{[1.5,3.5)}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro#0001",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro",
+      "ordinal": 1,
+      "scriptName": "cidr column round trip",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0001-select-id-addr-from-cidr_round_trip_items",
+      "suggestedId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0001-select-id-addr-from-cidr_round_trip_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, addr FROM cidr_round_trip_items ORDER BY id;",
+      "querySha256": "5785660a7948d2868884a18187073b3ec408a3c68b2d06a343ad1ac0a39fe755",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "192.168.1.0/24"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "10.0.0.0/8"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro#0002",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro",
+      "ordinal": 2,
+      "scriptName": "inet column round trip",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0002-select-id-addr-from-inet_round_trip_items",
+      "suggestedId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0002-select-id-addr-from-inet_round_trip_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, addr FROM inet_round_trip_items ORDER BY id;",
+      "querySha256": "71b9c8bf67cd98b164c210e347f0a54dff60411423de366a7e96734d1ecfdb64",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "192.168.1.1/32"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "10.0.0.1/32"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro#0003",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro",
+      "ordinal": 3,
+      "scriptName": "macaddr column round trip",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0003-select-id-addr-from-macaddr_round_trip_items",
+      "suggestedId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0003-select-id-addr-from-macaddr_round_trip_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, addr FROM macaddr_round_trip_items ORDER BY id;",
+      "querySha256": "1ca3125f432c3009a1bc4a03993fcab4655e66edf2eeba134406034068a753cf",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "08:00:2b:01:02:03"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "00:11:22:33:44:55"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro#0004",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro",
+      "ordinal": 4,
+      "scriptName": "money column round trip",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0004-select-id-amount-from-money_round_trip_items",
+      "suggestedId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0004-select-id-amount-from-money_round_trip_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, amount FROM money_round_trip_items ORDER BY id;",
+      "querySha256": "9ab5e2925a074bd54f4449033f127660c092a93de80acae923d449954bed90ca",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "$100.25"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "$50.50"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro#0005",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro",
+      "ordinal": 5,
+      "scriptName": "point column round trip",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0005-select-id-p-from-point_round_trip_items",
+      "suggestedId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0005-select-id-p-from-point_round_trip_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, p FROM point_round_trip_items ORDER BY id;",
+      "querySha256": "eac3fb530b626a9c705140c8e6407b6b9e0540f1dceb878dd693a3bd27ca637a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "{{1 2} true}"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "{{3 4} true}"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro#0006",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro",
+      "ordinal": 6,
+      "scriptName": "box column round trip",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0006-select-id-b-from-box_round_trip_items",
+      "suggestedId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0006-select-id-b-from-box_round_trip_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, b FROM box_round_trip_items ORDER BY id;",
+      "querySha256": "e9d03dc7ee8481f16d26e7be5127ecc629083fce60879792c86e67bbae2d5344",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "{[{3 4} {1 2}] true}"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "{[{7 8} {5 6}] true}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro#0007",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro",
+      "ordinal": 7,
+      "scriptName": "circle column round trip",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0007-select-id-c-from-circle_round_trip_items",
+      "suggestedId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0007-select-id-c-from-circle_round_trip_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, c FROM circle_round_trip_items ORDER BY id;",
+      "querySha256": "fb6290e6f43e85592c2a5570ca120c1b73372fd89278de5e4f43ee70cf68a092",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "{{1 2} 3 true}"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "{{4 5} 6 true}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro#0008",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro",
+      "ordinal": 8,
+      "scriptName": "line column round trip",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0008-select-id-ln-from-line_round_trip_items",
+      "suggestedId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0008-select-id-ln-from-line_round_trip_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, ln FROM line_round_trip_items ORDER BY id;",
+      "querySha256": "5de06e3527cf7fa330fa18e7674cc8cde61db411eb4b47131028e21413229741",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3 mons 2 days 00:00:00.000001"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "6 mons 5 days 00:00:00.000004"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro#0009",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro",
+      "ordinal": 9,
+      "scriptName": "line segment column round trip",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0009-select-id-seg-from-lseg_round_trip_items",
+      "suggestedId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0009-select-id-seg-from-lseg_round_trip_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, seg FROM lseg_round_trip_items ORDER BY id;",
+      "querySha256": "9e7725ef7ad3dc4bf801e907607c83145a851e49316a7c66612e8ca1fece0069",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "{[{1 2} {3 4}] true}"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "{[{5 6} {7 8}] true}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro#0010",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro",
+      "ordinal": 10,
+      "scriptName": "path column round trip",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0010-select-id-p-from-path_round_trip_items",
+      "suggestedId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0010-select-id-p-from-path_round_trip_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, p FROM path_round_trip_items ORDER BY id;",
+      "querySha256": "adf046aa64e5cb3a41dd08dbc73b9ba56e744e6758a9d6ad7c3d2492f02de2de",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "{[{1 2} {3 4} {5 6}] true true}"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "{[{7 8} {9 10} {11 12}] true true}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro#0011",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro",
+      "ordinal": 11,
+      "scriptName": "polygon column round trip",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0011-select-id-p-from-polygon_round_trip_items",
+      "suggestedId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0011-select-id-p-from-polygon_round_trip_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, p FROM polygon_round_trip_items ORDER BY id;",
+      "querySha256": "047b973f1526e7c7e9bdffd5cefe1425fe90574449c4e507c7e2a1b3ef52ec4a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "{[{1 2} {3 4} {5 6}] true}"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "{[{7 8} {9 10} {11 12}] true}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro#0012",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro",
+      "ordinal": 12,
+      "scriptName": "xml column round trip",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0012-select-id-doc-from-xml_round_trip_items",
+      "suggestedId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0012-select-id-doc-from-xml_round_trip_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, doc FROM xml_round_trip_items ORDER BY id;",
+      "querySha256": "814ed4b0af16be84ef239b377a93e44bd75e90733cb0af5236a43d596b88c566",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro#0013",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro",
+      "ordinal": 13,
+      "scriptName": "tsquery column round trip",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0013-select-id-query-from-tsquery_round_trip_items",
+      "suggestedId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0013-select-id-query-from-tsquery_round_trip_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, query FROM tsquery_round_trip_items ORDER BY id;",
+      "querySha256": "e6af28a02bf3b785fa69f417abfbe7418eb2e6396fc94b5e42706be1fcde7270",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "'fat' & 'rat'"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "'cat' | 'dog'"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro#0014",
+      "source": "testing/go/postgres16/type_correctness_repro_test.go:TestCommonBuiltinTypesRoundTripRepro",
+      "ordinal": 14,
+      "scriptName": "tsvector column round trip",
+      "oracle": "postgres",
+      "postgresId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0014-select-id-doc-from-tsvector_round_trip_items",
+      "suggestedId": "type-correctness-repro-test-testcommonbuiltintypesroundtriprepro-0014-select-id-doc-from-tsvector_round_trip_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, doc FROM tsvector_round_trip_items ORDER BY id;",
+      "querySha256": "1e0ec3d21523710666bb8e683b1d62fb6ab0fcb7448a3177664a0ed47dc8ecf1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "'a' 'cat' 'fat' 'sat'"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "'a' 'dog' 'ran'"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

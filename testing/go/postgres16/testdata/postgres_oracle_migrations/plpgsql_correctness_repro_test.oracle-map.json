@@ -1,0 +1,1088 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map plpgsql_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/plpgsql_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlCaseWithoutElseRaisesCaseNotFoundRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlCaseWithoutElseRaisesCaseNotFoundRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL CASE without ELSE raises case_not_found",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlcasewithoutelseraisescasenotfoundrepro-0001-select-plpgsql_case_without_else-1",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlcasewithoutelseraisescasenotfoundrepro-0001-select-plpgsql_case_without_else-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_case_without_else(1);",
+      "querySha256": "8715fa10099b29ea16737bc05276e9c52732448ea783b72e9db28c45020f4d03",
+      "expectedRows": [
+        [
+          {
+            "value": "one"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlCaseWithoutElseRaisesCaseNotFoundRepro#0002",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlCaseWithoutElseRaisesCaseNotFoundRepro",
+      "ordinal": 2,
+      "scriptName": "PL/pgSQL CASE without ELSE raises case_not_found",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlcasewithoutelseraisescasenotfoundrepro-0002-select-plpgsql_case_without_else-2",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlcasewithoutelseraisescasenotfoundrepro-0002-select-plpgsql_case_without_else-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "20000",
+      "errorSeverity": "ERROR",
+      "query": "SELECT plpgsql_case_without_else(2);",
+      "querySha256": "cdd8269d8b75334345dd03831580d4604c4aa54ffb72f1066c9e5060af76922c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlRaiseRejectsDuplicateMessageOptionRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlRaiseRejectsDuplicateMessageOptionRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL RAISE rejects duplicate MESSAGE option",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlraiserejectsduplicatemessageoptionrepro-0001-select-plpgsql_raise_duplicate_message",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlraiserejectsduplicatemessageoptionrepro-0001-select-plpgsql_raise_duplicate_message",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT plpgsql_raise_duplicate_message();",
+      "querySha256": "bd74f2b0f664f1c9ddc8f563c88d9388b0e3a745921b816e5edc804e260ae51d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlRaiseRejectsDuplicateDetailOptionRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlRaiseRejectsDuplicateDetailOptionRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL RAISE rejects duplicate DETAIL option",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlraiserejectsduplicatedetailoptionrepro-0001-select-plpgsql_raise_duplicate_detail",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlraiserejectsduplicatedetailoptionrepro-0001-select-plpgsql_raise_duplicate_detail",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT plpgsql_raise_duplicate_detail();",
+      "querySha256": "f742f6b93a627c212eef8f005a563e0a627e4a9ea17222e3abf5b1cc39978a65",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlExceptionDiagnosticsRollbackRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlExceptionDiagnosticsRollbackRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL exception block exposes diagnostics and rolls back block",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlexceptiondiagnosticsrollbackrepro-0001-select-plpgsql_exception_diag",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlexceptiondiagnosticsrollbackrepro-0001-select-plpgsql_exception_diag",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_exception_diag();",
+      "querySha256": "18d3d61210bd24a764d6e73d2257464459a3c4c60eddc340dac1ea0c9fdbbd09",
+      "expectedRows": [
+        [
+          {
+            "value": "22012:broken thing"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlExceptionDiagnosticsRollbackRepro#0002",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlExceptionDiagnosticsRollbackRepro",
+      "ordinal": 2,
+      "scriptName": "PL/pgSQL exception block exposes diagnostics and rolls back block",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlexceptiondiagnosticsrollbackrepro-0002-select-id-from-plpgsql_exception_diag_items-order",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlexceptiondiagnosticsrollbackrepro-0002-select-id-from-plpgsql_exception_diag_items-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM plpgsql_exception_diag_items ORDER BY id;",
+      "querySha256": "ab41e9b57bd0181a129c4369c9aee2898033082933e88a58499791cd7a83e69f",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlExceptionSqlstateSqlerrmVariablesRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlExceptionSqlstateSqlerrmVariablesRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL exception handler exposes SQLSTATE and SQLERRM",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlexceptionsqlstatesqlerrmvariablesrepro-0001-select-plpgsql_exception_sqlstate_sqlerrm",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlexceptionsqlstatesqlerrmvariablesrepro-0001-select-plpgsql_exception_sqlstate_sqlerrm",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_exception_sqlstate_sqlerrm();",
+      "querySha256": "a94e246d702eb396934ef4c6b668acbfd86a425545a9c72941b0dc8dae290d6c",
+      "expectedRows": [
+        [
+          {
+            "value": "22012:special failure"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlBareRaiseRethrowsCurrentExceptionRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlBareRaiseRethrowsCurrentExceptionRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL bare RAISE rethrows current exception",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlbareraiserethrowscurrentexceptionrepro-0001-select-plpgsql_bare_raise_rethrow",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlbareraiserethrowscurrentexceptionrepro-0001-select-plpgsql_bare_raise_rethrow",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_bare_raise_rethrow();",
+      "querySha256": "19815593877d6b1a791ff9abcc22ecba8dc744cb4e595d272213e88dc6015a99",
+      "expectedRows": [
+        [
+          {
+            "value": "reraised failure"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlDynamicExecuteDoesNotChangeFoundRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlDynamicExecuteDoesNotChangeFoundRepro",
+      "ordinal": 1,
+      "scriptName": "dynamic EXECUTE INTO does not change FOUND",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqldynamicexecutedoesnotchangefoundrepro-0001-select-found_value-from-plpgsql_execute_found_seen-where",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqldynamicexecutedoesnotchangefoundrepro-0001-select-found_value-from-plpgsql_execute_found_seen-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT found_value FROM plpgsql_execute_found_seen WHERE marker = 'execute_into';",
+      "querySha256": "21d37f3cb01fbdb22e7d2249f4ddb66cfd36cd03633ee3f70e3e93d89cea8078",
+      "expectedRows": [
+        [
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlDynamicExecuteDoesNotChangeFoundRepro#0002",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlDynamicExecuteDoesNotChangeFoundRepro",
+      "ordinal": 2,
+      "scriptName": "dynamic EXECUTE DML does not change FOUND",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqldynamicexecutedoesnotchangefoundrepro-0002-select-found_value-affected-from-plpgsql_execute_dml_found_seen",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqldynamicexecutedoesnotchangefoundrepro-0002-select-found_value-affected-from-plpgsql_execute_dml_found_seen",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT found_value, affected FROM plpgsql_execute_dml_found_seen WHERE marker = 'execute_dml';",
+      "querySha256": "25b579a2702a7e0111024a873665e2039b3fd5b722aad43e15d5bc87bcb027e5",
+      "expectedRows": [
+        [
+          {
+            "value": "true"
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlDynamicExecuteIntoRecordRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlDynamicExecuteIntoRecordRepro",
+      "ordinal": 1,
+      "scriptName": "dynamic EXECUTE INTO populates RECORD fields",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqldynamicexecuteintorecordrepro-0001-select-plpgsql_execute_into_record",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqldynamicexecuteintorecordrepro-0001-select-plpgsql_execute_into_record",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_execute_into_record();",
+      "querySha256": "7840976c64c1024bfedb36fb7985da9ccb93936b617579c1f52817dcc24fc7c3",
+      "expectedRows": [
+        [
+          {
+            "value": "10:dynamic"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlNonVoidFunctionRequiresReturnValueRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlNonVoidFunctionRequiresReturnValueRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL non-void function requires return value",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlnonvoidfunctionrequiresreturnvaluerepro-0001-select-plpgsql_missing_return_value",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlnonvoidfunctionrequiresreturnvaluerepro-0001-select-plpgsql_missing_return_value",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2F005",
+      "errorSeverity": "ERROR",
+      "query": "SELECT plpgsql_missing_return_value();",
+      "querySha256": "fd7063a01c5e12374a578d458e556b681582e51611cf5472d15261a03d3a1d2d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlReturnStatementValidationRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlReturnStatementValidationRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL RETURN statements match result type",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlreturnstatementvalidationrepro-0001-create-function-plpgsql_nonvoid_bare_return-returns-int",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlreturnstatementvalidationrepro-0001-create-function-plpgsql_nonvoid_bare_return-returns-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "CREATE FUNCTION plpgsql_nonvoid_bare_return()\n\t\t\t\t\t\tRETURNS INT AS $$\n\t\t\t\t\t\tBEGIN\n\t\t\t\t\t\t\tRETURN;\n\t\t\t\t\t\tEND;\n\t\t\t\t\t\t$$ LANGUAGE plpgsql;",
+      "querySha256": "c852b70d2b781f809fdae9dc8ad01e18562ae4a2d5b4d3e7a662092a13c3e80c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlReturnStatementValidationRepro#0002",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlReturnStatementValidationRepro",
+      "ordinal": 2,
+      "scriptName": "PL/pgSQL RETURN statements match result type",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlreturnstatementvalidationrepro-0002-create-function-plpgsql_void_return_expression-returns-void",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlreturnstatementvalidationrepro-0002-create-function-plpgsql_void_return_expression-returns-void",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42804",
+      "errorSeverity": "ERROR",
+      "query": "CREATE FUNCTION plpgsql_void_return_expression()\n\t\t\t\t\t\tRETURNS VOID AS $$\n\t\t\t\t\t\tBEGIN\n\t\t\t\t\t\t\tRETURN 5;\n\t\t\t\t\t\tEND;\n\t\t\t\t\t\t$$ LANGUAGE plpgsql;",
+      "querySha256": "888a93b927d18d478ab943fa35e0f46eabcb5d6082666ff3b70e8a15941a990e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlSelectIntoStrictCardinalityRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlSelectIntoStrictCardinalityRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL SELECT INTO STRICT enforces cardinality",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlselectintostrictcardinalityrepro-0001-select-plpgsql_strict_label-1",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlselectintostrictcardinalityrepro-0001-select-plpgsql_strict_label-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_strict_label(1);",
+      "querySha256": "7baf92c9ef86fccfc62baa19a69eabdbd221e3391d63916ec00e811b7c75e930",
+      "expectedRows": [
+        [
+          {
+            "value": "one"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlSelectIntoStrictCardinalityRepro#0002",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlSelectIntoStrictCardinalityRepro",
+      "ordinal": 2,
+      "scriptName": "PL/pgSQL SELECT INTO STRICT enforces cardinality",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlselectintostrictcardinalityrepro-0002-select-plpgsql_strict_label-999",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlselectintostrictcardinalityrepro-0002-select-plpgsql_strict_label-999",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "P0002",
+      "errorSeverity": "ERROR",
+      "query": "SELECT plpgsql_strict_label(999);",
+      "querySha256": "5c5e5a7ef65ca46ccf10d595e8af7a43840c39af38b9b06aa258b2cc3fbe3cae",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlSelectIntoStrictCardinalityRepro#0003",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlSelectIntoStrictCardinalityRepro",
+      "ordinal": 3,
+      "scriptName": "PL/pgSQL SELECT INTO STRICT enforces cardinality",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlselectintostrictcardinalityrepro-0003-select-plpgsql_strict_any_label",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlselectintostrictcardinalityrepro-0003-select-plpgsql_strict_any_label",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "P0003",
+      "errorSeverity": "ERROR",
+      "query": "SELECT plpgsql_strict_any_label();",
+      "querySha256": "e216f116dc836d74417f470c11d38fcd7848e3bf44275358a191d64e9b0f4e9e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlAliasVariablesResolveRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlAliasVariablesResolveRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL ALIAS variables resolve",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlaliasvariablesresolverepro-0001-select-plpgsql_alias_echo-aliased-value",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlaliasvariablesresolverepro-0001-select-plpgsql_alias_echo-aliased-value",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_alias_echo('aliased value');",
+      "querySha256": "0e77493e74959465ee6e563407b285ab23143b67ad3f063ff70f9875befcc28b",
+      "expectedRows": [
+        [
+          {
+            "value": "aliased value"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlReturnsTableCompositeVariableRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlReturnsTableCompositeVariableRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL returns table-typed composite variable",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlreturnstablecompositevariablerepro-0001-select-plpgsql_composite_single_return-::text",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlreturnstablecompositevariablerepro-0001-select-plpgsql_composite_single_return-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_composite_single_return()::text;",
+      "querySha256": "5fbb66303142580cb66d4da20df4bea2d62d8ab1abe3d26baf95352a0a8d9296",
+      "expectedRows": [
+        [
+          {
+            "value": "(1,apple,3,2.5)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlTableStarCompositeArgumentRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlTableStarCompositeArgumentRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL accepts table star composite argument",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqltablestarcompositeargumentrepro-0001-select-plpgsql_table_star_total-item.*-from-plpgsql_table_star_items",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqltablestarcompositeargumentrepro-0001-select-plpgsql_table_star_total-item.*-from-plpgsql_table_star_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_table_star_total(item.*)\n\t\t\t\t\t\tFROM plpgsql_table_star_items AS item\n\t\t\t\t\t\tORDER BY item.id;",
+      "querySha256": "b57e967ecd426cfdd41394078f2cb3769d63852c9b7926b541737ce373023f57",
+      "expectedRows": [
+        [
+          {
+            "value": "7.5"
+          }
+        ],
+        [
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlReturnNextSetofScalarRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlReturnNextSetofScalarRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL RETURN NEXT emits scalar SETOF rows",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlreturnnextsetofscalarrepro-0001-select-*-from-plpgsql_return_next_scalar-7",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlreturnnextsetofscalarrepro-0001-select-*-from-plpgsql_return_next_scalar-7",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM plpgsql_return_next_scalar(7);",
+      "querySha256": "da992560bb73cc109c5acf74b5319bc5d8b5041816d9c7843149425f5f5a2320",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ],
+        [
+          {
+            "value": "8"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlReturnNextRecordVariableRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlReturnNextRecordVariableRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL RETURN NEXT emits RECORD rows",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlreturnnextrecordvariablerepro-0001-select-id-label-from-plpgsql_return_next_record_rows",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlreturnnextrecordvariablerepro-0001-select-id-label-from-plpgsql_return_next_record_rows",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM plpgsql_return_next_record_rows();",
+      "querySha256": "cef6426b9978b75c36e4c0ee9f5fd082f5d2d91da05f9f8c106800f89286cf1d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "one"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "two"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlReturnQueryExecuteRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlReturnQueryExecuteRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL RETURN QUERY EXECUTE emits scalar SETOF rows",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlreturnqueryexecuterepro-0001-select-*-from-plpgsql_return_query_execute",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlreturnqueryexecuterepro-0001-select-*-from-plpgsql_return_query_execute",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM plpgsql_return_query_execute();",
+      "querySha256": "51d06c7d9db4d0e6c2c0db8796f4ebf1a830273c5babf48eb976264c7411899f",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "40"
+          }
+        ],
+        [
+          {
+            "value": "50"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlForQueryLoopUpdatesFoundRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlForQueryLoopUpdatesFoundRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL FOR query loop updates FOUND",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlforqueryloopupdatesfoundrepro-0001-select-plpgsql_for_query_found-true",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlforqueryloopupdatesfoundrepro-0001-select-plpgsql_for_query_found-true",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_for_query_found(true);",
+      "querySha256": "83e5f58ebf9917d58037771362e9b390fa9d03431d1a1af6bcb6b708daf3f4c7",
+      "expectedRows": [
+        [
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlForQueryLoopUpdatesFoundRepro#0002",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlForQueryLoopUpdatesFoundRepro",
+      "ordinal": 2,
+      "scriptName": "PL/pgSQL FOR query loop updates FOUND",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlforqueryloopupdatesfoundrepro-0002-select-plpgsql_for_query_found-false",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlforqueryloopupdatesfoundrepro-0002-select-plpgsql_for_query_found-false",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_for_query_found(false);",
+      "querySha256": "5b74adbbb45f7500173c1068711242305bae43f9b993fa4cb27e8e996843610a",
+      "expectedRows": [
+        [
+          {
+            "value": "false"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlForIntegerLoopUpdatesFoundRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlForIntegerLoopUpdatesFoundRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL integer FOR loop updates FOUND",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlforintegerloopupdatesfoundrepro-0001-select-plpgsql_for_integer_found-1-2",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlforintegerloopupdatesfoundrepro-0001-select-plpgsql_for_integer_found-1-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_for_integer_found(1, 2);",
+      "querySha256": "271b8f9e48281d2d63e5b6a049bc6ff388e5acee571be136b825cf140cb36986",
+      "expectedRows": [
+        [
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlForIntegerLoopUpdatesFoundRepro#0002",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlForIntegerLoopUpdatesFoundRepro",
+      "ordinal": 2,
+      "scriptName": "PL/pgSQL integer FOR loop updates FOUND",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlforintegerloopupdatesfoundrepro-0002-select-plpgsql_for_integer_found-2-1",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlforintegerloopupdatesfoundrepro-0002-select-plpgsql_for_integer_found-2-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_for_integer_found(2, 1);",
+      "querySha256": "79b21be95ab463ce358e8c74d9f5d3fc503354ee90b711b58e479e3b5fa47128",
+      "expectedRows": [
+        [
+          {
+            "value": "false"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlForInExecuteLoopRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlForInExecuteLoopRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL FOR IN EXECUTE iterates dynamic query rows",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlforinexecutelooprepro-0001-select-plpgsql_for_execute_sum",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlforinexecutelooprepro-0001-select-plpgsql_for_execute_sum",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_for_execute_sum();",
+      "querySha256": "b56ab2015b5bfa8612b89ec420063d2c6b219e6a32848b28a93062fd3ed0460b",
+      "expectedRows": [
+        [
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlDmlReturningIntoRejectsMultipleRowsRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlDmlReturningIntoRejectsMultipleRowsRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL DML RETURNING INTO rejects multiple rows atomically",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqldmlreturningintorejectsmultiplerowsrepro-0001-select-plpgsql_returning_multi",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqldmlreturningintorejectsmultiplerowsrepro-0001-select-plpgsql_returning_multi",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "P0003",
+      "errorSeverity": "ERROR",
+      "query": "SELECT plpgsql_returning_multi();",
+      "querySha256": "46d4a025e0b8fbd72966c3d913db96636968dabaca695d7d0eb83b4127822500",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlDmlReturningIntoRejectsMultipleRowsRepro#0002",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlDmlReturningIntoRejectsMultipleRowsRepro",
+      "ordinal": 2,
+      "scriptName": "PL/pgSQL DML RETURNING INTO rejects multiple rows atomically",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqldmlreturningintorejectsmultiplerowsrepro-0002-select-count-*-from-plpgsql_returning_multi_items",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqldmlreturningintorejectsmultiplerowsrepro-0002-select-count-*-from-plpgsql_returning_multi_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM plpgsql_returning_multi_items;",
+      "querySha256": "1371fa08dbb3650c784a237ea5d5902d7f542228331f1ca405e7aa7bf55027f6",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlUpdateReturningIntoRejectsMultipleRowsRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlUpdateReturningIntoRejectsMultipleRowsRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL UPDATE RETURNING INTO rejects multiple rows atomically",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlupdatereturningintorejectsmultiplerowsrepro-0001-select-plpgsql_update_returning_multi",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlupdatereturningintorejectsmultiplerowsrepro-0001-select-plpgsql_update_returning_multi",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "P0003",
+      "errorSeverity": "ERROR",
+      "query": "SELECT plpgsql_update_returning_multi();",
+      "querySha256": "db8692bd49480e5108490968eff467f5a6b95a5d70501a9a937094e996bd8faf",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlUpdateReturningIntoRejectsMultipleRowsRepro#0002",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlUpdateReturningIntoRejectsMultipleRowsRepro",
+      "ordinal": 2,
+      "scriptName": "PL/pgSQL UPDATE RETURNING INTO rejects multiple rows atomically",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlupdatereturningintorejectsmultiplerowsrepro-0002-select-count-*-from-plpgsql_update_returning_multi_items",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlupdatereturningintorejectsmultiplerowsrepro-0002-select-count-*-from-plpgsql_update_returning_multi_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM plpgsql_update_returning_multi_items WHERE touched;",
+      "querySha256": "37fba25a896ecaf2dcd078b0c439ab8e0e2971d13b86810906fdf57623befa8e",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlDeleteReturningIntoRejectsMultipleRowsRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlDeleteReturningIntoRejectsMultipleRowsRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL DELETE RETURNING INTO rejects multiple rows atomically",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqldeletereturningintorejectsmultiplerowsrepro-0001-select-plpgsql_delete_returning_multi",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqldeletereturningintorejectsmultiplerowsrepro-0001-select-plpgsql_delete_returning_multi",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "P0003",
+      "errorSeverity": "ERROR",
+      "query": "SELECT plpgsql_delete_returning_multi();",
+      "querySha256": "89699bc8ffe50d962450834b66e49c642cb75aff07099cc69f894ef465a71fb6",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlDeleteReturningIntoRejectsMultipleRowsRepro#0002",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlDeleteReturningIntoRejectsMultipleRowsRepro",
+      "ordinal": 2,
+      "scriptName": "PL/pgSQL DELETE RETURNING INTO rejects multiple rows atomically",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqldeletereturningintorejectsmultiplerowsrepro-0002-select-count-*-from-plpgsql_delete_returning_multi_items",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqldeletereturningintorejectsmultiplerowsrepro-0002-select-count-*-from-plpgsql_delete_returning_multi_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM plpgsql_delete_returning_multi_items;",
+      "querySha256": "20fef40b7ac7ca50945642dcf4bbafa8da4b83dc6e917dcc7d060cff4da73066",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlProcedureCommitPersistsPriorWorkRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlProcedureCommitPersistsPriorWorkRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL procedure COMMIT persists prior work before later error",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlprocedurecommitpersistspriorworkrepro-0001-call-plpgsql_proc_commit_then_fail",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlprocedurecommitpersistspriorworkrepro-0001-call-plpgsql_proc_commit_then_fail",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
+      "query": "CALL plpgsql_proc_commit_then_fail();",
+      "querySha256": "9b1a6fd4a8d8a32e7fb91ba327767bb50e7adc48c9b7d8d470771359c43e36e3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlProcedureCommitPersistsPriorWorkRepro#0002",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlProcedureCommitPersistsPriorWorkRepro",
+      "ordinal": 2,
+      "scriptName": "PL/pgSQL procedure COMMIT persists prior work before later error",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlprocedurecommitpersistspriorworkrepro-0002-select-id-from-plpgsql_proc_commit_items-order",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlprocedurecommitpersistspriorworkrepro-0002-select-id-from-plpgsql_proc_commit_items-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM plpgsql_proc_commit_items ORDER BY id;",
+      "querySha256": "5999c7374b33960b02a8e6450848ab1a0e8b46e08befec17f4c93ca7b0f47cf3",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlProcedureRollbackDiscardsPriorWorkRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlProcedureRollbackDiscardsPriorWorkRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL procedure ROLLBACK discards prior work and continues",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlprocedurerollbackdiscardspriorworkrepro-0001-select-id-from-plpgsql_proc_rollback_items-order",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlprocedurerollbackdiscardspriorworkrepro-0001-select-id-from-plpgsql_proc_rollback_items-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM plpgsql_proc_rollback_items ORDER BY id;",
+      "querySha256": "2d6f2065d5e9780d9a8cd7581247f520cbd68a580d1f1ac2ecdb1db43bbcc76c",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlForeachArrayLoopRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlForeachArrayLoopRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL FOREACH iterates array values",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlforeacharraylooprepro-0001-select-plpgsql_foreach_array_sum-array[1-2-3",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlforeacharraylooprepro-0001-select-plpgsql_foreach_array_sum-array[1-2-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_foreach_array_sum(ARRAY[1, 2, 3, 4]);",
+      "querySha256": "bb3c1db25f02d7f0c86ed15591b2db782c44ea4de9f5a55c595ec3e09e95b18e",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlForeachSliceArrayLoopRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlForeachSliceArrayLoopRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL FOREACH SLICE iterates multidimensional array rows",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlforeachslicearraylooprepro-0001-select-plpgsql_foreach_slice_sum-array[[1-2]-[3",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlforeachslicearraylooprepro-0001-select-plpgsql_foreach_slice_sum-array[[1-2]-[3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_foreach_slice_sum(ARRAY[[1, 2], [3, 4]]);",
+      "querySha256": "cffe72087da3ab38a8c9babafa2859a29369a8d4c22b4383ba40a6e033c652f8",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlColumnTypeDeclarationRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlColumnTypeDeclarationRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL variable uses table column percent TYPE",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlcolumntypedeclarationrepro-0001-select-plpgsql_column_type_echo-sample",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlcolumntypedeclarationrepro-0001-select-plpgsql_column_type_echo-sample",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_column_type_echo('sample');",
+      "querySha256": "eb1d01cf318b72a55d52c23fe316ee0aa81b6537585ba5cac0896eb6adce26b5",
+      "expectedRows": [
+        [
+          {
+            "value": "sample"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlRowTypeDeclarationRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlRowTypeDeclarationRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL variable uses table percent ROWTYPE",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlrowtypedeclarationrepro-0001-select-plpgsql_rowtype_label-1",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlrowtypedeclarationrepro-0001-select-plpgsql_rowtype_label-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_rowtype_label(1);",
+      "querySha256": "a95842be92df9e601516580fa1a37cf0954e4c8cc3abf6916963e80d6cc82943",
+      "expectedRows": [
+        [
+          {
+            "value": "first"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlDomainVariableAssignmentChecksConstraintRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlDomainVariableAssignmentChecksConstraintRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL domain variable assignment checks constraint",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqldomainvariableassignmentchecksconstraintrepro-0001-select-plpgsql_domain_assignment_bad",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqldomainvariableassignmentchecksconstraintrepro-0001-select-plpgsql_domain_assignment_bad",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "SELECT plpgsql_domain_assignment_bad();",
+      "querySha256": "90a9592045644b05ffd8b742155084fe65e8b6941e8bd419cb95af175ac2ea52",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlNotNullVariableRejectsNullAssignmentRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlNotNullVariableRejectsNullAssignmentRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL NOT NULL variable rejects NULL assignment",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlnotnullvariablerejectsnullassignmentrepro-0001-select-plpgsql_not_null_assignment",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlnotnullvariablerejectsnullassignmentrepro-0001-select-plpgsql_not_null_assignment",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22004",
+      "errorSeverity": "ERROR",
+      "query": "SELECT plpgsql_not_null_assignment();",
+      "querySha256": "04845f4583599c49b25727f6880b3b1fb3d7c5107ec003259fd008211588e8d0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlAssertStatementRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlAssertStatementRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL ASSERT checks conditions",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlassertstatementrepro-0001-select-plpgsql_assert_positive-5",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlassertstatementrepro-0001-select-plpgsql_assert_positive-5",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_assert_positive(5);",
+      "querySha256": "022adc95953dc751fd6bedd32f1b34ad37f4902320f52fb0e542e9e2e0dbed76",
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlAssertStatementRepro#0002",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlAssertStatementRepro",
+      "ordinal": 2,
+      "scriptName": "PL/pgSQL ASSERT checks conditions",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlassertstatementrepro-0002-select-plpgsql_assert_positive-0",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlassertstatementrepro-0002-select-plpgsql_assert_positive-0",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "P0004",
+      "errorSeverity": "ERROR",
+      "query": "SELECT plpgsql_assert_positive(0);",
+      "querySha256": "2125bb3f69b1383322ae47cc4b577338fb636cdc58334473404e18a5798baac0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlExplicitCursorFetchLoopRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlExplicitCursorFetchLoopRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL explicit cursor fetch loop sums rows",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlexplicitcursorfetchlooprepro-0001-select-plpgsql_cursor_fetch_sum",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlexplicitcursorfetchlooprepro-0001-select-plpgsql_cursor_fetch_sum",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_cursor_fetch_sum();",
+      "querySha256": "cd05390bdaaf98c08aeb9c1a4ff88316b417c7c68b569ae5803f748c0b39660f",
+      "expectedRows": [
+        [
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlCursorParametersRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlCursorParametersRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL cursor parameters filter rows",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlcursorparametersrepro-0001-select-plpgsql_cursor_param_sum-2-3",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlcursorparametersrepro-0001-select-plpgsql_cursor_param_sum-2-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_cursor_param_sum(2, 3);",
+      "querySha256": "62af7282420107abed27933112d73554561a6d1ae37ff59c2e73de872857edcf",
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlFunctionReturnsRefcursorRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlFunctionReturnsRefcursorRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL function returns fetchable refcursor",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlfunctionreturnsrefcursorrepro-0001-select-plpgsql_open_refcursor-plpgsql_item_cursor",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlfunctionreturnsrefcursorrepro-0001-select-plpgsql_open_refcursor-plpgsql_item_cursor",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plpgsql_open_refcursor('plpgsql_item_cursor');",
+      "querySha256": "5d7cdd67524b04933860af628937970a1ce8dec272c8d98ef8b01489796026ea",
+      "expectedRows": [
+        [
+          {
+            "value": "plpgsql_item_cursor"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlFunctionReturnsRefcursorRepro#0002",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlFunctionReturnsRefcursorRepro",
+      "ordinal": 2,
+      "scriptName": "PL/pgSQL function returns fetchable refcursor",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlfunctionreturnsrefcursorrepro-0002-fetch-all-from-plpgsql_item_cursor",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlfunctionreturnsrefcursorrepro-0002-fetch-all-from-plpgsql_item_cursor",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "FETCH ALL FROM plpgsql_item_cursor;",
+      "querySha256": "8025a8175f65588d5ff8ba4984b3880953ffd4a98c8f1bc050f14c1bb224f087",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlFunctionOutParametersReturnRowsRepro#0001",
+      "source": "testing/go/postgres16/plpgsql_correctness_repro_test.go:TestPlpgsqlFunctionOutParametersReturnRowsRepro",
+      "ordinal": 1,
+      "scriptName": "PL/pgSQL function OUT parameters are callable by input args",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlfunctionoutparametersreturnrowsrepro-0001-select-*-from-plpgsql_out_parameter_values-4",
+      "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlfunctionoutparametersreturnrowsrepro-0001-select-*-from-plpgsql_out_parameter_values-4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM plpgsql_out_parameter_values(4);",
+      "querySha256": "cd96efb5bcf85f5ded255858eb1ac66f3aca534a483bfc5a7d73c0fbd545d6f3",
+      "expectedRows": [
+        [
+          {
+            "value": "8"
+          },
+          {
+            "value": "12"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}
