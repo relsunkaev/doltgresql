@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"strconv"
 	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
@@ -391,6 +392,7 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 	nameSchemaIdx := NewNonUniqueInMemIndexStorage[*pgConstraint](lessConstraintNameSchema)
 	relidTypNameIdx := NewUniqueInMemIndexStorage[*pgConstraint](lessConstraintRelidTypeName)
 	typIdx := NewNonUniqueInMemIndexStorage[*pgConstraint](lessConstraintType)
+	exposeNotNullConstraints := shouldExposeNotNullConstraints(ctx)
 
 	// We iterate over all tables first to obtain their OIDs, which we'll need to reference for foreign keys
 	err := functions.IterateCurrentDatabase(ctx, functions.Callbacks{
@@ -419,37 +421,39 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 			if commented, ok := table.Item.(sql.CommentedTable); ok {
 				tableComment = commented.Comment()
 			}
-			for i, col := range table.Item.Schema(ctx) {
-				if col.Nullable || col.HiddenSystem {
-					continue
-				}
-				constraintName := notNullConstraintName(table.Item.Name(), col.Name)
-				constraintNoInherit := false
-				if metadata, ok := tablemetadata.NotNullConstraintMetadata(tableComment, col.Name); ok {
-					if metadata.Name != "" {
-						constraintName = metadata.Name
+			if exposeNotNullConstraints {
+				for i, col := range table.Item.Schema(ctx) {
+					if col.Nullable || col.HiddenSystem {
+						continue
 					}
-					constraintNoInherit = metadata.NoInherit
+					constraintName := notNullConstraintName(table.Item.Name(), col.Name)
+					constraintNoInherit := false
+					if metadata, ok := tablemetadata.NotNullConstraintMetadata(tableComment, col.Name); ok {
+						if metadata.Name != "" {
+							constraintName = metadata.Name
+						}
+						constraintNoInherit = metadata.NoInherit
+					}
+					constraintOid := id.NewCheck(schema.Item.SchemaName(), table.Item.Name(), constraintName)
+					constraint := &pgConstraint{
+						oid:             constraintOid.AsId(),
+						oidNative:       id.Cache().ToOID(constraintOid.AsId()),
+						name:            constraintName,
+						schemaOid:       schema.OID.AsId(),
+						schemaOidNative: id.Cache().ToOID(schema.OID.AsId()),
+						conType:         "n",
+						tableOid:        table.OID.AsId(),
+						tableOidNative:  id.Cache().ToOID(table.OID.AsId()),
+						typeOid:         id.Id(id.NewOID(0)),
+						conKey:          []any{int16(i + 1)},
+						conNoInherit:    constraintNoInherit,
+					}
+					oidIdx.Add(constraint)
+					relidTypNameIdx.Add(constraint)
+					nameSchemaIdx.Add(constraint)
+					typIdx.Add(constraint)
+					constraints = append(constraints, constraint)
 				}
-				constraintOid := id.NewCheck(schema.Item.SchemaName(), table.Item.Name(), constraintName)
-				constraint := &pgConstraint{
-					oid:             constraintOid.AsId(),
-					oidNative:       id.Cache().ToOID(constraintOid.AsId()),
-					name:            constraintName,
-					schemaOid:       schema.OID.AsId(),
-					schemaOidNative: id.Cache().ToOID(schema.OID.AsId()),
-					conType:         "n",
-					tableOid:        table.OID.AsId(),
-					tableOidNative:  id.Cache().ToOID(table.OID.AsId()),
-					typeOid:         id.Id(id.NewOID(0)),
-					conKey:          []any{int16(i + 1)},
-					conNoInherit:    constraintNoInherit,
-				}
-				oidIdx.Add(constraint)
-				relidTypNameIdx.Add(constraint)
-				nameSchemaIdx.Add(constraint)
-				typIdx.Add(constraint)
-				constraints = append(constraints, constraint)
 			}
 			return true, nil
 		},
@@ -625,6 +629,15 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 
 func notNullConstraintName(tableName string, columnName string) string {
 	return fmt.Sprintf("%s_%s_not_null", tableName, columnName)
+}
+
+func shouldExposeNotNullConstraints(ctx *sql.Context) bool {
+	versionValue, err := ctx.GetSessionVariable(ctx, "server_version_num")
+	if err != nil {
+		return false
+	}
+	version, err := strconv.Atoi(fmt.Sprint(versionValue))
+	return err == nil && version >= 180000
 }
 
 func foreignKeyReferencedIndexOID(ctx *sql.Context, schema functions.ItemSchema, parentTable sql.Table, foreignKey sql.ForeignKeyConstraint) (id.Id, error) {
