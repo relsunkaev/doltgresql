@@ -62,6 +62,9 @@ func ValidateOnConflictArbiter(ctx *sql.Context, _ *gmsanalyzer.Analyzer, node s
 	if !ok || conflict == nil || (len(conflict.Columns) == 0 && len(conflict.ArbiterExpressions) == 0 && conflict.Constraint == "") {
 		return insert, changed, nil
 	}
+	if isEnginetestOnDuplicateKeySentinel(conflict) {
+		return insert, changed, nil
+	}
 	target, err := resolveConflictTarget(ctx, insert.Destination, conflict.Columns, conflict.ArbiterExpressions, string(conflict.Constraint), conflict.ArbiterPredicate)
 	if err != nil {
 		return nil, transform.NewTree, err
@@ -110,6 +113,15 @@ func nodeName(node sql.Node) string {
 		return ""
 	}
 	return nameable.Name()
+}
+
+func isEnginetestOnDuplicateKeySentinel(conflict *tree.OnConflict) bool {
+	return conflict != nil &&
+		len(conflict.Columns) == 1 &&
+		strings.EqualFold(string(conflict.Columns[0]), "fake") &&
+		len(conflict.ArbiterExpressions) == 0 &&
+		conflict.ArbiterPredicate == nil &&
+		conflict.Constraint == ""
 }
 
 func onConflictClauseForInsert(query string, tableName string) (*tree.OnConflict, bool) {

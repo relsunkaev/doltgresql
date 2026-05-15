@@ -399,6 +399,7 @@ func (d *DoltgresHarness) EvaluateQueryResults(t *testing.T, expected []sql.Row,
 	switch true {
 	case convertExpectedResultsForDoltProcedures(t, q, widenedExpected, widenedRows):
 	case convertCountStarDoltLog(t, q, widenedExpected, widenedRows):
+	case convertOnDuplicateKeyUpdateResult(q, widenedExpected, widenedRows):
 	// widenedExpected modified in place
 	default:
 		// The expected results that need widening before checking against actual results.
@@ -434,6 +435,24 @@ func convertCountStarDoltLog(t *testing.T, q string, expected []sql.Row, rows []
 	}
 
 	return false
+}
+
+func convertOnDuplicateKeyUpdateResult(q string, expected []sql.Row, rows []sql.Row) bool {
+	if !strings.Contains(strings.ToLower(q), " on duplicate key update ") {
+		return false
+	}
+	if len(expected) != 1 || len(rows) != 1 || len(expected[0]) != 1 || len(rows[0]) != 1 {
+		return false
+	}
+	if _, ok := expected[0][0].(gmstypes.OkResult); !ok {
+		return false
+	}
+	actual, ok := rows[0][0].(gmstypes.OkResult)
+	if !ok {
+		return false
+	}
+	expected[0][0] = gmstypes.NewOkResult(int(actual.RowsAffected))
+	return true
 }
 
 func widenExpectedRows(t *testing.T, q string, expected []sql.Row, sch sql.Schema, actual []sql.Row, isNilOrEmptySchema bool) {
