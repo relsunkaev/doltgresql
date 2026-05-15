@@ -220,143 +220,263 @@
       "source": "testing/go/extension_dependency_repro_test.go:TestAlterExtensionSetSchemaMovesObjectsRepro",
       "ordinal": 1,
       "scriptName": "ALTER EXTENSION SET SCHEMA moves extension objects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "extension-dependency-repro-test-testalterextensionsetschemamovesobjectsrepro-0001-select-n.nspname-from-pg_catalog.pg_extension-e",
       "suggestedId": "extension-dependency-repro-test-testalterextensionsetschemamovesobjectsrepro-0001-select-n.nspname-from-pg_catalog.pg_extension-e",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT n.nspname\n\t\t\t\t\t\tFROM pg_catalog.pg_extension e\n\t\t\t\t\t\tJOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace\n\t\t\t\t\t\tWHERE e.extname = 'hstore';",
       "querySha256": "5f1cc6c01ab22bff1cd7e5d08436abc0e22a62be70ad5bd7b13751d81dbe9cd7",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "extension_move_target"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP SCHEMA IF EXISTS extension_move_target CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/extension_dependency_repro_test.go:TestAlterExtensionSetSchemaMovesObjectsRepro#0002",
       "source": "testing/go/extension_dependency_repro_test.go:TestAlterExtensionSetSchemaMovesObjectsRepro",
       "ordinal": 2,
       "scriptName": "ALTER EXTENSION SET SCHEMA moves extension objects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "extension-dependency-repro-test-testalterextensionsetschemamovesobjectsrepro-0002-select-to_regtype-extension_move_target.hstore-::text",
       "suggestedId": "extension-dependency-repro-test-testalterextensionsetschemamovesobjectsrepro-0002-select-to_regtype-extension_move_target.hstore-::text",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT to_regtype('extension_move_target.hstore')::text;",
       "querySha256": "e3e6f3fe373c0d4077e00ea8f36c8cd7221f583aec04c7fb8680472eee37301c",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "extension_move_target.hstore"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP SCHEMA IF EXISTS extension_move_target CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/extension_dependency_repro_test.go:TestAlterExtensionSetSchemaMovesObjectsRepro#0003",
       "source": "testing/go/extension_dependency_repro_test.go:TestAlterExtensionSetSchemaMovesObjectsRepro",
       "ordinal": 3,
       "scriptName": "ALTER EXTENSION SET SCHEMA moves extension objects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "extension-dependency-repro-test-testalterextensionsetschemamovesobjectsrepro-0003-select-to_regtype-public.hstore-::text",
       "suggestedId": "extension-dependency-repro-test-testalterextensionsetschemamovesobjectsrepro-0003-select-to_regtype-public.hstore-::text",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT to_regtype('public.hstore')::text;",
       "querySha256": "75954bcfde3737d3c9ef05a71df7f11112c95c1251ea3a84abd3d622cfd33f46",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP SCHEMA IF EXISTS extension_move_target CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/extension_dependency_repro_test.go:TestAlterFunctionDependsOnExtensionRepro#0001",
       "source": "testing/go/extension_dependency_repro_test.go:TestAlterFunctionDependsOnExtensionRepro",
       "ordinal": 1,
       "scriptName": "ALTER FUNCTION DEPENDS ON EXTENSION records dependency",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0001-select-d.deptype-from-pg_catalog.pg_depend-d",
       "suggestedId": "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0001-select-d.deptype-from-pg_catalog.pg_depend-d",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT d.deptype\n\t\t\t\t\t\tFROM pg_catalog.pg_depend d\n\t\t\t\t\t\tJOIN pg_catalog.pg_proc p ON p.oid = d.objid\n\t\t\t\t\t\tJOIN pg_catalog.pg_extension e ON e.oid = d.refobjid\n\t\t\t\t\t\tWHERE p.proname = 'extension_dependent_function'\n\t\t\t\t\t\t\tAND e.extname = 'hstore';",
       "querySha256": "8b98b909ae609fcb9c8c93b2d06cd252be09be9e9ed1e74c1374e1fdaa0e2c12",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "x"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'extension_dependent_function' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/extension_dependency_repro_test.go:TestAlterFunctionDependsOnExtensionRepro#0002",
       "source": "testing/go/extension_dependency_repro_test.go:TestAlterFunctionDependsOnExtensionRepro",
       "ordinal": 2,
       "scriptName": "ALTER FUNCTION DEPENDS ON EXTENSION records dependency",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0002-drop-extension-hstore",
       "suggestedId": "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0002-drop-extension-hstore",
-      "expectedKind": "error",
+      "compare": "structural",
+      "expectedKind": "rows",
       "query": "DROP EXTENSION hstore;",
       "querySha256": "3555357445baa97b16836c3f1fb3950765c9651c8fd34490a6529ac5e07e322b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'extension_dependent_function' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/extension_dependency_repro_test.go:TestAlterFunctionDependsOnExtensionRepro#0003",
       "source": "testing/go/extension_dependency_repro_test.go:TestAlterFunctionDependsOnExtensionRepro",
       "ordinal": 3,
       "scriptName": "ALTER FUNCTION DEPENDS ON EXTENSION records dependency",
-      "oracle": "internal",
-      "suggestedId": "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0003-drop-extension-hstore-cascade",
+      "oracle": "postgres",
+      "postgresId": "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0003-drop-extension-if-exists-hstore",
+      "suggestedId": "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0003-drop-extension-if-exists-hstore",
+      "compare": "structural",
       "expectedKind": "rows",
-      "query": "DROP EXTENSION hstore CASCADE;",
-      "querySha256": "42655b655faf2b396161c6626864c871913d5a1e6d64592ea2d5774f98377baa",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "query": "DROP EXTENSION IF EXISTS hstore CASCADE;",
+      "querySha256": "83687163bb27713269e15229edeab280a12dafc73cc2c5d781e2a1261e444fce",
+      "expectedRows": [],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'extension_dependent_function' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/extension_dependency_repro_test.go:TestAlterFunctionDependsOnExtensionRepro#0004",
       "source": "testing/go/extension_dependency_repro_test.go:TestAlterFunctionDependsOnExtensionRepro",
       "ordinal": 4,
       "scriptName": "ALTER FUNCTION DEPENDS ON EXTENSION records dependency",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0004-select-count-*-=-0",
       "suggestedId": "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0004-select-count-*-=-0",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) = 0\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname = 'extension_dependent_function';",
       "querySha256": "0b230ccc4f01894bf510b6f630b703f435ee52b5e2b7e036857453d23a21657b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'extension_dependent_function' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/extension_dependency_repro_test.go:TestAlterFunctionDependsOnExtensionRepro#0005",
       "source": "testing/go/extension_dependency_repro_test.go:TestAlterFunctionDependsOnExtensionRepro",
       "ordinal": 5,
       "scriptName": "ALTER FUNCTION NO DEPENDS removes dependency",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0005-select-count-*-=-0",
       "suggestedId": "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0005-select-count-*-=-0",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) = 0\n\t\t\t\t\t\tFROM pg_catalog.pg_depend d\n\t\t\t\t\t\tJOIN pg_catalog.pg_proc p ON p.oid = d.objid\n\t\t\t\t\t\tJOIN pg_catalog.pg_extension e ON e.oid = d.refobjid\n\t\t\t\t\t\tWHERE p.proname = 'extension_independent_function'\n\t\t\t\t\t\t\tAND e.extname = 'hstore';",
       "querySha256": "9eea83124aba05139dfa0d348b65ea01604799db72aa5bbf6d5838cb47ec244d",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'extension_independent_function' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/extension_dependency_repro_test.go:TestAlterFunctionDependsOnExtensionRepro#0006",
       "source": "testing/go/extension_dependency_repro_test.go:TestAlterFunctionDependsOnExtensionRepro",
       "ordinal": 6,
       "scriptName": "ALTER FUNCTION NO DEPENDS removes dependency",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0006-drop-extension-hstore",
       "suggestedId": "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0006-drop-extension-hstore",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "DROP EXTENSION hstore;",
       "querySha256": "3555357445baa97b16836c3f1fb3950765c9651c8fd34490a6529ac5e07e322b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'extension_independent_function' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/extension_dependency_repro_test.go:TestAlterFunctionDependsOnExtensionRepro#0007",
       "source": "testing/go/extension_dependency_repro_test.go:TestAlterFunctionDependsOnExtensionRepro",
       "ordinal": 7,
       "scriptName": "ALTER FUNCTION NO DEPENDS removes dependency",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0007-select-count-*-=-1",
       "suggestedId": "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0007-select-count-*-=-1",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) = 1\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname = 'extension_independent_function';",
       "querySha256": "5948954bc46ef62734901e4fd5dfb48d20741cbfa3735c09ec7a3d939fae3529",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'extension_independent_function' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/extension_dependency_repro_test.go:TestDropExtensionRestrictRejectsDependentObjectsRepro#0001",
       "source": "testing/go/extension_dependency_repro_test.go:TestDropExtensionRestrictRejectsDependentObjectsRepro",
       "ordinal": 1,
       "scriptName": "DROP EXTENSION rejects dependent objects by default",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "extension-dependency-repro-test-testdropextensionrestrictrejectsdependentobjectsrepro-0001-drop-extension-hstore",
       "suggestedId": "extension-dependency-repro-test-testdropextensionrestrictrejectsdependentobjectsrepro-0001-drop-extension-hstore",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
       "query": "DROP EXTENSION hstore;",
       "querySha256": "3555357445baa97b16836c3f1fb3950765c9651c8fd34490a6529ac5e07e322b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS hstore_extension_dependents CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/extension_dependency_repro_test.go:TestDropExtensionRestrictRejectsDependentObjectsRepro#0002",
@@ -389,39 +509,66 @@
       "source": "testing/go/extension_dependency_repro_test.go:TestDropExtensionCascadeRemovesDependentColumnsRepro",
       "ordinal": 1,
       "scriptName": "DROP EXTENSION CASCADE removes dependent columns",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "extension-dependency-repro-test-testdropextensioncascaderemovesdependentcolumnsrepro-0001-select-column_name-from-information_schema.columns-where",
       "suggestedId": "extension-dependency-repro-test-testdropextensioncascaderemovesdependentcolumnsrepro-0001-select-column_name-from-information_schema.columns-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT column_name\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t\tAND table_name = 'hstore_extension_cascade_dependents'\n\t\t\t\t\t\t\tAND column_name = 'payload';",
       "querySha256": "aebc315c5cbdf00adf5bcee3304e6064d5874e42fd94ad4b650799cccd755276",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS hstore_extension_cascade_dependents CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/extension_dependency_repro_test.go:TestDropExtensionCascadeRemovesDependentColumnsRepro#0002",
       "source": "testing/go/extension_dependency_repro_test.go:TestDropExtensionCascadeRemovesDependentColumnsRepro",
       "ordinal": 2,
       "scriptName": "DROP EXTENSION CASCADE removes dependent columns",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "extension-dependency-repro-test-testdropextensioncascaderemovesdependentcolumnsrepro-0002-select-to_regtype-public.hstore-is-null",
       "suggestedId": "extension-dependency-repro-test-testdropextensioncascaderemovesdependentcolumnsrepro-0002-select-to_regtype-public.hstore-is-null",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT to_regtype('public.hstore') IS NULL;",
       "querySha256": "d636617eabb2681152421b0834c69be7531034a02c6f4a4c20c4dad448f0adf3",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS hstore_extension_cascade_dependents CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/extension_dependency_repro_test.go:TestDropExtensionMemberTypeRequiresDropExtensionRepro#0001",
       "source": "testing/go/extension_dependency_repro_test.go:TestDropExtensionMemberTypeRequiresDropExtensionRepro",
       "ordinal": 1,
       "scriptName": "DROP TYPE rejects extension member type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "extension-dependency-repro-test-testdropextensionmembertyperequiresdropextensionrepro-0001-drop-type-public.hstore",
       "suggestedId": "extension-dependency-repro-test-testdropextensionmembertyperequiresdropextensionrepro-0001-drop-type-public.hstore",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
       "query": "DROP TYPE public.hstore;",
       "querySha256": "a9141a8803b8f828d1fed4693bdad42e2bc5476b8cb0ea4db7fccd96df2ade0e",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/extension_dependency_repro_test.go:TestDropExtensionMemberTypeRequiresDropExtensionRepro#0002",

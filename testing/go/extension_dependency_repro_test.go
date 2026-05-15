@@ -165,16 +165,13 @@ func TestAlterExtensionSetSchemaMovesObjectsRepro(t *testing.T) {
 					Query: `SELECT n.nspname
 						FROM pg_catalog.pg_extension e
 						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
-						WHERE e.extname = 'hstore';`,
-					Expected: []sql.Row{{"extension_move_target"}},
+						WHERE e.extname = 'hstore';`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testalterextensionsetschemamovesobjectsrepro-0001-select-n.nspname-from-pg_catalog.pg_extension-e"},
 				},
 				{
-					Query:    `SELECT to_regtype('extension_move_target.hstore')::text;`,
-					Expected: []sql.Row{{"extension_move_target.hstore"}},
+					Query: `SELECT to_regtype('extension_move_target.hstore')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testalterextensionsetschemamovesobjectsrepro-0002-select-to_regtype-extension_move_target.hstore-::text"},
 				},
 				{
-					Query:    `SELECT to_regtype('public.hstore')::text;`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT to_regtype('public.hstore')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testalterextensionsetschemamovesobjectsrepro-0003-select-to_regtype-public.hstore-::text"},
 				},
 			},
 		},
@@ -183,7 +180,7 @@ func TestAlterExtensionSetSchemaMovesObjectsRepro(t *testing.T) {
 
 // TestAlterFunctionDependsOnExtensionRepro reproduces a routine dependency
 // gap: ALTER FUNCTION ... DEPENDS ON EXTENSION should record a pg_depend edge,
-// block DROP EXTENSION by default, and remove the function on CASCADE.
+// and drop the function with the extension.
 func TestAlterFunctionDependsOnExtensionRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -204,22 +201,18 @@ func TestAlterFunctionDependsOnExtensionRepro(t *testing.T) {
 						JOIN pg_catalog.pg_proc p ON p.oid = d.objid
 						JOIN pg_catalog.pg_extension e ON e.oid = d.refobjid
 						WHERE p.proname = 'extension_dependent_function'
-							AND e.extname = 'hstore';`,
-					Expected: []sql.Row{{"x"}},
+							AND e.extname = 'hstore';`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0001-select-d.deptype-from-pg_catalog.pg_depend-d"},
 				},
 				{
-					Query:       `DROP EXTENSION hstore;`,
-					ExpectedErr: `depend`,
+					Query: `DROP EXTENSION hstore;`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0002-drop-extension-hstore"},
 				},
 				{
-					Query:    `DROP EXTENSION hstore CASCADE;`,
-					Expected: []sql.Row{},
+					Query: `DROP EXTENSION IF EXISTS hstore CASCADE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0003-drop-extension-if-exists-hstore"},
 				},
 				{
 					Query: `SELECT count(*) = 0
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'extension_dependent_function';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE proname = 'extension_dependent_function';`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0004-select-count-*-=-0"},
 				},
 			},
 		},
@@ -243,18 +236,15 @@ func TestAlterFunctionDependsOnExtensionRepro(t *testing.T) {
 						JOIN pg_catalog.pg_proc p ON p.oid = d.objid
 						JOIN pg_catalog.pg_extension e ON e.oid = d.refobjid
 						WHERE p.proname = 'extension_independent_function'
-							AND e.extname = 'hstore';`,
-					Expected: []sql.Row{{"t"}},
+							AND e.extname = 'hstore';`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0005-select-count-*-=-0"},
 				},
 				{
-					Query:    `DROP EXTENSION hstore;`,
-					Expected: []sql.Row{},
+					Query: `DROP EXTENSION hstore;`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0006-drop-extension-hstore"},
 				},
 				{
 					Query: `SELECT count(*) = 1
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'extension_independent_function';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE proname = 'extension_independent_function';`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testalterfunctiondependsonextensionrepro-0007-select-count-*-=-1"},
 				},
 			},
 		},
@@ -277,8 +267,7 @@ func TestDropExtensionRestrictRejectsDependentObjectsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP EXTENSION hstore;`,
-					ExpectedErr: `depend`,
+					Query: `DROP EXTENSION hstore;`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testdropextensionrestrictrejectsdependentobjectsrepro-0001-drop-extension-hstore"},
 				},
 				{
 					Query: `SELECT extname
@@ -318,12 +307,10 @@ func TestDropExtensionCascadeRemovesDependentColumnsRepro(t *testing.T) {
 						FROM information_schema.columns
 						WHERE table_schema = 'public'
 							AND table_name = 'hstore_extension_cascade_dependents'
-							AND column_name = 'payload';`,
-					Expected: []sql.Row{},
+							AND column_name = 'payload';`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testdropextensioncascaderemovesdependentcolumnsrepro-0001-select-column_name-from-information_schema.columns-where"},
 				},
 				{
-					Query:    `SELECT to_regtype('public.hstore') IS NULL;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT to_regtype('public.hstore') IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testdropextensioncascaderemovesdependentcolumnsrepro-0002-select-to_regtype-public.hstore-is-null"},
 				},
 			},
 		},
@@ -342,8 +329,7 @@ func TestDropExtensionMemberTypeRequiresDropExtensionRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP TYPE public.hstore;`,
-					ExpectedErr: `extension`,
+					Query: `DROP TYPE public.hstore;`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testdropextensionmembertyperequiresdropextensionrepro-0001-drop-type-public.hstore"},
 				},
 				{
 					Query: `SELECT extname
