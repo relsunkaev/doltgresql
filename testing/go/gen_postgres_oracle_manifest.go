@@ -1578,7 +1578,8 @@ func hasDoltSpecificWorkflowSource(source string) bool {
 func hasDoltgresOnlySource(source string) bool {
 	sourceFile, _, _ := strings.Cut(source, ":")
 	switch sourceFile {
-	case "testing/go/show_test.go":
+	case "testing/go/index_test.go",
+		"testing/go/show_test.go":
 		return true
 	default:
 		return false

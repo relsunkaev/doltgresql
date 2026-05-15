@@ -189,7 +189,8 @@
       "query": "EXPLAIN SELECT id FROM jsonb_gin_lookup\nWHERE doc @\u003e '{\"a\":1}'\nORDER BY id;",
       "querySha256": "de2d4f99d083e3ca9044c9aa87c9cd2c254bcae7973568c955b492aa672da798",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": false,
       "cleanupProvided": false
@@ -587,6 +588,9 @@
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 = 2 ORDER BY pk;",
       "querySha256": "079642338c527bd62cf111ca45ee54da373f916f21c699c83bac02f39a3a2b1d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -641,6 +645,9 @@
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 \u003e 2 ORDER BY pk;",
       "querySha256": "a2ae9316be71665ca106d8869b76093fb76c1af157586c569575a8ba757105ab",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -687,6 +694,9 @@
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE (v1 \u003e 3 OR v1 \u003c 2) AND v1 \u003c\u003e 5 ORDER BY pk;",
       "querySha256": "518fc8ef72891bc0018874f5a8f7f703ffc18020d0fb41806466f62f90576d78",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -733,6 +743,9 @@
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 = 2 OR v1 = 4 ORDER BY pk;",
       "querySha256": "95d0808051611607e3634fb27260bd379fb019a922b33761eeb602579d4dc010",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -779,6 +792,9 @@
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 IN (2, 4) ORDER BY pk;",
       "querySha256": "161f1c617b8434e90a0502a252b1850ce41279ccc0230866488be6485e9a7f54",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -825,6 +841,9 @@
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 IN (4, 2, 4, 2) ORDER BY pk;",
       "querySha256": "cd5efe7833350d7e43c6106e35564a5b6d43e8cb92f8725f991c1dc887f00a1a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -904,6 +923,9 @@
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 NOT IN (2, 4) ORDER BY pk;",
       "querySha256": "6c2af9e668544cb43d7e44b0aa9e840f1866ac7eb1c7c38049fbfbd7bc1bcb02",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -950,6 +972,9 @@
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 \u003e= 4 ORDER BY pk;",
       "querySha256": "a90be42103ac766f04b82e62ba3a170adc795d6c6bfb7c3da5a1cceeaaa55449",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1103,6 +1128,9 @@
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 \u003e 't' OR v1 \u003c 'f' ORDER BY pk;",
       "querySha256": "500ecd9b5cc4606dfc5f282c675da5dc297f645ca23e2386f806335ce8e82239",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1160,6 +1188,9 @@
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 = 2 AND v2 = 22 ORDER BY pk;",
       "querySha256": "155134726b586bdee9dafaa212c5c33fbc375dab3ce4e3beb3cc71fd31711182",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1173,6 +1204,9 @@
       "expectedKind": "rows",
       "query": "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
       "querySha256": "cb4f8c5e1a8f47bdf86cd5afafa0f03b304654cc70e6a73877f630f631d4a1de",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1186,6 +1220,9 @@
       "expectedKind": "rows",
       "query": "explain select * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
       "querySha256": "8bbc3f29b86e0c3d43dda8ba82716500ec05a3885b1c96b987996e3b2d5ff573",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1233,6 +1270,9 @@
       "expectedKind": "rows",
       "query": "explain select * from test join jointable on test.v1 = jointable.v3 and test.v2 = jointable.v4 order by 1",
       "querySha256": "f04ad6a6214719f68aa26bd18f4e1476729e1b86678e71eb4a778cf87dd8a95a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1536,6 +1576,9 @@
       "expectedKind": "rows",
       "query": "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
       "querySha256": "cb4f8c5e1a8f47bdf86cd5afafa0f03b304654cc70e6a73877f630f631d4a1de",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1549,6 +1592,9 @@
       "expectedKind": "rows",
       "query": "explain select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
       "querySha256": "157491b049529382e93c4d513dd1cacbce033bd41ed335391c829376746a42a8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1562,6 +1608,9 @@
       "expectedKind": "rows",
       "query": "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = jointable.v4 order by 1",
       "querySha256": "dabc3b23c29c9c8939328c0d983853ad1016bb28e801729c834008fb33660680",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1575,6 +1624,9 @@
       "expectedKind": "rows",
       "query": "explain select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = jointable.v4 order by 1",
       "querySha256": "ab0fe6722a5fff79c410240311daf5d38e1aa4490b539b203019ea5e892f54a0",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1588,6 +1640,9 @@
       "expectedKind": "rows",
       "query": "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
       "querySha256": "cb4f8c5e1a8f47bdf86cd5afafa0f03b304654cc70e6a73877f630f631d4a1de",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1601,6 +1656,9 @@
       "expectedKind": "rows",
       "query": "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 21 order by 1",
       "querySha256": "f05449e345fca746d2f77afd8404879c8c9f0ba944079efc1081352b0ab6a144",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1614,6 +1672,9 @@
       "expectedKind": "rows",
       "query": "explain select * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
       "querySha256": "8bbc3f29b86e0c3d43dda8ba82716500ec05a3885b1c96b987996e3b2d5ff573",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1626,7 +1687,8 @@
       "suggestedId": "index-test-testbasicindexing-0050",
       "expectedKind": "rows",
       "nonLiteral": [
-        "Query"
+        "Query",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1682,7 +1744,8 @@
         ]
       ],
       "nonLiteral": [
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1701,7 +1764,8 @@
       "query": "explain select /*+ lookup_join(sq, test) */ HINT * from test join (select * from jointable) sq on test.v1 = sq.v3 and test.v2 = sq.v4 order by 1",
       "querySha256": "d416f2d5170bcde8b999f538b88472ebf4d4a4a62718c3c1eb3c653d122349a6",
       "nonLiteral": [
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1766,6 +1830,9 @@
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 IN (2, '3', 4) ORDER BY v1;",
       "querySha256": "4f756b68c533d0555c6a8186e1160227f6b1f9a192302b6d665c4c08b12db9ab",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1845,6 +1912,9 @@
       "expectedKind": "error",
       "query": "CREATE INDEX v1_idx ON test(v1 varchar_pattern_ops) WITH (storage_opt1 = foo) TABLESPACE tablespace_name;",
       "querySha256": "d5d5bc4e53d502d8be9f8f1972f727f744f06a00417253adfe9f257ec847bc6a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1858,6 +1928,9 @@
       "expectedKind": "error",
       "query": "CREATE INDEX v1_idx2 ON test using hash (v1);",
       "querySha256": "d47e6bc019bc06717de069092e6a347a6df25a0a08a5ea54e24bacd769b7ffe3",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1871,6 +1944,9 @@
       "expectedKind": "error",
       "query": "CREATE INDEX v1_idx_storage ON test(v1) WITH (definitely_not_supported = 1);",
       "querySha256": "b42e69388ffaba8cc16a9f14854822b21ef4bae168a50720538255cfe26eb981",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1884,6 +1960,9 @@
       "expectedKind": "error",
       "query": "CREATE INDEX v1_idx_tablespace ON test(v1) TABLESPACE definitely_not_supported;",
       "querySha256": "ae36eb171381f10a5f364916b568b7418237324c8642c49103cda5735019c899",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1897,6 +1976,9 @@
       "expectedKind": "error",
       "query": "ALTER INDEX v1_idx_storage SET (definitely_not_supported = 1);",
       "querySha256": "73db3325f4207cf22cfacb59767e579fad511c7c2246c3103e7703c350a48dcf",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1910,6 +1992,9 @@
       "expectedKind": "error",
       "query": "ALTER INDEX v1_idx_storage SET TABLESPACE definitely_not_supported;",
       "querySha256": "2a7b68be0425592a3a07ceae53bcdf58ae70476fe0ca0ed58564262949e2be07",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1923,6 +2008,9 @@
       "expectedKind": "error",
       "query": "ALTER INDEX v1_idx_existing ALTER COLUMN 1 SET STATISTICS 100;",
       "querySha256": "4607ffeb759b08c93cf10065dafb235703bcacb705a8ee17d531b6ca5584d4d5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1937,7 +2025,8 @@
         "Query",
         "Expected",
         "GeneratedHelper",
-        "SetUpScript"
+        "SetUpScript",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1953,7 +2042,8 @@
         "Query",
         "GeneratedHelper",
         "SetUpScript",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1970,7 +2060,8 @@
         "GeneratedHelper",
         "SetUpScript",
         "PriorQuery",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1988,7 +2079,8 @@
         "SetUpScript",
         "PriorQuery",
         "PriorQuery",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2007,7 +2099,8 @@
         "PriorQuery",
         "PriorQuery",
         "PriorQuery",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2027,7 +2120,8 @@
         "PriorQuery",
         "PriorQuery",
         "PriorQuery",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2047,7 +2141,8 @@
         "PriorQuery",
         "PriorQuery",
         "PriorQuery",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2063,7 +2158,8 @@
         "Query",
         "Expected",
         "GeneratedHelper",
-        "SetUpScript"
+        "SetUpScript",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2079,7 +2175,8 @@
         "Query",
         "GeneratedHelper",
         "SetUpScript",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2096,7 +2193,8 @@
         "GeneratedHelper",
         "SetUpScript",
         "PriorQuery",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2114,7 +2212,8 @@
         "SetUpScript",
         "PriorQuery",
         "PriorQuery",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2133,7 +2232,8 @@
         "PriorQuery",
         "PriorQuery",
         "PriorQuery",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2153,7 +2253,8 @@
         "PriorQuery",
         "PriorQuery",
         "PriorQuery",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2173,7 +2274,8 @@
         "PriorQuery",
         "PriorQuery",
         "PriorQuery",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2189,7 +2291,8 @@
         "Query",
         "Expected",
         "GeneratedHelper",
-        "SetUpScript"
+        "SetUpScript",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2205,7 +2308,8 @@
         "Query",
         "GeneratedHelper",
         "SetUpScript",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2222,7 +2326,8 @@
         "GeneratedHelper",
         "SetUpScript",
         "PriorQuery",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2240,7 +2345,8 @@
         "SetUpScript",
         "PriorQuery",
         "PriorQuery",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2259,7 +2365,8 @@
         "PriorQuery",
         "PriorQuery",
         "PriorQuery",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2279,7 +2386,8 @@
         "PriorQuery",
         "PriorQuery",
         "PriorQuery",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2299,7 +2407,8 @@
         "PriorQuery",
         "PriorQuery",
         "PriorQuery",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2315,7 +2424,8 @@
         "Query",
         "Expected",
         "GeneratedHelper",
-        "SetUpScript"
+        "SetUpScript",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2331,7 +2441,8 @@
         "Query",
         "GeneratedHelper",
         "SetUpScript",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2348,7 +2459,8 @@
         "GeneratedHelper",
         "SetUpScript",
         "PriorQuery",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2366,7 +2478,8 @@
         "SetUpScript",
         "PriorQuery",
         "PriorQuery",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2385,7 +2498,8 @@
         "PriorQuery",
         "PriorQuery",
         "PriorQuery",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2405,7 +2519,8 @@
         "PriorQuery",
         "PriorQuery",
         "PriorQuery",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2425,7 +2540,8 @@
         "PriorQuery",
         "PriorQuery",
         "PriorQuery",
-        "PriorQuery"
+        "PriorQuery",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2871,7 +2987,8 @@
       "query": "SELECT token, SUM(row_count)\nFROM dg_gin_jsonb_gin_backfill_jsonb_gin_backfill_idx_posting_chunks\nWHERE token IN ('9:jsonb_ops3:key1:01:a', '9:jsonb_ops3:key1:01:x')\nGROUP BY token\nORDER BY token;",
       "querySha256": "705816b2b7fe446446976d5a2a390969d5126cb05f5a1145f8817418e0cea3ef",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2904,7 +3021,8 @@
       "query": "SELECT token, SUM(row_count)\nFROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_posting_chunks\nWHERE token IN ('9:jsonb_ops3:key1:01:x', '9:jsonb_ops3:key1:01:z')\nGROUP BY token\nORDER BY token;",
       "querySha256": "37138233d7e6648e869acc4a971b66febaf48d7ae8f17f149c7c3b0dc9e4f5eb",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2920,7 +3038,8 @@
       "query": "SELECT SUM(row_count), COUNT(payload) \u003e 0, COUNT(checksum) \u003e 0\nFROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_posting_chunks;",
       "querySha256": "0004922fd8670b786ebb70ef11a847e720cb49e6a1c77b96013bc514e93530a8",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2953,7 +3072,8 @@
       "query": "SELECT SUM(row_count), COUNT(payload) \u003e 0, COUNT(checksum) \u003e 0\n\tFROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_posting_chunks;",
       "querySha256": "d48ec5ea6cee2d87df8dbb5900a245b0da06b514191f9b5e474b7f3110ca29de",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2969,7 +3089,8 @@
       "query": "SELECT token, SUM(row_count)\n\tFROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_posting_chunks\n\tWHERE token IN ('9:jsonb_ops3:key1:01:x', '9:jsonb_ops3:key1:01:z')\n\tGROUP BY token\n\tORDER BY token;",
       "querySha256": "b1f70263fde2c5c3cd8e2e3c0c9fa7bd923b949e14144a92c555ddc5e0ce4ffc",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2985,7 +3106,8 @@
       "query": "SELECT token, SUM(row_count)\n\tFROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_posting_chunks\n\tWHERE token IN ('9:jsonb_ops3:key1:01:x', '9:jsonb_ops3:key1:01:z')\n\tGROUP BY token\n\tORDER BY token;",
       "querySha256": "b1f70263fde2c5c3cd8e2e3c0c9fa7bd923b949e14144a92c555ddc5e0ce4ffc",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -3001,7 +3123,8 @@
       "query": "SELECT COALESCE(SUM(row_count), 0), COUNT(*)\n\tFROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_posting_chunks;",
       "querySha256": "6ac1cbb57461bac8759116d4fba007c1093eed5ad1b3f335986edbebaf658801",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -3017,7 +3140,8 @@
       "query": "SELECT SUM(row_count), COUNT(payload) \u003e 0, COUNT(checksum) \u003e 0\n\tFROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_posting_chunks;",
       "querySha256": "d48ec5ea6cee2d87df8dbb5900a245b0da06b514191f9b5e474b7f3110ca29de",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -3033,7 +3157,8 @@
       "query": "SELECT SUM(row_count), COUNT(payload) \u003e 0, COUNT(checksum) \u003e 0\nFROM dg_gin_jsonb_gin_lifecycle_jsonb_gin_lifecycle_idx_posting_chunks;",
       "querySha256": "51d36dbbf2b2df6034e5d8395d0734a61311b1ec6748fda591e4b792d564d1d5",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -3048,6 +3173,9 @@
       "expectedKind": "error",
       "query": "SELECT COUNT(*) FROM dg_gin_jsonb_gin_lifecycle_jsonb_gin_lifecycle_idx_posting_chunks;",
       "querySha256": "c0696c13272b7acda6103c14988750c8f6b29873e0433501c258f0f8376e8186",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3062,7 +3190,8 @@
       "query": "SELECT SUM(row_count), COUNT(payload) \u003e 0, COUNT(checksum) \u003e 0\nFROM dg_gin_jsonb_gin_lifecycle_jsonb_gin_lifecycle_idx_posting_chunks;",
       "querySha256": "51d36dbbf2b2df6034e5d8395d0734a61311b1ec6748fda591e4b792d564d1d5",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -3077,6 +3206,9 @@
       "expectedKind": "rows",
       "query": "EXPLAIN SELECT id FROM jsonb_gin_lookup\nWHERE doc @\u003e '{\"a\":1}'\nORDER BY id;",
       "querySha256": "de2d4f99d083e3ca9044c9aa87c9cd2c254bcae7973568c955b492aa672da798",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -3294,6 +3426,9 @@
       "expectedKind": "rows",
       "query": "EXPLAIN SELECT id FROM jsonb_gin_path_lookup\n\tWHERE doc @\u003e '{\"a\":{\"b\":1}}'\n\tORDER BY id;",
       "querySha256": "063375b11abd3f6507edc75d21c518c8c58f5a7b6fa77c8def199ac41d5738ec",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -3378,6 +3513,9 @@
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 BETWEEN 3 AND 5 OR v1 BETWEEN 7 AND 9 order by 1;",
       "querySha256": "0829dfb0750f9f03789bfc0d9225ffd66c1353f91093ac9eaabb731a0d190327",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -3392,7 +3530,8 @@
       "query": "SELECT id, k FROM sbtest1 WHERE k BETWEEN 3708 AND 3713 OR k BETWEEN 5041 AND 5046;",
       "querySha256": "dd807772bb957d7c82ef2bbf69ecc3108a1aef51cfca0e2d4434c51a918cae51",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
