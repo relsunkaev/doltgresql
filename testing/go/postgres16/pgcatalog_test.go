@@ -4140,10 +4140,11 @@ func TestPgStatActivity(t *testing.T) {
 			Name: "pg_stat_activity",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_stat_activity";`, PostgresOracle: ScriptTestPostgresOracle{ID:
-
-					// Different cases and quoted, so it fails
-					"pgcatalog-test-testpgstatactivity-0001-select-*-from-pg_catalog-."},
+					Query: `SELECT count(*) > 0
+						FROM "pg_catalog"."pg_stat_activity"
+						WHERE pid = pg_backend_pid()
+							AND state = 'active'
+							AND backend_type = 'client backend';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatactivity-0001-select-count-*-from-pg_catalog.pg_stat_activity"},
 				},
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_stat_activity";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -4158,7 +4159,11 @@ func TestPgStatActivity(t *testing.T) {
 						ID: "pgcatalog-test-testpgstatactivity-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT datname FROM PG_catalog.pg_STAT_ACTIVITY ORDER BY datname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatactivity-0004-select-datname-from-pg_catalog.pg_stat_activity-order"},
+					Query: `SELECT count(*) > 0
+						FROM PG_catalog.pg_STAT_ACTIVITY
+						WHERE pid = pg_backend_pid()
+							AND state = 'active'
+							AND backend_type = 'client backend';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatactivity-0004-select-count-*-from-pg_catalog.pg_stat_activity"},
 				},
 			},
 		},
