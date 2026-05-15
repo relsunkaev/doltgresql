@@ -64,7 +64,12 @@ func replaceNode(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node) (sql.Nod
 		if options.NotValid || options.NoInherit {
 			stripped := *node
 			check := *node.Check
-			check.Name = core.EncodePhysicalConstraintName(cleanName)
+			if options.NotValid {
+				if options.NoInherit {
+					cleanName = ast.EncodeNoInheritCheckConstraintName(cleanName)
+				}
+				check.Name = core.EncodePhysicalConstraintName(cleanName)
+			}
 			stripped.Check = &check
 			return pgnodes.NewCreateCheck(&stripped, a.Overrides, options.NotValid), transform.NewTree, nil
 		}

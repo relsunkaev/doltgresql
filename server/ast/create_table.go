@@ -659,7 +659,7 @@ func nodeTypedTableCheckConstraint(ctx *Context, name string, expr tree.Expr, no
 		return pgnodes.TypedTableCheckConstraint{}, err
 	}
 	return pgnodes.TypedTableCheckConstraint{
-		Name:       name,
+		Name:       physicalCheckConstraintNameWithOptions(tree.Name(name), noInherit),
 		Expression: tree.AsStringWithFlags(expr, tree.FmtParsable),
 	}, nil
 }

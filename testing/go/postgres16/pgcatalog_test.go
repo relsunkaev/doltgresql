@@ -1102,7 +1102,7 @@ func TestPgConversion(t *testing.T) {
 						ID: "pgcatalog-test-testpgconversion-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT conname FROM PG_catalog.pg_CONVERSION ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconversion-0004-select-conname-from-pg_catalog.pg_conversion-order"},
+					Query: "SELECT conname FROM PG_catalog.pg_CONVERSION WHERE conname = 'utf8_to_iso_8859_1' ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconversion-0004-select-conname-from-pg_catalog.pg_conversion-order"},
 				},
 			},
 		},

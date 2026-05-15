@@ -188,7 +188,7 @@ func nodeColumnTableDef(ctx *Context, node *tree.ColumnTableDef, tableName vites
 			return nil, err
 		}
 		colDef.Type.Constraint = &vitess.ConstraintDefinition{
-			Name: core.EncodePhysicalConstraintName(string(checkExpr.ConstraintName)),
+			Name: physicalCheckConstraintNameWithOptions(checkExpr.ConstraintName, checkExpr.NoInherit),
 			Details: &vitess.CheckConstraintDefinition{
 				Expr:     expr,
 				Enforced: true,

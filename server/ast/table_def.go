@@ -43,7 +43,7 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 			return err
 		}
 		target.TableSpec.Constraints = append(target.TableSpec.Constraints, &vitess.ConstraintDefinition{
-			Name: core.EncodePhysicalConstraintName(string(node.Name)),
+			Name: physicalCheckConstraintNameWithOptions(node.Name, node.NoInherit),
 			Details: &vitess.CheckConstraintDefinition{
 				Expr:     expr,
 				Enforced: !node.NotEnforced,
@@ -374,7 +374,7 @@ func appendAdditionalColumnCheckConstraints(ctx *Context, tableSpec *vitess.Tabl
 			name = defaultColumnCheckConstraintName(tableName, columnDef.Name)
 		}
 		tableSpec.Constraints = append(tableSpec.Constraints, &vitess.ConstraintDefinition{
-			Name: core.EncodePhysicalConstraintName(name),
+			Name: physicalCheckConstraintNameWithOptions(tree.Name(name), checkExpr.NoInherit),
 			Details: &vitess.CheckConstraintDefinition{
 				Expr:     expr,
 				Enforced: true,

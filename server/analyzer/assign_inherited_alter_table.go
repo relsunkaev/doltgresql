@@ -163,8 +163,11 @@ func inheritedCheckColumnIndex(schema sql.Schema, name string) (int, bool) {
 func inheritedNormalizeCreateCheckNode(createCheck *plan.CreateCheck) (*plan.CreateCheck, bool) {
 	logicalName := core.DecodePhysicalConstraintName(createCheck.Check.Name)
 	cleanName, options := ast.DecodeCheckConstraintNameOptions(logicalName)
-	if !options.NotValid && !options.NoInherit {
+	if !options.NotValid {
 		return createCheck, false
+	}
+	if options.NoInherit {
+		cleanName = ast.EncodeNoInheritCheckConstraintName(cleanName)
 	}
 	checkCopy := *createCheck.Check
 	checkCopy.Name = core.EncodePhysicalConstraintName(cleanName)

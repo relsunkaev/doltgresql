@@ -41,11 +41,6 @@ func nodeCheckConstraintTableDef(
 		return nil, err
 	}
 
-	name := node.Name
-	if node.NoInherit {
-		name = tree.Name(EncodeNoInheritCheckConstraintName(string(name)))
-	}
-
 	return &vitess.DDL{
 		Action:           "alter",
 		Table:            tableName,
@@ -54,7 +49,7 @@ func nodeCheckConstraintTableDef(
 		TableSpec: &vitess.TableSpec{
 			Constraints: []*vitess.ConstraintDefinition{
 				{
-					Name: physicalCheckConstraintName(name),
+					Name: physicalCheckConstraintNameWithOptions(node.Name, node.NoInherit),
 					Details: &vitess.CheckConstraintDefinition{
 						Expr:     expr,
 						Enforced: !node.NotEnforced,
@@ -65,12 +60,15 @@ func nodeCheckConstraintTableDef(
 	}, nil
 }
 
-func physicalCheckConstraintName(name tree.Name) string {
-	logicalName := name.String()
-	if HasCheckConstraintNameOptionMarker(string(name)) {
-		logicalName = string(name)
+func physicalCheckConstraintNameWithOptions(name tree.Name, noInherit bool) string {
+	if noInherit {
+		name = tree.Name(EncodeNoInheritCheckConstraintName(string(name)))
 	}
-	return core.EncodePhysicalConstraintName(logicalName)
+	return physicalCheckConstraintName(name)
+}
+
+func physicalCheckConstraintName(name tree.Name) string {
+	return core.EncodePhysicalConstraintName(string(name))
 }
 
 // nodeAlterTableDropConstraint converts a tree.AlterTableDropConstraint instance
