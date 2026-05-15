@@ -21,6 +21,7 @@ import (
 	goerrors "errors"
 	"fmt"
 	"os"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -291,8 +292,16 @@ func postgresOracleStringValueWithMode(value any, mode string) string {
 		if mode == "json" {
 			return normalizeCachedPostgresOracleJSON(text)
 		}
+		if mode == "array" {
+			return normalizeCachedPostgresOracleArrayText(text)
+		}
 		return text
 	default:
+		if mode == "array" {
+			if normalized, ok := normalizeCachedPostgresOracleArraySlice(v); ok {
+				return normalized
+			}
+		}
 		text := fmt.Sprint(v)
 		if mode == "timestamp" {
 			return normalizeCachedPostgresOracleTimestamp(text)
@@ -308,6 +317,9 @@ func postgresOracleStringValueWithMode(value any, mode string) string {
 		}
 		if mode == "json" {
 			return normalizeCachedPostgresOracleJSON(text)
+		}
+		if mode == "array" {
+			return normalizeCachedPostgresOracleArrayText(text)
 		}
 		return text
 	}
@@ -325,6 +337,9 @@ func cachedPostgresOracleColumnMode(modes []string, index int) string {
 }
 
 func inferCachedPostgresOracleColumnMode(oid uint32) string {
+	if cachedPostgresOracleArrayOID(oid) {
+		return "array"
+	}
 	switch oid {
 	case 114, 3802:
 		return "json"
@@ -335,6 +350,132 @@ func inferCachedPostgresOracleColumnMode(oid uint32) string {
 	default:
 		return "structural"
 	}
+}
+
+func cachedPostgresOracleArrayOID(oid uint32) bool {
+	// Keep this narrow until cached structural normalization is type-aware
+	// for arrays such as bool[] and date[]. The PostgreSQL oracle stores
+	// decoded text[] arrays as unquoted structural elements, while Doltgres
+	// often returns the same column as a PostgreSQL array literal string.
+	return oid == 1009
+}
+
+func normalizeCachedPostgresOracleArrayText(value string) string {
+	trimmed := strings.TrimSpace(value)
+	if strings.HasPrefix(trimmed, "[") {
+		if separator := strings.IndexByte(trimmed, '='); separator >= 0 {
+			trimmed = trimmed[separator+1:]
+		}
+	}
+	if normalized, ok := normalizeCachedPostgresOracleArrayLiteral(trimmed); ok {
+		return normalized
+	}
+	trimmed = strings.ReplaceAll(trimmed, ", ", ",")
+	return trimmed
+}
+
+func normalizeCachedPostgresOracleArrayLiteral(value string) (string, bool) {
+	if len(value) < 2 || value[0] != '{' || value[len(value)-1] != '}' {
+		return "", false
+	}
+	var parts []string
+	var token strings.Builder
+	inQuotes := false
+	escaped := false
+	braceDepth := 0
+	tokenQuoted := false
+	for i := 1; i < len(value)-1; i++ {
+		ch := value[i]
+		if escaped {
+			token.WriteByte(ch)
+			escaped = false
+			continue
+		}
+		if inQuotes {
+			switch ch {
+			case '\\':
+				escaped = true
+			case '"':
+				inQuotes = false
+			default:
+				token.WriteByte(ch)
+			}
+			continue
+		}
+		switch ch {
+		case '"':
+			if braceDepth == 0 {
+				tokenQuoted = true
+			} else {
+				token.WriteByte(ch)
+			}
+			inQuotes = true
+		case '{':
+			braceDepth++
+			token.WriteByte(ch)
+		case '}':
+			if braceDepth == 0 {
+				return "", false
+			}
+			braceDepth--
+			token.WriteByte(ch)
+		case ',':
+			if braceDepth > 0 {
+				token.WriteByte(ch)
+				continue
+			}
+			parts = append(parts, normalizeCachedPostgresOracleArrayToken(token.String(), tokenQuoted))
+			token.Reset()
+			tokenQuoted = false
+		case '\\':
+			token.WriteByte(ch)
+		default:
+			token.WriteByte(ch)
+		}
+	}
+	if escaped || inQuotes || braceDepth != 0 {
+		return "", false
+	}
+	parts = append(parts, normalizeCachedPostgresOracleArrayToken(token.String(), tokenQuoted))
+	return "{" + strings.Join(parts, ",") + "}", true
+}
+
+func normalizeCachedPostgresOracleArrayToken(token string, quoted bool) string {
+	trimmed := strings.TrimSpace(token)
+	if !quoted && strings.HasPrefix(trimmed, "{") {
+		if normalized, ok := normalizeCachedPostgresOracleArrayLiteral(trimmed); ok {
+			return normalized
+		}
+	}
+	if !quoted && strings.EqualFold(trimmed, "NULL") {
+		return "NULL"
+	}
+	return token
+}
+
+func normalizeCachedPostgresOracleArraySlice(value any) (string, bool) {
+	rv := reflect.ValueOf(value)
+	if rv.Kind() != reflect.Slice && rv.Kind() != reflect.Array {
+		return "", false
+	}
+	parts := make([]string, rv.Len())
+	for i := range parts {
+		parts[i] = normalizeCachedPostgresOracleArrayElement(rv.Index(i))
+	}
+	return "{" + strings.Join(parts, ",") + "}", true
+}
+
+func normalizeCachedPostgresOracleArrayElement(element reflect.Value) string {
+	if !element.IsValid() {
+		return "NULL"
+	}
+	for element.Kind() == reflect.Interface || element.Kind() == reflect.Pointer {
+		if element.IsNil() {
+			return "NULL"
+		}
+		element = element.Elem()
+	}
+	return fmt.Sprint(element.Interface())
 }
 
 var (
