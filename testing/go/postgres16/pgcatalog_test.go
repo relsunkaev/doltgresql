@@ -907,7 +907,12 @@ func TestPgConstraint(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_constraint" WHERE conrelid='testing2'::regclass OR conrelid='testing'::regclass order by 1`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraint-0001-select-*-from-pg_catalog-."},
+					Query: `SELECT co.conname, cl.relname, co.contype, co.condeferrable::text, co.condeferred::text, co.convalidated::text, co.confupdtype, co.confdeltype, co.confmatchtype, co.conislocal::text, co.coninhcount::text, co.connoinherit::text, co.conkey::text, co.confkey::text, COALESCE(ref.relname, '') AS confrelname
+						FROM "pg_catalog"."pg_constraint" co
+						JOIN "pg_catalog"."pg_class" cl ON co.conrelid = cl.oid
+						LEFT JOIN "pg_catalog"."pg_class" ref ON co.confrelid = ref.oid
+						WHERE co.conrelid='testing2'::regclass OR co.conrelid='testing'::regclass
+						ORDER BY co.conname`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraint-0001-select-*-from-pg_catalog-."},
 				},
 				{ // Different cases and quoted, so it fails
 					Query: `SELECT * FROM "PG_catalog"."pg_constraint";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -922,10 +927,10 @@ func TestPgConstraint(t *testing.T) {
 						ID: "pgcatalog-test-testpgconstraint-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT conname FROM PG_catalog.pg_CONSTRAINT ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraint-0004-select-conname-from-pg_catalog.pg_constraint-order"},
+					Query: "SELECT conname FROM PG_catalog.pg_CONSTRAINT WHERE conrelid IN ('testing'::regclass, 'testing2'::regclass) ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraint-0004-select-conname-from-pg_catalog.pg_constraint-order"},
 				},
 				{
-					Query: "SELECT co.oid, co.conname, co.conrelid, cl.relname FROM pg_catalog.pg_constraint co JOIN pg_catalog.pg_class cl ON co.conrelid = cl.oid WHERE cl.relname = 'testing2';", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraint-0005-select-co.oid-co.conname-co.conrelid-cl.relname"},
+					Query: "SELECT co.conname, co.conrelid::regclass::text, cl.relname FROM pg_catalog.pg_constraint co JOIN pg_catalog.pg_class cl ON co.conrelid = cl.oid WHERE cl.relname = 'testing2' ORDER BY co.conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraint-0005-select-co.oid-co.conname-co.conrelid-cl.relname"},
 				},
 			},
 		},

@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -25,6 +26,9 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/parser"
+	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgast "github.com/dolthub/doltgresql/server/ast"
 	"github.com/dolthub/doltgresql/server/deferrable"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
@@ -458,16 +462,19 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 			return true, nil
 		},
 		Check: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable, check functions.ItemCheck) (cont bool, err error) {
+			constraintName, constraintOptions := pgast.DecodeCheckConstraintNameOptions(core.DecodePhysicalConstraintName(check.Item.Name))
 			constraint := &pgConstraint{
 				oid:             check.OID.AsId(),
 				oidNative:       id.Cache().ToOID(check.OID.AsId()),
-				name:            core.DecodePhysicalConstraintName(check.Item.Name),
+				name:            constraintName,
 				schemaOid:       schema.OID.AsId(),
 				schemaOidNative: id.Cache().ToOID(schema.OID.AsId()),
 				conType:         "c",
 				tableOid:        table.OID.AsId(),
 				tableOidNative:  id.Cache().ToOID(table.OID.AsId()),
 				typeOid:         id.Id(id.NewOID(0)),
+				conKey:          checkConstraintConKey(ctx, table.Item, check.Item.CheckExpression),
+				conNoInherit:    constraintOptions.NoInherit,
 			}
 			oidIdx.Add(constraint)
 			relidTypNameIdx.Add(constraint)
@@ -625,6 +632,59 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 	}
 
 	return nil
+}
+
+func checkConstraintConKey(ctx *sql.Context, table sql.Table, checkExpression string) []any {
+	columnIndexes := make(map[string]int16)
+	for i, col := range table.Schema(ctx) {
+		idx := int16(i + 1)
+		columnIndexes[strings.ToLower(col.Name)] = idx
+		columnIndexes[strings.ToLower(core.DecodePhysicalColumnName(col.Name))] = idx
+	}
+
+	statements, err := parser.Parse("SELECT " + checkExpression)
+	if err != nil || len(statements) != 1 {
+		return nil
+	}
+	selectStmt, ok := statements[0].AST.(*tree.Select)
+	if !ok {
+		return nil
+	}
+	selectClause, ok := selectStmt.Select.(*tree.SelectClause)
+	if !ok || len(selectClause.Exprs) != 1 {
+		return nil
+	}
+
+	columns := make(map[int16]struct{})
+	_, _ = tree.SimpleVisit(selectClause.Exprs[0].Expr, func(expr tree.Expr) (bool, tree.Expr, error) {
+		switch typedExpr := expr.(type) {
+		case *tree.UnresolvedName:
+			if typedExpr.NumParts > 0 {
+				if idx, ok := columnIndexes[strings.ToLower(typedExpr.Parts[0])]; ok {
+					columns[idx] = struct{}{}
+				}
+			}
+		case *tree.ColumnItem:
+			if idx, ok := columnIndexes[strings.ToLower(string(typedExpr.ColumnName))]; ok {
+				columns[idx] = struct{}{}
+			}
+		}
+		return true, expr, nil
+	})
+	if len(columns) == 0 {
+		return nil
+	}
+
+	indexes := make([]int, 0, len(columns))
+	for idx := range columns {
+		indexes = append(indexes, int(idx))
+	}
+	sort.Ints(indexes)
+	conKey := make([]any, len(indexes))
+	for i, idx := range indexes {
+		conKey[i] = int16(idx)
+	}
+	return conKey
 }
 
 func notNullConstraintName(tableName string, columnName string) string {
@@ -821,6 +881,19 @@ func (iter *pgConstraintTableScanIter) Close(ctx *sql.Context) error {
 
 // pgConstraintToRow converts a pgConstraint to a sql.Row.
 func pgConstraintToRow(constraint *pgConstraint) sql.Row {
+	fkUpdateType := constraint.fkUpdateType
+	if fkUpdateType == "" {
+		fkUpdateType = " "
+	}
+	fkDeleteType := constraint.fkDeleteType
+	if fkDeleteType == "" {
+		fkDeleteType = " "
+	}
+	fkMatchType := constraint.fkMatchType
+	if fkMatchType == "" {
+		fkMatchType = " "
+	}
+
 	var conKey interface{}
 	if len(constraint.conKey) == 0 {
 		conKey = nil
@@ -835,7 +908,7 @@ func pgConstraintToRow(constraint *pgConstraint) sql.Row {
 		conFkey = constraint.conFkey
 	}
 	conNoInherit := true
-	if constraint.conType == "n" {
+	if constraint.conType == "c" || constraint.conType == "n" {
 		conNoInherit = constraint.conNoInherit
 	}
 	zeroOid := id.NewOID(0).AsId()
@@ -853,20 +926,20 @@ func pgConstraintToRow(constraint *pgConstraint) sql.Row {
 		pgConstraintOidOrZero(constraint.idxOid, zeroOid),   // conindid
 		zeroOid, // conparentid
 		pgConstraintOidOrZero(constraint.tableRefOid, zeroOid), // confrelid
-		constraint.fkUpdateType,                                // confupdtype
-		constraint.fkDeleteType,                                // confdeltype
-		constraint.fkMatchType,                                 // confmatchtype
-		true,                                                   // conislocal
-		int16(0),                                               // coninhcount
-		conNoInherit,                                           // connoinherit
-		conKey,                                                 // conkey
-		conFkey,                                                // confkey
-		nil,                                                    // conpfeqop
-		nil,                                                    // conppeqop
-		nil,                                                    // conffeqop
-		nil,                                                    // confdelsetcols
-		nil,                                                    // conexclop
-		nil,                                                    // conbin
+		fkUpdateType, // confupdtype
+		fkDeleteType, // confdeltype
+		fkMatchType,  // confmatchtype
+		true,         // conislocal
+		int16(0),     // coninhcount
+		conNoInherit, // connoinherit
+		conKey,       // conkey
+		conFkey,      // confkey
+		nil,          // conpfeqop
+		nil,          // conppeqop
+		nil,          // conffeqop
+		nil,          // confdelsetcols
+		nil,          // conexclop
+		nil,          // conbin
 		id.NewTable(PgCatalogName, PgConstraintName).AsId(), // tableoid
 	}
 }
