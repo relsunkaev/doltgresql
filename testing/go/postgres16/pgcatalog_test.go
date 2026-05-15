@@ -3842,27 +3842,51 @@ func TestPgSequences(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "pg_sequences",
+			SetUpScript: []string{
+				`CREATE SEQUENCE pg_sequences_alpha START WITH 5 INCREMENT BY 2 MINVALUE 1 MAXVALUE 51;`,
+				`CREATE SEQUENCE pg_sequences_beta;`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_sequences";`, PostgresOracle: ScriptTestPostgresOracle{ID:
-
-					// Different cases and quoted, so it fails
-					"pgcatalog-test-testpgsequences-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"schema"}},
+					Query: `SELECT schemaname, sequencename, sequenceowner, data_type,
+							start_value, min_value, max_value, increment_by, cycle,
+							cache_size, last_value IS NULL AS last_value_is_null
+						FROM "pg_catalog"."pg_sequences"
+						WHERE sequencename IN ('pg_sequences_alpha', 'pg_sequences_beta')
+						ORDER BY sequencename;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgsequences-0001-select-schemaname-sequencename-sequenceowner-from-pg_catalog.pg_sequences-order"},
 				},
+			},
+		},
+		{
+			Name: "pg_sequences schema case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_sequences";`, PostgresOracle: ScriptTestPostgresOracle{
-
-						// Different cases and quoted, so it fails
 						ID: "pgcatalog-test-testpgsequences-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_sequences relation case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "pg_catalog"."PG_sequences";`, PostgresOracle: ScriptTestPostgresOracle{
-
-						// Different cases but non-quoted, so it works
 						ID: "pgcatalog-test-testpgsequences-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_sequences mixed-case lookup",
+			SetUpScript: []string{
+				`CREATE SEQUENCE pg_sequences_alpha START WITH 5 INCREMENT BY 2 MINVALUE 1 MAXVALUE 51;`,
+				`CREATE SEQUENCE pg_sequences_beta;`,
+			},
+			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT sequencename FROM PG_catalog.pg_SEQUENCES ORDER BY sequencename;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgsequences-0004-select-sequencename-from-pg_catalog.pg_sequences-order"},
+					Query: `SELECT sequencename
+						FROM PG_catalog.pg_SEQUENCES
+						WHERE sequencename IN ('pg_sequences_alpha', 'pg_sequences_beta')
+						ORDER BY sequencename;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgsequences-0004-select-sequencename-from-pg_catalog.pg_sequences-order"},
 				},
 			},
 		},
