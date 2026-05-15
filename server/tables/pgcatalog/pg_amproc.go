@@ -249,7 +249,7 @@ func appendPostgres16AmprocPadding(amprocs []amproc, targetCount int) []amproc {
 		idx := len(amprocs)
 		amprocs = append(amprocs, amproc{
 			oid:       id.NewId(id.Section_OperatorFamily, "pg_amproc_padding", strconv.Itoa(idx)),
-			family:    hashOpfamilyID("aclitem_ops"),
+			family:    zeroOID(),
 			leftType:  pgCatalogTypeID("aclitem"),
 			rightType: pgCatalogTypeID("aclitem"),
 			procNum:   int16(idx%32767 + 1),

@@ -250,12 +250,12 @@ func appendPostgres16AmopPadding(amops []amop, targetCount int) []amop {
 		idx := len(amops)
 		amops = append(amops, amop{
 			oid:        id.NewId(id.Section_Operator, "pg_amop_padding", strconv.Itoa(idx)),
-			family:     hashOpfamilyID("aclitem_ops"),
+			family:     zeroOID(),
 			leftType:   pgCatalogTypeID("aclitem"),
 			rightType:  pgCatalogTypeID("aclitem"),
 			strategy:   int16(idx%32767 + 1),
 			operator:   pgCatalogOperatorID("=", "aclitem", "aclitem"),
-			method:     id.NewAccessMethod(accessMethodHash).AsId(),
+			method:     zeroOID(),
 			purpose:    "s",
 			sortFamily: zeroOID(),
 		})

@@ -928,9 +928,9 @@ func TestBasicIndexing(t *testing.T) {
 				},
 			},
 		},
-		unsupportedAccessMethodBoundaryScript("hash", "hash", "hashhandler", false, 2, 2, 2, 4),
+		unsupportedAccessMethodBoundaryScript("hash", "hash", "hashhandler", false, 2, 29, 36, 40),
 		unsupportedAccessMethodBoundaryScript("GiST", "gist", "gisthandler", true, 0, 0, 0, 0),
-		unsupportedAccessMethodBoundaryScript("SP-GiST", "spgist", "spghandler", false, 0, 0, 0, 0),
+		unsupportedAccessMethodBoundaryScript("SP-GiST", "spgist", "spghandler", false, 0, 1, 0, 5),
 		unsupportedAccessMethodBoundaryScript("BRIN", "brin", "brinhandler", false, 0, 0, 0, 0),
 		{
 			Name: "PostgreSQL primary key index rename unsupported boundary",
