@@ -329,6 +329,12 @@ func plannerPredicateExprSQL(expr sql.Expression) (string, bool) {
 		return binaryPredicateSQL(expr.LeftChild, op, expr.RightChild)
 	case sql.FunctionExpression:
 		return plannerFunctionPredicateSQL(expr)
+	case *pgexpression.NullIf:
+		children := expr.Children()
+		if len(children) != 2 {
+			return "", false
+		}
+		return plannerFunctionCallPredicateSQL("nullif", children)
 	case *gmsexpression.Equals:
 		return binaryPredicateSQL(expr.Left(), "=", expr.Right())
 	case *gmsexpression.NullSafeEquals:
