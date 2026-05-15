@@ -4035,12 +4035,16 @@ func TestPgShdescription(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "pg_shdescription",
+			SetUpScript: []string{
+				`COMMENT ON DATABASE postgres IS 'generic pg_shdescription comment';`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_shdescription";`, PostgresOracle: ScriptTestPostgresOracle{ID:
-
-					// Different cases and quoted, so it fails
-					"pgcatalog-test-testpgshdescription-0001-select-*-from-pg_catalog-."},
+					Query: `SELECT description
+						FROM "pg_catalog"."pg_shdescription"
+						WHERE objoid = (SELECT oid FROM "pg_catalog"."pg_database" WHERE datname = 'postgres')
+							AND classoid = 'pg_database'::regclass
+							AND description = 'generic pg_shdescription comment';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgshdescription-0001-select-description-from-pg_catalog.pg_shdescription-where"},
 				},
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_shdescription";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -4055,7 +4059,10 @@ func TestPgShdescription(t *testing.T) {
 						ID: "pgcatalog-test-testpgshdescription-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT objoid FROM PG_catalog.pg_SHDESCRIPTION ORDER BY objoid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgshdescription-0004-select-objoid-from-pg_catalog.pg_shdescription-order"},
+					Query: `SELECT description
+						FROM PG_catalog.pg_SHDESCRIPTION
+						WHERE description = 'generic pg_shdescription comment'
+						ORDER BY description;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgshdescription-0004-select-description-from-pg_catalog.pg_shdescription-where"},
 				},
 			},
 		},
