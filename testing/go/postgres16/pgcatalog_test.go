@@ -3479,25 +3479,42 @@ func TestPgReplicationOrigin(t *testing.T) {
 			Name: "pg_replication_origin",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_replication_origin";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT *
+FROM "pg_catalog"."pg_replication_origin"
+WHERE roname = 'doltgresql_oracle_origin';`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpgreplicationorigin-0001-select-*-from-pg_catalog-."},
 				},
+			},
+		},
+		{
+			Name: "pg_replication_origin schema case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_replication_origin";`, PostgresOracle: ScriptTestPostgresOracle{
 
 						// Different cases and quoted, so it fails
 						ID: "pgcatalog-test-testpgreplicationorigin-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_replication_origin relation case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "pg_catalog"."PG_replication_origin";`, PostgresOracle: ScriptTestPostgresOracle{
 
 						// Different cases but non-quoted, so it works
 						ID: "pgcatalog-test-testpgreplicationorigin-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_replication_origin mixed-case lookup",
+			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT roname FROM PG_catalog.pg_REPLICATION_ORIGIN ORDER BY roname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgreplicationorigin-0004-select-roname-from-pg_catalog.pg_replication_origin-order"},
+					Query: "SELECT roname FROM PG_catalog.pg_REPLICATION_ORIGIN WHERE roname = 'doltgresql_oracle_origin' ORDER BY roname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgreplicationorigin-0004-select-roname-from-pg_catalog.pg_replication_origin-order"},
 				},
 			},
 		},
@@ -3510,25 +3527,42 @@ func TestPgReplicationOriginStatus(t *testing.T) {
 			Name: "pg_replication_origin_status",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_replication_origin_status";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT *
+FROM "pg_catalog"."pg_replication_origin_status"
+WHERE external_id = 'doltgresql_oracle_origin';`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpgreplicationoriginstatus-0001-select-*-from-pg_catalog-."},
 				},
+			},
+		},
+		{
+			Name: "pg_replication_origin_status schema case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_replication_origin_status";`, PostgresOracle: ScriptTestPostgresOracle{
 
 						// Different cases and quoted, so it fails
 						ID: "pgcatalog-test-testpgreplicationoriginstatus-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_replication_origin_status relation case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "pg_catalog"."PG_replication_origin_status";`, PostgresOracle: ScriptTestPostgresOracle{
 
 						// Different cases but non-quoted, so it works
 						ID: "pgcatalog-test-testpgreplicationoriginstatus-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_replication_origin_status mixed-case lookup",
+			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT local_id FROM PG_catalog.pg_REPLICATION_ORIGIN_STATUS ORDER BY local_id;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgreplicationoriginstatus-0004-select-local_id-from-pg_catalog.pg_replication_origin_status-order"},
+					Query: "SELECT local_id FROM PG_catalog.pg_REPLICATION_ORIGIN_STATUS WHERE external_id = 'doltgresql_oracle_origin' ORDER BY local_id;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgreplicationoriginstatus-0004-select-local_id-from-pg_catalog.pg_replication_origin_status-order"},
 				},
 			},
 		},
