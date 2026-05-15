@@ -503,15 +503,16 @@ func nodeSelectExpr(ctx *Context, node tree.SelectExpr) (vitess.SelectExpr, erro
 		}
 
 		if ctx.InSetOpOperand() {
-			if node.As == "" {
-				node.As = tree.UnrestrictedName(expr.Parts[0])
+			as := vitess.ColIdent{}
+			if node.As != "" {
+				as = outputColumnIdent(string(node.As))
 			}
 			return &vitess.AliasedExpr{
 				Expr: vitess.InjectedExpr{
 					Expression: pgexprs.NewSetOpProjection(),
 					Children:   vitess.Exprs{colName},
 				},
-				As: outputColumnIdent(string(node.As)),
+				As: as,
 			}, nil
 		}
 		// We don't set the InputExpression for ColName expressions. This matches the behavior in vitess's

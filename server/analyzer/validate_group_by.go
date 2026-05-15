@@ -164,7 +164,7 @@ func invalidCorrelatedGroupByAlias(ctx *sql.Context, scope *plan.Scope, exprs []
 			if !ok {
 				return true
 			}
-			if !correlated.Contains(alias.Id()) || aliasReferencesSameNamedColumn(alias) {
+			if !correlated.Contains(alias.Id()) || aliasReferencesSameNamedColumn(alias) || aliasReferencesNoColumns(ctx, alias) {
 				return true
 			}
 
@@ -191,6 +191,18 @@ func aliasReferencesSameNamedColumn(alias *expression.Alias) bool {
 
 	getField, ok := child.(*expression.GetField)
 	return ok && strings.EqualFold(alias.Name(), getField.Name())
+}
+
+func aliasReferencesNoColumns(ctx *sql.Context, alias *expression.Alias) bool {
+	referencesColumn := false
+	sql.Inspect(ctx, alias.Child, func(ctx *sql.Context, expr sql.Expression) bool {
+		if referencesColumn {
+			return false
+		}
+		_, referencesColumn = expr.(*expression.GetField)
+		return !referencesColumn
+	})
+	return !referencesColumn
 }
 
 func groupByValidationError(err error) error {
