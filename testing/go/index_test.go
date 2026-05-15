@@ -2579,7 +2579,8 @@ ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-t
 				},
 				{
 					Query: `SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0
-FROM dg_gin_jsonb_gin_backfill_jsonb_gin_backfill_idx_posting_chunks;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0239-select-sum-row_count-count-payload", Compare: "sqlstate"},
+FROM dg_gin_jsonb_gin_backfill_jsonb_gin_backfill_idx_posting_chunks;`,
+					Expected: []sql.Row{{int64(12), "t", "t"}},
 				},
 				{
 					Query: `SELECT token, SUM(row_count)
@@ -2588,8 +2589,8 @@ WHERE token IN ('9:jsonb_ops3:key1:01:a', '9:jsonb_ops3:key1:01:x')
 GROUP BY token
 ORDER BY token;`,
 					Expected: []sql.Row{
-						{"9:jsonb_ops3:key1:01:a", float64(2)},
-						{"9:jsonb_ops3:key1:01:x", float64(1)},
+						{"9:jsonb_ops3:key1:01:a", int64(2)},
+						{"9:jsonb_ops3:key1:01:x", int64(1)},
 					},
 				},
 			},
@@ -2609,7 +2610,8 @@ ORDER BY token;`,
 				},
 				{
 					Query: `SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0
-FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_posting_chunks;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0241-select-sum-row_count-count-payload", Compare: "sqlstate"},
+FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_posting_chunks;`,
+					Expected: []sql.Row{{int64(8), "t", "t"}},
 				},
 				{
 					Query: `UPDATE jsonb_gin_dml
@@ -2623,7 +2625,7 @@ WHERE token IN ('9:jsonb_ops3:key1:01:x', '9:jsonb_ops3:key1:01:z')
 GROUP BY token
 ORDER BY token;`,
 					Expected: []sql.Row{
-						{"9:jsonb_ops3:key1:01:z", float64(1)},
+						{"9:jsonb_ops3:key1:01:z", int64(1)},
 					},
 				},
 				{
@@ -2632,7 +2634,7 @@ ORDER BY token;`,
 				{
 					Query: `SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0
 FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_posting_chunks;`,
-					Expected: []sql.Row{{float64(4), "t", "t"}},
+					Expected: []sql.Row{{int64(4), "t", "t"}},
 				},
 			},
 		},
@@ -2654,7 +2656,8 @@ FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_posting_chunks;`,
 				},
 				{
 					Query: `SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0
-	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_posting_chunks;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0244-select-sum-row_count-count-payload", Compare: "sqlstate"},
+	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_posting_chunks;`,
+					Expected: []sql.Row{{int64(8), "t", "t"}},
 				},
 				{
 					Query: "ROLLBACK;",
@@ -2662,7 +2665,7 @@ FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_posting_chunks;`,
 				{
 					Query: `SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0
 	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_posting_chunks;`,
-					Expected: []sql.Row{{float64(4), "t", "t"}},
+					Expected: []sql.Row{{int64(4), "t", "t"}},
 				},
 				{
 					Query: "BEGIN;",
@@ -2679,7 +2682,7 @@ FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_posting_chunks;`,
 	GROUP BY token
 	ORDER BY token;`,
 					Expected: []sql.Row{
-						{"9:jsonb_ops3:key1:01:z", float64(1)},
+						{"9:jsonb_ops3:key1:01:z", int64(1)},
 					},
 				},
 				{
@@ -2692,7 +2695,7 @@ FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_posting_chunks;`,
 	GROUP BY token
 	ORDER BY token;`,
 					Expected: []sql.Row{
-						{"9:jsonb_ops3:key1:01:x", float64(1)},
+						{"9:jsonb_ops3:key1:01:x", int64(1)},
 					},
 				},
 				{
@@ -2704,7 +2707,7 @@ FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_posting_chunks;`,
 				{
 					Query: `SELECT COALESCE(SUM(row_count), 0), COUNT(*)
 	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_posting_chunks;`,
-					Expected: []sql.Row{{float64(0), 0}},
+					Expected: []sql.Row{{int64(0), int64(0)}},
 				},
 				{
 					Query: "ROLLBACK;",
@@ -2712,7 +2715,7 @@ FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_posting_chunks;`,
 				{
 					Query: `SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0
 	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_posting_chunks;`,
-					Expected: []sql.Row{{float64(4), "t", "t"}},
+					Expected: []sql.Row{{int64(4), "t", "t"}},
 				},
 			},
 		},
@@ -2735,7 +2738,7 @@ FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_posting_chunks;`,
 				{
 					Query: `SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0
 FROM dg_gin_jsonb_gin_lifecycle_jsonb_gin_lifecycle_idx_posting_chunks;`,
-					Expected: []sql.Row{{float64(8), "t", "t"}},
+					Expected: []sql.Row{{int64(8), "t", "t"}},
 				},
 				{
 					Query: "DROP INDEX jsonb_gin_lifecycle_renamed_idx;",
@@ -2750,7 +2753,7 @@ FROM dg_gin_jsonb_gin_lifecycle_jsonb_gin_lifecycle_idx_posting_chunks;`,
 				{
 					Query: `SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0
 FROM dg_gin_jsonb_gin_lifecycle_jsonb_gin_lifecycle_idx_posting_chunks;`,
-					Expected: []sql.Row{{float64(8), "t", "t"}},
+					Expected: []sql.Row{{int64(8), "t", "t"}},
 				},
 			},
 		},

@@ -8398,19 +8398,16 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 267,
       "scriptName": "PostgreSQL jsonb gin sidecar backfill",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0239-select-sum-row_count-count-payload",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0267-select-sum-row_count-count-payload",
-      "compare": "sqlstate",
       "expectedKind": "rows",
-      "sqlstate": "42P01",
-      "errorSeverity": "ERROR",
       "query": "SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0\nFROM dg_gin_jsonb_gin_backfill_jsonb_gin_backfill_idx_posting_chunks;",
       "querySha256": "0ac4382ae3ad9e84fda07bbfbd6400345e281e3e951a1a6372d9308018923364",
       "nonLiteral": [
+        "DoltSpecific",
         "Expected"
       ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -8434,19 +8431,16 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 269,
       "scriptName": "PostgreSQL jsonb gin sidecar DML maintenance",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0241-select-sum-row_count-count-payload",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0269-select-sum-row_count-count-payload",
-      "compare": "sqlstate",
       "expectedKind": "rows",
-      "sqlstate": "42P01",
-      "errorSeverity": "ERROR",
       "query": "SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0\nFROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_posting_chunks;",
       "querySha256": "0004922fd8670b786ebb70ef11a847e720cb49e6a1c77b96013bc514e93530a8",
       "nonLiteral": [
+        "DoltSpecific",
         "Expected"
       ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -8486,19 +8480,16 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 272,
       "scriptName": "PostgreSQL jsonb gin sidecar transaction rollback",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0244-select-sum-row_count-count-payload",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0272-select-sum-row_count-count-payload",
-      "compare": "sqlstate",
       "expectedKind": "rows",
-      "sqlstate": "42P01",
-      "errorSeverity": "ERROR",
       "query": "SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0\n\tFROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_posting_chunks;",
       "querySha256": "d48ec5ea6cee2d87df8dbb5900a245b0da06b514191f9b5e474b7f3110ca29de",
       "nonLiteral": [
+        "DoltSpecific",
         "Expected"
       ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {

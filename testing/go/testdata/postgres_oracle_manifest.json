@@ -10504,69 +10504,6 @@
       ]
     },
     {
-      "id": "index-test-testbasicindexing-0239-select-sum-row_count-count-payload",
-      "source": "testing/go/index_test.go:TestBasicIndexing",
-      "ordinal": 267,
-      "oracle": "postgres",
-      "compare": "sqlstate",
-      "setup": [
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE jsonb_gin_backfill (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
-        "INSERT INTO jsonb_gin_backfill VALUES\n\t\t\t\t\t(1, '{\"a\":1,\"tags\":[\"x\",\"x\"],\"empty\":{}}'),\n\t\t\t\t\t(2, '{\"a\":2,\"tags\":[\"y\"],\"ok\":true}');",
-        "CREATE INDEX jsonb_gin_backfill_idx ON jsonb_gin_backfill USING gin (doc);"
-      ],
-      "query": "SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0\nFROM dg_gin_jsonb_gin_backfill_jsonb_gin_backfill_idx_posting_chunks;",
-      "expectedSqlstate": "42P01",
-      "expectedErrorSeverity": "ERROR",
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
-      "id": "index-test-testbasicindexing-0241-select-sum-row_count-count-payload",
-      "source": "testing/go/index_test.go:TestBasicIndexing",
-      "ordinal": 269,
-      "oracle": "postgres",
-      "compare": "sqlstate",
-      "setup": [
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE jsonb_gin_dml (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
-        "INSERT INTO jsonb_gin_dml VALUES\n\t\t\t\t\t(1, '{\"a\":1,\"tags\":[\"x\",\"x\"]}');",
-        "CREATE INDEX jsonb_gin_dml_idx ON jsonb_gin_dml USING gin (doc);",
-        "INSERT INTO jsonb_gin_dml VALUES\n\t\t\t\t\t\t(2, '{\"a\":2,\"tags\":[\"y\",\"y\"]}');"
-      ],
-      "query": "SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0\nFROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_posting_chunks;",
-      "expectedSqlstate": "42P01",
-      "expectedErrorSeverity": "ERROR",
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
-      "id": "index-test-testbasicindexing-0244-select-sum-row_count-count-payload",
-      "source": "testing/go/index_test.go:TestBasicIndexing",
-      "ordinal": 272,
-      "oracle": "postgres",
-      "compare": "sqlstate",
-      "setup": [
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE jsonb_gin_txn (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
-        "INSERT INTO jsonb_gin_txn VALUES\n\t\t\t\t\t\t(1, '{\"a\":1,\"tags\":[\"x\",\"x\"]}');",
-        "CREATE INDEX jsonb_gin_txn_idx ON jsonb_gin_txn USING gin (doc);",
-        "BEGIN;",
-        "INSERT INTO jsonb_gin_txn VALUES\n\t\t\t\t\t\t\t(2, '{\"a\":2,\"tags\":[\"y\",\"y\"]}');"
-      ],
-      "query": "SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0\n\tFROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_posting_chunks;",
-      "expectedSqlstate": "42P01",
-      "expectedErrorSeverity": "ERROR",
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
       "id": "index-test-testbasicindexing-0282-select-id-from-jsonb_gin_lookup-where",
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 282,
