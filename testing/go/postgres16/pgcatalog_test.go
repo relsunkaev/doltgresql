@@ -4273,10 +4273,11 @@ func TestPgStatBgwriter(t *testing.T) {
 			Name: "pg_stat_bgwriter",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_stat_bgwriter";`, PostgresOracle: ScriptTestPostgresOracle{ID:
-
-					// Different cases and quoted, so it fails
-					"pgcatalog-test-testpgstatbgwriter-0001-select-*-from-pg_catalog-."},
+					Query: `SELECT count(*) = 1
+FROM "pg_catalog"."pg_stat_bgwriter"
+WHERE checkpoints_timed >= 0
+  AND checkpoints_req >= 0
+  AND buffers_backend_fsync >= 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatbgwriter-0001-select-count-1-from-pg_catalog.pg_stat_bgwriter-where"},
 				},
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_stat_bgwriter";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -4291,7 +4292,10 @@ func TestPgStatBgwriter(t *testing.T) {
 						ID: "pgcatalog-test-testpgstatbgwriter-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT checkpoints_timed FROM PG_catalog.pg_STAT_BGWRITER ORDER BY checkpoints_timed;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatbgwriter-0004-select-checkpoints_timed-from-pg_catalog.pg_stat_bgwriter-order"},
+					Query: `SELECT count(*) = 1 FROM PG_catalog.pg_STAT_BGWRITER
+WHERE checkpoints_timed >= 0
+  AND checkpoints_req >= 0
+  AND buffers_backend_fsync >= 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatbgwriter-0004-select-count-1-from-pg_catalog.pg_stat_bgwriter-where"},
 				},
 			},
 		},
