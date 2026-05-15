@@ -1335,9 +1335,22 @@ func TestPgDepend(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "pg_depend",
+			SetUpScript: []string{
+				`CREATE SEQUENCE depend_items_id_seq;`,
+				`CREATE TABLE depend_items (
+					id integer DEFAULT nextval('depend_items_id_seq'),
+					label text
+				);`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_depend";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT d.classid::regclass::text, d.refclassid::regclass::text, d.deptype
+						FROM "pg_catalog"."pg_depend" d
+						JOIN pg_catalog.pg_attrdef ad ON d.classid = 'pg_attrdef'::regclass AND d.objid = ad.oid
+						JOIN pg_catalog.pg_class seq ON d.refclassid = 'pg_class'::regclass AND d.refobjid = seq.oid
+						JOIN pg_catalog.pg_class tbl ON ad.adrelid = tbl.oid
+						WHERE tbl.relname = 'depend_items' AND seq.relname = 'depend_items_id_seq'
+						ORDER BY 1,2,3;`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpgdepend-0001-select-*-from-pg_catalog-."},
@@ -1355,26 +1368,43 @@ func TestPgDepend(t *testing.T) {
 						ID: "pgcatalog-test-testpgdepend-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT classid FROM PG_catalog.pg_DEPEND ORDER BY classid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdepend-0004-select-classid-from-pg_catalog.pg_depend-order"},
+					Query: `SELECT d.deptype
+						FROM PG_catalog.pg_DEPEND d
+						JOIN PG_catalog.pg_ATTRDEF ad ON d.classid = 'pg_attrdef'::regclass AND d.objid = ad.oid
+						JOIN PG_catalog.pg_CLASS seq ON d.refclassid = 'pg_class'::regclass AND d.refobjid = seq.oid
+						JOIN PG_catalog.pg_CLASS tbl ON ad.adrelid = tbl.oid
+						WHERE tbl.relname = 'depend_items' AND seq.relname = 'depend_items_id_seq'
+						ORDER BY d.deptype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdepend-0004-select-classid-from-pg_catalog.pg_depend-order"},
 				},
 				{
-					Query: `SELECT classid, objid, refclassid, refobjid, deptype
-						FROM pg_catalog.pg_depend
-						WHERE deptype != 'p' AND deptype != 'e'
-						UNION ALL
-						SELECT 'pg_opfamily'::pg_catalog.regclass AS classid, amopfamily AS objid, refclassid, refobjid, deptype
-						FROM pg_catalog.pg_depend d, pg_catalog.pg_amop o
-						WHERE deptype NOT IN ('p', 'e', 'i')
-							AND classid = 'pg_amop'::pg_catalog.regclass
-							AND objid = o.oid
-							AND NOT (refclassid = 'pg_opfamily'::pg_catalog.regclass AND amopfamily = refobjid)
-						UNION ALL
-						SELECT 'pg_opfamily'::pg_catalog.regclass AS classid, amprocfamily AS objid, refclassid, refobjid, deptype
-						FROM pg_catalog.pg_depend d, pg_catalog.pg_amproc p
-						WHERE deptype NOT IN ('p', 'e', 'i')
-							AND classid = 'pg_amproc'::pg_catalog.regclass
-							AND objid = p.oid
-							AND NOT (refclassid = 'pg_opfamily'::pg_catalog.regclass AND amprocfamily = refobjid)
+					Query: `SELECT deps.classid::regclass::text, deps.deptype
+						FROM (
+							SELECT d.classid, d.objid, d.refclassid, d.refobjid, d.deptype
+							FROM pg_catalog.pg_depend d
+							WHERE d.deptype != 'p' AND d.deptype != 'e'
+							UNION ALL
+							SELECT 'pg_opfamily'::pg_catalog.regclass AS classid, amopfamily AS objid, d.refclassid, d.refobjid, d.deptype
+							FROM pg_catalog.pg_depend d, pg_catalog.pg_amop o
+							WHERE d.deptype NOT IN ('p', 'e', 'i')
+								AND d.classid = 'pg_amop'::pg_catalog.regclass
+								AND d.objid = o.oid
+								AND NOT (d.refclassid = 'pg_opfamily'::pg_catalog.regclass AND o.amopfamily = d.refobjid)
+							UNION ALL
+							SELECT 'pg_opfamily'::pg_catalog.regclass AS classid, amprocfamily AS objid, d.refclassid, d.refobjid, d.deptype
+							FROM pg_catalog.pg_depend d, pg_catalog.pg_amproc p
+							WHERE d.deptype NOT IN ('p', 'e', 'i')
+								AND d.classid = 'pg_amproc'::pg_catalog.regclass
+								AND d.objid = p.oid
+								AND NOT (d.refclassid = 'pg_opfamily'::pg_catalog.regclass AND p.amprocfamily = d.refobjid)
+						) AS deps(classid, objid, refclassid, refobjid, deptype)
+						WHERE deps.classid = 'pg_attrdef'::pg_catalog.regclass
+							AND deps.deptype = 'n'
+							AND deps.objid = (
+								SELECT ad.oid
+								FROM pg_catalog.pg_attrdef ad
+								JOIN pg_catalog.pg_class tbl ON ad.adrelid = tbl.oid
+								WHERE tbl.relname = 'depend_items'
+							)
 						ORDER BY 1,2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdepend-0005-select-classid-objid-refclassid-refobjid"},
 				},
 			},
