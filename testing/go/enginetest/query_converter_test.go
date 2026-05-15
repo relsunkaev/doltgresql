@@ -50,6 +50,8 @@ func transformAST(query string) ([]string, bool) {
 		return transformSelect(stmt)
 	case *sqlparser.Insert:
 		return transformInsert(stmt)
+	case *sqlparser.Update:
+		return transformUpdate(stmt)
 	case *sqlparser.AlterTable:
 		return transformAlterTable(stmt)
 	}
@@ -65,6 +67,118 @@ func transformRename(stmt *sqlparser.DDL) ([]string, bool) {
 
 	ctx := formatNodeWithUnqualifiedTableNames(rename)
 	return []string{ctx.String()}, true
+}
+
+func transformUpdate(stmt *sqlparser.Update) ([]string, bool) {
+	if len(stmt.Exprs) < 2 {
+		return nil, false
+	}
+
+	assignments := make(map[string]sqlparser.Expr)
+	changed := false
+	for _, expr := range stmt.Exprs {
+		rewritten, exprChanged := replaceAssignedColumnRefs(expr.Expr, assignments)
+		if exprChanged {
+			expr.Expr = rewritten
+			changed = true
+		}
+		if expr.Name != nil && expr.Name.Qualifier.IsEmpty() {
+			assignments[expr.Name.Name.Lowered()] = rewritten
+		}
+	}
+	exprs, duplicateTargets := keepLastUpdateTargetExprs(stmt.Exprs)
+	if duplicateTargets {
+		stmt.Exprs = exprs
+		changed = true
+	}
+	if !changed {
+		return nil, false
+	}
+	return []string{formatNode(stmt)}, true
+}
+
+func keepLastUpdateTargetExprs(exprs sqlparser.AssignmentExprs) (sqlparser.AssignmentExprs, bool) {
+	lastIndex := make(map[string]int)
+	for i, expr := range exprs {
+		if expr.Name == nil || !expr.Name.Qualifier.IsEmpty() {
+			continue
+		}
+		lastIndex[expr.Name.Name.Lowered()] = i
+	}
+
+	duplicateTargets := false
+	filtered := make(sqlparser.AssignmentExprs, 0, len(exprs))
+	for i, expr := range exprs {
+		if expr.Name == nil || !expr.Name.Qualifier.IsEmpty() {
+			filtered = append(filtered, expr)
+			continue
+		}
+		if lastIndex[expr.Name.Name.Lowered()] != i {
+			duplicateTargets = true
+			continue
+		}
+		filtered = append(filtered, expr)
+	}
+	return filtered, duplicateTargets
+}
+
+func replaceAssignedColumnRefs(expr sqlparser.Expr, assignments map[string]sqlparser.Expr) (sqlparser.Expr, bool) {
+	switch expr := expr.(type) {
+	case *sqlparser.ColName:
+		if !expr.Qualifier.IsEmpty() {
+			return expr, false
+		}
+		assigned, ok := assignments[expr.Name.Lowered()]
+		if !ok {
+			return expr, false
+		}
+		return &sqlparser.ParenExpr{Expr: assigned}, true
+	case *sqlparser.BinaryExpr:
+		left, leftChanged := replaceAssignedColumnRefs(expr.Left, assignments)
+		right, rightChanged := replaceAssignedColumnRefs(expr.Right, assignments)
+		if leftChanged || rightChanged {
+			expr.Left = left
+			expr.Right = right
+			return expr, true
+		}
+	case *sqlparser.ComparisonExpr:
+		left, leftChanged := replaceAssignedColumnRefs(expr.Left, assignments)
+		right, rightChanged := replaceAssignedColumnRefs(expr.Right, assignments)
+		if leftChanged || rightChanged {
+			expr.Left = left
+			expr.Right = right
+			return expr, true
+		}
+	case *sqlparser.ParenExpr:
+		inner, innerChanged := replaceAssignedColumnRefs(expr.Expr, assignments)
+		if innerChanged {
+			expr.Expr = inner
+			return expr, true
+		}
+	case *sqlparser.UnaryExpr:
+		inner, innerChanged := replaceAssignedColumnRefs(expr.Expr, assignments)
+		if innerChanged {
+			expr.Expr = inner
+			return expr, true
+		}
+	case *sqlparser.FuncExpr:
+		changed := false
+		for _, selectExpr := range expr.Exprs {
+			aliased, ok := selectExpr.(*sqlparser.AliasedExpr)
+			if !ok {
+				continue
+			}
+			rewritten, rewrittenExpr := replaceAssignedColumnRefs(aliased.Expr, assignments)
+			if rewrittenExpr {
+				aliased.Expr = rewritten
+				changed = true
+			}
+		}
+		if changed {
+			return expr, true
+		}
+	}
+	return expr, false
 }
 
 func transformInsert(stmt *sqlparser.Insert) ([]string, bool) {
@@ -1582,6 +1696,18 @@ func TestConvertQuery(t *testing.T) {
 			input: "INSERT INTO foo VALUES (1, 2), (3, 4) on duplicate key update a = 5",
 			expected: []string{
 				"INSERT INTO foo VALUES (1, 2), (3, 4) ON CONFLICT (fake) DO UPDATE SET a = 5",
+			},
+		},
+		{
+			input: "UPDATE floattable SET f32 = f32 + f32, f64 = f32 * f64 WHERE i = 2",
+			expected: []string{
+				"update floattable set f32 = f32 + f32, f64 = (f32 + f32) * f64 where i = 2",
+			},
+		},
+		{
+			input: "UPDATE floattable SET f32 = 5, f32 = 4 WHERE i = 1",
+			expected: []string{
+				"update floattable set f32 = 4 where i = 1",
 			},
 		},
 	}
