@@ -3939,28 +3939,47 @@ func TestPgSettings(t *testing.T) {
 func TestPgShadow(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "pg_shadow",
+			Name: "pg_shadow default login role",
+			SetUpScript: []string{
+				`CREATE USER shadow_alpha_user;`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_shadow";`, PostgresOracle: ScriptTestPostgresOracle{ID:
-
-					// Different cases and quoted, so it fails
-					"pgcatalog-test-testpgshadow-0001-select-*-from-pg_catalog-."},
+					Query: `SELECT usename, usesuper, usecreatedb, userepl, usebypassrls, usesysid <> 0 AS has_oid
+						FROM "pg_catalog"."pg_shadow"
+						WHERE usename = 'shadow_alpha_user';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgshadow-0001-select-*-from-pg_catalog-."},
 				},
+			},
+		},
+		{
+			Name: "pg_shadow schema case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_shadow";`, PostgresOracle: ScriptTestPostgresOracle{
-
-						// Different cases and quoted, so it fails
 						ID: "pgcatalog-test-testpgshadow-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_shadow relation case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "pg_catalog"."PG_shadow";`, PostgresOracle: ScriptTestPostgresOracle{
-
-						// Different cases but non-quoted, so it works
 						ID: "pgcatalog-test-testpgshadow-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_shadow mixed-case lookup",
+			SetUpScript: []string{
+				`CREATE USER shadow_mixed_user;`,
+			},
+			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT usename FROM PG_catalog.pg_SHADOW ORDER BY usename;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgshadow-0004-select-usename-from-pg_catalog.pg_shadow-order"},
+					Query: `SELECT usename
+						FROM PG_catalog.pg_SHADOW
+						WHERE usename = 'shadow_mixed_user'
+						ORDER BY usename;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgshadow-0004-select-usename-from-pg_catalog.pg_shadow-order"},
 				},
 			},
 		},

@@ -281,6 +281,29 @@ func TestCreateUserPopulatesPgShadowRepro(t *testing.T) {
 	})
 }
 
+func TestCreateRoleRejectsPgPrefixRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE ROLE rejects reserved pg prefix",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE ROLE pg_reserved_role;`, PostgresOracle: ScriptTestPostgresOracle{
+						ID: "role-catalog-repro-test-testcreaterolerejectspgprefixrepro-0001-create-role-pg_reserved_role", Compare: "sqlstate"},
+				},
+			},
+		},
+		{
+			Name: "CREATE USER rejects reserved pg prefix",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE USER pg_reserved_user;`, PostgresOracle: ScriptTestPostgresOracle{
+						ID: "role-catalog-repro-test-testcreaterolerejectspgprefixrepro-0002-create-user-pg_reserved_user", Compare: "sqlstate"},
+				},
+			},
+		},
+	})
+}
+
 // TestCreateUserPopulatesPgAuthidPasswordRepro reproduces a catalog
 // persistence bug: pg_authid should expose the stored password hash to
 // superusers, but Doltgres leaves rolpassword null.

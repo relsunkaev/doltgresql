@@ -16,6 +16,7 @@ package node
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/cockroachdb/errors"
@@ -100,6 +101,9 @@ func (c *CreateRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 			return sql.RowsToRowIter(), nil
 		}
 		return nil, pgerror.Newf(pgcode.DuplicateObject, `role "%s" already exists`, c.Name)
+	}
+	if strings.HasPrefix(strings.ToLower(c.Name), "pg_") {
+		return nil, pgerror.Newf(pgcode.ReservedName, `role name "%s" is reserved`, c.Name)
 	}
 	if c.ConnectionLimit < -1 {
 		return nil, pgerror.New(pgcode.InvalidParameterValue, "invalid connection limit")

@@ -512,6 +512,50 @@
       "querySha256": "36d42b3642322ff2c38b346f28e88a7f09f41b252fb9aa9169345108f703b313",
       "needsCleanup": false,
       "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/role_catalog_repro_test.go:TestCreateRoleRejectsPgPrefixRepro#0001",
+      "source": "testing/go/postgres16/role_catalog_repro_test.go:TestCreateRoleRejectsPgPrefixRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE ROLE rejects reserved pg prefix",
+      "oracle": "postgres",
+      "postgresId": "role-catalog-repro-test-testcreaterolerejectspgprefixrepro-0001-create-role-pg_reserved_role",
+      "suggestedId": "postgres16/role-catalog-repro-test-testcreaterolerejectspgprefixrepro-0001-create-role-pg_reserved_role",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42939",
+      "errorSeverity": "ERROR",
+      "query": "CREATE ROLE pg_reserved_role;",
+      "querySha256": "a94ccaae9b3cc3787b3a10c2df34b6eaa09663ed9bf1f37426a38c478fc94c6a",
+      "cleanup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'pg_reserved_role') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('pg_reserved_role'); END IF; END $$",
+        "DROP ROLE IF EXISTS pg_reserved_role"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/postgres16/role_catalog_repro_test.go:TestCreateRoleRejectsPgPrefixRepro#0002",
+      "source": "testing/go/postgres16/role_catalog_repro_test.go:TestCreateRoleRejectsPgPrefixRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE USER rejects reserved pg prefix",
+      "oracle": "postgres",
+      "postgresId": "role-catalog-repro-test-testcreaterolerejectspgprefixrepro-0002-create-user-pg_reserved_user",
+      "suggestedId": "postgres16/role-catalog-repro-test-testcreaterolerejectspgprefixrepro-0002-create-user-pg_reserved_user",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42939",
+      "errorSeverity": "ERROR",
+      "query": "CREATE USER pg_reserved_user;",
+      "querySha256": "bc04dc2fb27670fd7eea33bd322b20f7c1f2d8388ae789f48f61521ee32edcfc",
+      "cleanup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'pg_reserved_user') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('pg_reserved_user'); END IF; END $$",
+        "DROP ROLE IF EXISTS pg_reserved_user"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     }
   ]
 }

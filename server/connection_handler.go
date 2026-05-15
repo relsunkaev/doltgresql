@@ -4601,6 +4601,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.UndefinedObject.String(), true
 	case strings.HasPrefix(msg, `role "`) && strings.HasSuffix(msg, `" does not have permission to revoke this privilege`):
 		return pgcode.FeatureNotSupported.String(), true
+	case strings.HasPrefix(msg, `role name "`) && strings.HasSuffix(msg, `" is reserved`):
+		return pgcode.ReservedName.String(), true
 	case strings.HasPrefix(msg, `database "`) && strings.HasSuffix(msg, `" does not exist`):
 		return pgcode.UndefinedDatabase.String(), true
 	case strings.HasPrefix(msg, `schema "`) && strings.HasSuffix(msg, `" does not exist`):
