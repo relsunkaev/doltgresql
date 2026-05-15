@@ -1461,14 +1461,27 @@ WHERE doc @> '{"a":1}';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-te
 	pg_catalog.pg_get_indexdef(i.indexrelid, 1, true)
 FROM pg_catalog.pg_index i
 JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
-WHERE c.relname = 'idx_items_title_lower';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0325-select-i.indkey-i.indexprs-pg_catalog.pg_get_expr-i.indexprs", ColumnModes: []string{"structural", "structural", "structural", "schema"}},
+WHERE c.relname = 'idx_items_title_lower';`,
+					Expected: []sql.Row{{
+						"0",
+						"lower(title)",
+						"lower(title)",
+						"CREATE UNIQUE INDEX idx_items_title_lower ON public.items USING btree (lower(title))",
+						"lower(title)",
+					}},
 				},
 				{
 					Query: `SELECT a.attname, a.attnum
 FROM pg_catalog.pg_attribute a
 JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
 WHERE c.relname = 'items' AND a.attnum > 0
-ORDER BY a.attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0326-select-a.attname-a.attnum-from-pg_catalog.pg_attribute"},
+ORDER BY a.attnum;`,
+					Expected: []sql.Row{
+						{"id", int64(1)},
+						{"title", int64(2)},
+						{"metadata", int64(3)},
+						{"updated_at", int64(4)},
+					},
 				},
 				{
 					Query: `SELECT
@@ -1482,7 +1495,14 @@ FROM pg_catalog.pg_attribute a
 JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
 WHERE c.relname IN ('items_pkey', 'idx_items_title_lower', 'idx_items_title_updated_include')
   AND a.attnum > 0
-ORDER BY c.relname, a.attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0327-select-c.relname-a.attname-a.attnum-a.atttypid"},
+ORDER BY c.relname, a.attnum;`,
+					Expected: []sql.Row{
+						{"idx_items_title_lower", "lower", int64(1), int64(25), int64(100), int64(-1)},
+						{"idx_items_title_updated_include", "title", int64(1), int64(1043), int64(950), int64(-1)},
+						{"idx_items_title_updated_include", "updated_at", int64(2), int64(1114), int64(0), int64(-1)},
+						{"idx_items_title_updated_include", "metadata", int64(3), int64(114), int64(0), int64(-1)},
+						{"items_pkey", "id", int64(1), int64(23), int64(0), int64(-1)},
+					},
 				},
 				{
 					Query: "INSERT INTO items (title, metadata, updated_at) VALUES ('ABC', '{}', '2026-10-10 01:02:03');", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0328-insert-into-items-title-metadata"},
@@ -1518,7 +1538,16 @@ ORDER BY c.relname, a.attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "in
 	pg_catalog.pg_get_indexdef(i.indexrelid, 3, true)
 FROM pg_catalog.pg_index i
 JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
-WHERE c.relname = 'mixed_expression_index_meta_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0337-select-i.indkey-i.indexprs-pg_catalog.pg_get_expr-i.indexprs", ColumnModes: []string{"structural", "structural", "structural", "schema"}},
+WHERE c.relname = 'mixed_expression_index_meta_idx';`,
+					Expected: []sql.Row{{
+						"0 3 0",
+						"lower(title), upper(code)",
+						"lower(title), upper(code)",
+						"CREATE INDEX mixed_expression_index_meta_idx ON public.mixed_expression_index_meta USING btree (lower(title), code, upper(code))",
+						"lower(title)",
+						"code",
+						"upper(code)",
+					}},
 				},
 				{
 					Query: `SELECT id

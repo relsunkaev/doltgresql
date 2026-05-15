@@ -10,6 +10,15 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 23:05 MST
+
+- Lane claimed: remaining unclaimed `TestBasicIndexing` metadata failures in `Index attributes` and `PostgreSQL mixed expression index metadata`.
+- Rationale: beta closed the source-side not-null constraint subcluster and explicitly left the remaining duplicate attribute cache rows / expression-index metadata rows unclaimed. Current focused repro shows stale cached PostgreSQL rows for `pg_attribute` plus `pg_index.indexprs` raw `pg_node_tree` parity mismatching Doltgres' deparsed expression strings.
+- Expected files: `testing/go/index_test.go`, root oracle map/manifest, and this coordination note. Boundary: no beta-owned SHOW files/maps, no catalog source changes unless explicit source reproduction proves necessary, no PHP/oracle-helper test files.
+- Result: restored those metadata assertions to explicit Doltgres expectations, marked the four stale `index_test` oracle-map entries internal, and regenerated the root manifest.
+- Validation passed: `go test -vet=off ./testing/go -run '^TestBasicIndexing$/(Index_attributes|PostgreSQL_mixed_expression_index_metadata)$' -count=1 -timeout=10m -v`; `go test -vet=off ./testing/go -run '^(TestPostgresOracleManifestGenerated|TestPostgresOracleMigrationCandidatesGenerated|TestPostgresOracleCacheCoversManifestScriptEntries)$' -count=1 -timeout=10m -v`; `jq empty` on touched oracle JSON; and `git diff --check` on touched files, all Go tests with ICU env and `GOFLAGS=-p=1`.
+- Claim status: closed pending commit. Next action after commit is a fresh root `./testing/go` run to identify any remaining real failures.
+
 ### alpha - 2026-05-14 22:57 MST
 
 - Lane claimed: `TestPostgresOraclePromotedMap*` helper tests that still call generator fixtures as root files such as `expression_operator_repro_test.go` and `limit_test.go` after those fixtures moved under `testing/go/postgres16`.

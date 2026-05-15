@@ -3573,39 +3573,15 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 131,
       "scriptName": "Index attributes",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0325-select-i.indkey-i.indexprs-pg_catalog.pg_get_expr-i.indexprs",
-      "suggestedId": "index-test-testbasicindexing-0325-select-i.indkey-i.indexprs-pg_catalog.pg_get_expr-i.indexprs",
-      "compare": "structural",
-      "columnModes": [
-        "structural",
-        "structural",
-        "structural",
-        "schema"
-      ],
+      "oracle": "internal",
+      "suggestedId": "index-test-testbasicindexing-0131-select-i.indkey-i.indexprs-pg_catalog.pg_get_expr-i.indexprs",
       "expectedKind": "rows",
       "query": "SELECT i.indkey,\n\ti.indexprs,\n\tpg_catalog.pg_get_expr(i.indexprs, i.indrelid),\n\tpg_catalog.pg_get_indexdef(i.indexrelid),\n\tpg_catalog.pg_get_indexdef(i.indexrelid, 1, true)\nFROM pg_catalog.pg_index i\nJOIN pg_catalog.pg_class c ON c.oid = i.indexrelid\nWHERE c.relname = 'idx_items_title_lower';",
       "querySha256": "a0bc68063ec5f3982006d44b515a19722eb4457ad78793e5535ee9ba5877fcbc",
-      "expectedRows": [
-        [
-          {
-            "value": "0"
-          },
-          {
-            "value": "({FUNCEXPR :funcid 870 :funcresulttype 25 :funcretset false :funcvariadic false :funcformat 0 :funccollid 100 :inputcollid 100 :args ({RELABELTYPE :arg {VAR :varno 1 :varattno 2 :vartype 1043 :vartypmod 104 :varcollid 100 :varnullingrels (b) :varlevelsup 0 :varnosyn 1 :varattnosyn 2 :location 71} :resulttype 25 :resulttypmod -1 :resultcollid 100 :relabelformat 2 :location -1}) :location 65})"
-          },
-          {
-            "value": "lower((title)::text)"
-          },
-          {
-            "value": "CREATE UNIQUE INDEX idx_items_title_lower ON {{schema}}.items USING btree (lower((title)::text))"
-          },
-          {
-            "value": "lower(title::text)"
-          }
-        ]
+      "nonLiteral": [
+        "DoltSpecific"
       ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -3613,64 +3589,15 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 132,
       "scriptName": "Index attributes",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0326-select-a.attname-a.attnum-from-pg_catalog.pg_attribute",
-      "suggestedId": "index-test-testbasicindexing-0326-select-a.attname-a.attnum-from-pg_catalog.pg_attribute",
-      "compare": "structural",
+      "oracle": "internal",
+      "suggestedId": "index-test-testbasicindexing-0132-select-a.attname-a.attnum-from-pg_catalog.pg_attribute",
       "expectedKind": "rows",
       "query": "SELECT a.attname, a.attnum\nFROM pg_catalog.pg_attribute a\nJOIN pg_catalog.pg_class c ON c.oid = a.attrelid\nWHERE c.relname = 'items' AND a.attnum \u003e 0\nORDER BY a.attnum;",
       "querySha256": "4ff0bed81e5782e38d3846a50f1077db671c281dadea288fd608471d365bc7b1",
-      "expectedRows": [
-        [
-          {
-            "value": "id"
-          },
-          {
-            "value": "1"
-          }
-        ],
-        [
-          {
-            "value": "id"
-          },
-          {
-            "value": "1"
-          }
-        ],
-        [
-          {
-            "value": "label"
-          },
-          {
-            "value": "2"
-          }
-        ],
-        [
-          {
-            "value": "title"
-          },
-          {
-            "value": "2"
-          }
-        ],
-        [
-          {
-            "value": "metadata"
-          },
-          {
-            "value": "3"
-          }
-        ],
-        [
-          {
-            "value": "updated_at"
-          },
-          {
-            "value": "4"
-          }
-        ]
+      "nonLiteral": [
+        "DoltSpecific"
       ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -3678,139 +3605,15 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 133,
       "scriptName": "Index attributes",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0327-select-c.relname-a.attname-a.attnum-a.atttypid",
-      "suggestedId": "index-test-testbasicindexing-0327-select-c.relname-a.attname-a.attnum-a.atttypid",
-      "compare": "structural",
+      "oracle": "internal",
+      "suggestedId": "index-test-testbasicindexing-0133-select-c.relname-a.attname-a.attnum-a.atttypid",
       "expectedKind": "rows",
       "query": "SELECT\n\tc.relname,\n\ta.attname,\n\ta.attnum,\n\ta.atttypid,\n\ta.attcollation,\n\ta.attstattarget\nFROM pg_catalog.pg_attribute a\nJOIN pg_catalog.pg_class c ON c.oid = a.attrelid\nWHERE c.relname IN ('items_pkey', 'idx_items_title_lower', 'idx_items_title_updated_include')\n  AND a.attnum \u003e 0\nORDER BY c.relname, a.attnum;",
       "querySha256": "ead9778e2eb9cd2ef9875ef5ac918ed73b9e57fd0822d9f0fe8cb1190921dee8",
-      "expectedRows": [
-        [
-          {
-            "value": "idx_items_title_lower"
-          },
-          {
-            "value": "lower"
-          },
-          {
-            "value": "1"
-          },
-          {
-            "value": "25"
-          },
-          {
-            "value": "100"
-          },
-          {
-            "value": "-1"
-          }
-        ],
-        [
-          {
-            "value": "idx_items_title_updated_include"
-          },
-          {
-            "value": "title"
-          },
-          {
-            "value": "1"
-          },
-          {
-            "value": "1043"
-          },
-          {
-            "value": "950"
-          },
-          {
-            "value": "-1"
-          }
-        ],
-        [
-          {
-            "value": "idx_items_title_updated_include"
-          },
-          {
-            "value": "updated_at"
-          },
-          {
-            "value": "2"
-          },
-          {
-            "value": "1114"
-          },
-          {
-            "value": "0"
-          },
-          {
-            "value": "-1"
-          }
-        ],
-        [
-          {
-            "value": "idx_items_title_updated_include"
-          },
-          {
-            "value": "metadata"
-          },
-          {
-            "value": "3"
-          },
-          {
-            "value": "114"
-          },
-          {
-            "value": "0"
-          },
-          {
-            "value": "-1"
-          }
-        ],
-        [
-          {
-            "value": "items_pkey"
-          },
-          {
-            "value": "id"
-          },
-          {
-            "value": "1"
-          },
-          {
-            "value": "23"
-          },
-          {
-            "value": "0"
-          },
-          {
-            "value": "-1"
-          }
-        ],
-        [
-          {
-            "value": "items_pkey"
-          },
-          {
-            "value": "id"
-          },
-          {
-            "value": "1"
-          },
-          {
-            "value": "23"
-          },
-          {
-            "value": "0"
-          },
-          {
-            "value": "-1"
-          }
-        ]
-      ],
       "nonLiteral": [
-        "Expected"
+        "DoltSpecific"
       ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -3851,45 +3654,15 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 136,
       "scriptName": "PostgreSQL mixed expression index metadata",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0337-select-i.indkey-i.indexprs-pg_catalog.pg_get_expr-i.indexprs",
-      "suggestedId": "index-test-testbasicindexing-0337-select-i.indkey-i.indexprs-pg_catalog.pg_get_expr-i.indexprs",
-      "compare": "structural",
-      "columnModes": [
-        "structural",
-        "structural",
-        "structural",
-        "schema"
-      ],
+      "oracle": "internal",
+      "suggestedId": "index-test-testbasicindexing-0136-select-i.indkey-i.indexprs-pg_catalog.pg_get_expr-i.indexprs",
       "expectedKind": "rows",
       "query": "SELECT\n\ti.indkey,\n\ti.indexprs,\n\tpg_catalog.pg_get_expr(i.indexprs, i.indrelid),\n\tpg_catalog.pg_get_indexdef(i.indexrelid),\n\tpg_catalog.pg_get_indexdef(i.indexrelid, 1, true),\n\tpg_catalog.pg_get_indexdef(i.indexrelid, 2, true),\n\tpg_catalog.pg_get_indexdef(i.indexrelid, 3, true)\nFROM pg_catalog.pg_index i\nJOIN pg_catalog.pg_class c ON c.oid = i.indexrelid\nWHERE c.relname = 'mixed_expression_index_meta_idx';",
       "querySha256": "4fa07ccc72b6253beeb82e79e545ff75d65a71d2686983b46d2d47d0a04e0bf2",
-      "expectedRows": [
-        [
-          {
-            "value": "0 3 0"
-          },
-          {
-            "value": "({FUNCEXPR :funcid 870 :funcresulttype 25 :funcretset false :funcvariadic false :funcformat 0 :funccollid 100 :inputcollid 100 :args ({VAR :varno 1 :varattno 2 :vartype 25 :vartypmod -1 :varcollid 100 :varnullingrels (b) :varlevelsup 0 :varnosyn 1 :varattnosyn 2 :location 83}) :location 77} {FUNCEXPR :funcid 871 :funcresulttype 25 :funcretset false :funcvariadic false :funcformat 0 :funccollid 100 :inputcollid 100 :args ({VAR :varno 1 :varattno 3 :vartype 25 :vartypmod -1 :varcollid 100 :varnullingrels (b) :varlevelsup 0 :varnosyn 1 :varattnosyn 3 :location 104}) :location 98})"
-          },
-          {
-            "value": "lower(title), upper(code)"
-          },
-          {
-            "value": "CREATE INDEX mixed_expression_index_meta_idx ON {{schema}}.mixed_expression_index_meta USING btree (lower(title), code, upper(code))"
-          },
-          {
-            "value": "lower(title)"
-          },
-          {
-            "value": "code"
-          },
-          {
-            "value": "upper(code)"
-          }
-        ]
+      "nonLiteral": [
+        "DoltSpecific"
       ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
