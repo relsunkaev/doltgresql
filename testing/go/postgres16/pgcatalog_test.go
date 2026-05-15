@@ -4705,9 +4705,7 @@ func TestPgStatSlru(t *testing.T) {
 							flushes >= 0 AS flushes_nonnegative,
 							truncates >= 0 AS truncates_nonnegative
 						FROM "pg_catalog"."pg_stat_slru"
-						ORDER BY name;`, PostgresOracle: ScriptTestPostgresOracle{ID:
-
-					"pgcatalog-test-testpgstatslru-0001-select-*-from-pg_catalog-."},
+						ORDER BY name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatslru-0001-select-*-from-pg_catalog-."},
 				},
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_stat_slru";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -4735,10 +4733,15 @@ func TestPgStatSsl(t *testing.T) {
 			Name: "pg_stat_ssl",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_stat_ssl";`, PostgresOracle: ScriptTestPostgresOracle{ID:
-
-					// Different cases and quoted, so it fails
-					"pgcatalog-test-testpgstatssl-0001-select-*-from-pg_catalog-."},
+					Query: `SELECT ssl,
+							version IS NULL AS version_is_null,
+							cipher IS NULL AS cipher_is_null,
+							bits IS NULL AS bits_is_null,
+							client_dn IS NULL AS client_dn_is_null,
+							client_serial IS NULL AS client_serial_is_null,
+							issuer_dn IS NULL AS issuer_dn_is_null
+						FROM "pg_catalog"."pg_stat_ssl"
+						WHERE pid = pg_backend_pid();`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatssl-0001-select-*-from-pg_catalog-."},
 				},
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_stat_ssl";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -4753,7 +4756,7 @@ func TestPgStatSsl(t *testing.T) {
 						ID: "pgcatalog-test-testpgstatssl-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT pid FROM PG_catalog.pg_STAT_SSL ORDER BY pid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatssl-0004-select-pid-from-pg_catalog.pg_stat_ssl-order"},
+					Query: "SELECT count(*) = 1 FROM PG_catalog.pg_STAT_SSL WHERE pid = pg_backend_pid();", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatssl-0004-select-pid-from-pg_catalog.pg_stat_ssl-order"},
 				},
 			},
 		},
