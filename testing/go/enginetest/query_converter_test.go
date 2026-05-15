@@ -77,7 +77,7 @@ func transformInsert(stmt *sqlparser.Insert) ([]string, bool) {
 		if len(stmt.Columns) > 0 {
 			colList = make(tree.NameList, len(stmt.Columns))
 			for i, col := range stmt.Columns {
-				colList[i] = tree.Name(col.String())
+				colList[i] = mysqlColumnName(col)
 			}
 		}
 
@@ -105,7 +105,7 @@ func transformInsert(stmt *sqlparser.Insert) ([]string, bool) {
 		if len(stmt.Columns) > 0 {
 			colList = make(tree.NameList, len(stmt.Columns))
 			for i, col := range stmt.Columns {
-				colList[i] = tree.Name(col.String())
+				colList[i] = mysqlColumnName(col)
 			}
 		}
 
@@ -135,6 +135,10 @@ func translateTableName(table sqlparser.TableName) *tree.TableName {
 	return tree.NewTableName(tree.Name(table.DbQualifier.String()), tree.Name(table.Name.String()))
 }
 
+func mysqlColumnName(col sqlparser.ColIdent) tree.Name {
+	return tree.Name(col.Lowered())
+}
+
 func TableNameToUnresolvedObjectName(table sqlparser.TableName) *tree.UnresolvedObjectName {
 	if !table.DbQualifier.IsEmpty() {
 		panic(fmt.Sprintf("unhandled case: db qualifier present %v", table))
@@ -151,7 +155,7 @@ func convertUpdateExprs(exprs sqlparser.AssignmentExprs) tree.UpdateExprs {
 	updateExprs := make(tree.UpdateExprs, len(exprs))
 	for i, expr := range exprs {
 		updateExprs[i] = &tree.UpdateExpr{
-			Names: tree.NameList{tree.Name(expr.Name.String())},
+			Names: tree.NameList{mysqlColumnName(expr.Name.Name)},
 			Expr:  convertExpr(expr.Expr),
 		}
 	}
@@ -784,7 +788,7 @@ func transformCreateTable(stmt *sqlparser.DDL) ([]string, bool) {
 		defVal := convertExpr(col.Type.Default)
 
 		if col.Type.Autoincrement {
-			autoIncColumn = col.Name.String()
+			autoIncColumn = col.Name.Lowered()
 			defVal = &tree.FuncExpr{
 				Func: tree.WrapFunction("nextval"),
 				Exprs: []tree.Expr{
@@ -794,7 +798,7 @@ func transformCreateTable(stmt *sqlparser.DDL) ([]string, bool) {
 		}
 
 		createTable.Defs = append(createTable.Defs, &tree.ColumnTableDef{
-			Name:      tree.Name(col.Name.String()),
+			Name:      mysqlColumnName(col.Name),
 			Type:      convertTypeDef(col.Type),
 			Collation: "", // TODO
 			Nullable: struct {
@@ -831,7 +835,7 @@ func transformCreateTable(stmt *sqlparser.DDL) ([]string, bool) {
 
 			indexFields := make(tree.IndexElemList, len(index.Fields))
 			for i, col := range index.Fields {
-				colName := col.Column.String()
+				colName := col.Column.Lowered()
 				indexFields[i] = tree.IndexElem{
 					Column: tree.Name(colName),
 				}
@@ -877,7 +881,7 @@ func transformCreateTable(stmt *sqlparser.DDL) ([]string, bool) {
 
 			for i, col := range index.Fields {
 				createIndex.Columns[i] = tree.IndexElem{
-					Column:    tree.Name(col.Column.String()),
+					Column:    mysqlColumnName(col.Column),
 					Direction: tree.Ascending,
 				}
 			}
@@ -1491,6 +1495,10 @@ func TestConvertQuery(t *testing.T) {
 			expected: []string{"CREATE TABLE foo (a INTEGER NOT NULL PRIMARY KEY)"},
 		},
 		{
+			input:    "CREATE TABLE test (PK int PRIMARY KEY)",
+			expected: []string{"CREATE TABLE test (pk INTEGER NOT NULL PRIMARY KEY)"},
+		},
+		{
 			input: "CREATE TABLE foo (a INT primary key, b int not null)",
 			expected: []string{
 				"CREATE TABLE foo (a INTEGER NOT NULL PRIMARY KEY, b INTEGER NOT NULL)",
@@ -1554,6 +1562,12 @@ func TestConvertQuery(t *testing.T) {
 			input: "INSERT INTO foo (a, b) VALUES (1, 2), (3, 4) on duplicate key update a = 5",
 			expected: []string{
 				"INSERT INTO foo(a, b) VALUES (1, 2), (3, 4) ON CONFLICT (fake) DO UPDATE SET a = 5",
+			},
+		},
+		{
+			input: "INSERT INTO foo (A, B) VALUES (1, 2) on duplicate key update A = 5",
+			expected: []string{
+				"INSERT INTO foo(a, b) VALUES (1, 2) ON CONFLICT (fake) DO UPDATE SET a = 5",
 			},
 		},
 		{
