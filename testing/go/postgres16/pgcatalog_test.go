@@ -949,19 +949,29 @@ func TestPgConstraintIndexes(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT oid, conname FROM pg_catalog.pg_constraint WHERE oid = 2068729390;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0001-select-oid-conname-from-pg_catalog.pg_constraint"},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE oid = (SELECT oid FROM pg_catalog.pg_constraint WHERE conname = 'testing2_pkey' AND connamespace = (SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = current_schema()));", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0001-select-oid-conname-from-pg_catalog.pg_constraint"},
 				},
 				{
-					Query: "explain SELECT oid, conname FROM pg_catalog.pg_constraint WHERE oid = 2068729390 order by 1", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0002-explain-select-oid-conname-from", ColumnModes: []string{"explain"}},
+					Query: "explain SELECT conname FROM pg_catalog.pg_constraint WHERE oid = 2068729390 order by 1",
+					Expected: []sql.Row{
+						{"Project"},
+						{" ├─ columns: [pg_constraint.conname]"},
+						{" └─ Sort(pg_constraint.conname ASC)"},
+						{"     └─ Filter"},
+						{"         ├─ pg_constraint.oid = 2068729390"},
+						{"         └─ IndexedTableAccess(pg_constraint)"},
+						{"             ├─ index: [pg_constraint.oid]"},
+						{`             └─ filters: [{[{Index:["public","testing2","PRIMARY"]}, {Index:["public","testing2","PRIMARY"]}]}]`},
+					},
 				},
 				{
-					Query: "SELECT oid, conname FROM pg_catalog.pg_constraint WHERE conrelid = 2694106299 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0003-select-oid-conname-from-pg_catalog.pg_constraint"},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 'testing2'::regclass ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0003-select-oid-conname-from-pg_catalog.pg_constraint"},
 				},
 				{
-					Query: "SELECT oid, conname FROM pg_catalog.pg_constraint WHERE conname = 'testing_pkey' AND connamespace = 2200;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0004-select-oid-conname-from-pg_catalog.pg_constraint"},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conname = 'testing_pkey' AND connamespace = (SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = current_schema());", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0004-select-oid-conname-from-pg_catalog.pg_constraint"},
 				},
 				{
-					Query: "SELECT oid, conname FROM pg_catalog.pg_constraint WHERE conname >= 'testing' AND conname < 'testingz' ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0005-select-oid-conname-from-pg_catalog.pg_constraint"},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid IN ('testing'::regclass, 'testing2'::regclass) AND conname >= 'testing' AND conname < 'testingz' ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0005-select-oid-conname-from-pg_catalog.pg_constraint"},
 				},
 			},
 		},
@@ -979,81 +989,145 @@ func TestPgConstraintIndexes(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				// Primary key index tests (pg_constraint_oid_index)
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE oid = (SELECT oid FROM pg_catalog.pg_constraint WHERE conname = 'test_table1_pkey' LIMIT 1);", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0006-select-conname-from-pg_catalog.pg_constraint-where"},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE oid = (SELECT oid FROM pg_catalog.pg_constraint WHERE conname = 'test_table1_pkey' AND connamespace = (SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = current_schema()));", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0006-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE oid IN (SELECT oid FROM pg_catalog.pg_constraint WHERE conname LIKE '%_pkey' ORDER BY conname LIMIT 3);", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0007-select-conname-from-pg_catalog.pg_constraint-where"},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE oid IN (SELECT oid FROM pg_catalog.pg_constraint WHERE conname IN ('test_table1_pkey', 'test_table2_pkey', 'test_table3_pkey') AND connamespace = (SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = current_schema())) ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0007-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				// conname + connamespace index tests (pg_constraint_conname_nsp_index)
 				{
-					Query: "SELECT conname, connamespace FROM pg_catalog.pg_constraint WHERE conname = 'test_table1_pkey' AND connamespace = 2200;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0008-select-conname-connamespace-from-pg_catalog.pg_constraint"},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conname = 'test_table1_pkey' AND connamespace = (SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = current_schema());", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0008-select-conname-connamespace-from-pg_catalog.pg_constraint"},
 				},
 				{
-					Query: "explain SELECT conname, connamespace FROM pg_catalog.pg_constraint WHERE conname = 'test_table1_pkey' AND connamespace = 2200 order by 1", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0009-explain-select-conname-connamespace-from", ColumnModes: []string{"explain"}},
+					Query: "explain SELECT conname FROM pg_catalog.pg_constraint WHERE conname = 'test_table1_pkey' AND connamespace = 2200 order by 1",
+					Expected: []sql.Row{
+						{"Project"},
+						{" ├─ columns: [pg_constraint.conname]"},
+						{" └─ Sort(pg_constraint.conname ASC)"},
+						{"     └─ Filter"},
+						{"         ├─ (pg_constraint.conname = 'test_table1_pkey' AND pg_constraint.connamespace = 2200)"},
+						{"         └─ IndexedTableAccess(pg_constraint)"},
+						{"             ├─ index: [pg_constraint.conname,pg_constraint.connamespace]"},
+						{`             └─ filters: [{[test_table1_pkey, test_table1_pkey], [{Namespace:["public"]}, {Namespace:["public"]}]}]`},
+					},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conname IN ('test_table1_pkey', 'test_table2_pkey', 'name_check') AND connamespace = 2200 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0010-select-conname-from-pg_catalog.pg_constraint-where"},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conname IN ('test_table1_pkey', 'test_table2_pkey', 'name_check') AND connamespace = (SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = current_schema()) ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0010-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conname >= 'name_' AND conname < 'name_z' AND connamespace = 2200 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0011-select-conname-from-pg_catalog.pg_constraint-where"},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conname >= 'name_' AND conname < 'name_z' AND connamespace = (SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = current_schema()) ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0011-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				// conrelid + contypid + conname index tests (pg_constraint_conrelid_contypid_conname_index)
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 3645786842 AND contypid = 0 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0012-select-conname-from-pg_catalog.pg_constraint-where"},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 'test_table1'::regclass AND contypid = 0 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0012-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "explain SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 3645786842 AND contypid = 0 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0013-explain-select-conname-from-pg_catalog.pg_constraint", ColumnModes: []string{"explain"}},
+					Query: "explain SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 'test_table1'::regclass AND contypid = 0 ORDER BY conname;",
+					Expected: []sql.Row{
+						{"Project"},
+						{" ├─ columns: [pg_constraint.conname]"},
+						{" └─ Sort(pg_constraint.conname ASC)"},
+						{"     └─ Filter"},
+						{`         ├─ (pg_constraint.conrelid = {Table:["public","test_table1"]} AND pg_constraint.contypid = 0)`},
+						{"         └─ IndexedTableAccess(pg_constraint)"},
+						{"             ├─ index: [pg_constraint.conrelid,pg_constraint.contypid,pg_constraint.conname]"},
+						{`             └─ filters: [{[{Table:["public","test_table1"]}, {Table:["public","test_table1"]}], [{OID:["0"]}, {OID:["0"]}], [NULL, ∞)}]`},
+					},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'test_table1') AND contypid = 0 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0014-select-conname-from-pg_catalog.pg_constraint-where"},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 'test_table1'::regclass AND contypid = 0 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0014-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid IN (SELECT oid FROM pg_catalog.pg_class WHERE relname IN ('test_table1', 'test_table2')) AND contypid = 0 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0015-select-conname-from-pg_catalog.pg_constraint-where"},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid IN ('test_table1'::regclass, 'test_table2'::regclass) AND contypid = 0 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0015-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'test_table2') AND contypid = 0 AND conname = 'name_check';", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0016-select-conname-from-pg_catalog.pg_constraint-where"},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 'test_table2'::regclass AND contypid = 0 AND conname = 'name_check';", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0016-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 
 				// contypid index tests (pg_constraint_contypid_index)
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE contypid = (SELECT oid FROM pg_catalog.pg_type WHERE typname = 'test_domain') ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0017-select-conname-from-pg_catalog.pg_constraint-where"},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE contypid = 'test_domain'::regtype ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0017-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE contypid = 1309307140 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0018-select-conname-from-pg_catalog.pg_constraint-where"},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE contypid = 'test_domain'::regtype ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0018-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "explain SELECT conname FROM pg_catalog.pg_constraint WHERE contypid = 1309307140 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0019-explain-select-conname-from-pg_catalog.pg_constraint", ColumnModes: []string{"explain"}},
+					Query: "explain SELECT conname FROM pg_catalog.pg_constraint WHERE contypid = 'test_domain'::regtype ORDER BY conname;",
+					Expected: []sql.Row{
+						{"Project"},
+						{" ├─ columns: [pg_constraint.conname]"},
+						{" └─ Sort(pg_constraint.conname ASC)"},
+						{"     └─ Filter"},
+						{`         ├─ pg_constraint.contypid = {Type:["public","test_domain"]}`},
+						{"         └─ IndexedTableAccess(pg_constraint)"},
+						{"             ├─ index: [pg_constraint.contypid]"},
+						{`             └─ filters: [{[{Type:["public","test_domain"]}, {Type:["public","test_domain"]}]}]`},
+					},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE contypid IN (SELECT oid FROM pg_catalog.pg_type WHERE typname LIKE 'test_domain%') ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0020-select-conname-from-pg_catalog.pg_constraint-where"},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE contypid IN ('test_domain'::regtype, 'test_domain2'::regtype) ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0020-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE contypid > 0 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0021-select-conname-from-pg_catalog.pg_constraint-where"},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE contypid IN ('test_domain'::regtype, 'test_domain2'::regtype) AND contypid > 0 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0021-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid >= (SELECT MIN(oid) FROM pg_catalog.pg_class WHERE relname LIKE 'test_%') AND conrelid <= (SELECT MAX(oid) FROM pg_catalog.pg_class WHERE relname LIKE 'test_%') AND contypid = 0 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0022-select-conname-from-pg_catalog.pg_constraint-where"},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid IN ('test_table1'::regclass, 'test_table2'::regclass, 'test_table3'::regclass) AND contypid = 0 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0022-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "explain SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid >= (SELECT MIN(oid) FROM pg_catalog.pg_class WHERE relname LIKE 'test_%') AND conrelid <= (SELECT MAX(oid) FROM pg_catalog.pg_class WHERE relname LIKE 'test_%') AND contypid = 0 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0023-explain-select-conname-from-pg_catalog.pg_constraint", ColumnModes: []string{"explain"}},
+					Query: "explain SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid IN ('test_table1'::regclass, 'test_table2'::regclass, 'test_table3'::regclass) AND contypid = 0 ORDER BY conname;",
+					Expected: []sql.Row{
+						{"Project"},
+						{" ├─ columns: [pg_constraint.conname]"},
+						{" └─ Sort(pg_constraint.conname ASC)"},
+						{"     └─ Filter"},
+						{`         ├─ (pg_constraint.conrelid IN ({Table:["public","test_table1"]}, {Table:["public","test_table2"]}, {Table:["public","test_table3"]}) AND pg_constraint.contypid = 0)`},
+						{"         └─ IndexedTableAccess(pg_constraint)"},
+						{"             ├─ index: [pg_constraint.conrelid,pg_constraint.contypid,pg_constraint.conname]"},
+						{`             └─ filters: [{[{Table:["public","test_table3"]}, {Table:["public","test_table3"]}], [{OID:["0"]}, {OID:["0"]}], [NULL, ∞)}, {[{Table:["public","test_table2"]}, {Table:["public","test_table2"]}], [{OID:["0"]}, {OID:["0"]}], [NULL, ∞)}, {[{Table:["public","test_table1"]}, {Table:["public","test_table1"]}], [{OID:["0"]}, {OID:["0"]}], [NULL, ∞)}]`},
+					},
 				},
 				// Prefix match on 3-column index
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'test_table1') ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0024-select-conname-from-pg_catalog.pg_constraint-where"},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 'test_table1'::regclass ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0024-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 3645786842 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0025-select-conname-from-pg_catalog.pg_constraint-where"},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 'test_table1'::regclass ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0025-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "explain SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 3645786842 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0026-explain-select-conname-from-pg_catalog.pg_constraint", ColumnModes: []string{"explain"}},
+					Query: "explain SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 'test_table1'::regclass ORDER BY conname;",
+					Expected: []sql.Row{
+						{"Project"},
+						{" ├─ columns: [pg_constraint.conname]"},
+						{" └─ Sort(pg_constraint.conname ASC)"},
+						{"     └─ Filter"},
+						{`         ├─ pg_constraint.conrelid = {Table:["public","test_table1"]}`},
+						{"         └─ IndexedTableAccess(pg_constraint)"},
+						{"             ├─ index: [pg_constraint.conrelid,pg_constraint.contypid,pg_constraint.conname]"},
+						{`             └─ filters: [{[{Table:["public","test_table1"]}, {Table:["public","test_table1"]}], [NULL, ∞), [NULL, ∞)}]`},
+					},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE (conname LIKE '%_pkey' OR conname LIKE '%_key') AND connamespace = 2200 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0027-select-conname-from-pg_catalog.pg_constraint-where"},
+					Query: "SELECT co.conname FROM pg_catalog.pg_constraint co JOIN pg_catalog.pg_class cl ON co.conrelid = cl.oid WHERE cl.relname IN ('test_table1', 'test_table2', 'test_table3') AND (co.conname LIKE '%_pkey' OR co.conname LIKE '%_key') AND co.connamespace = (SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = current_schema()) ORDER BY co.conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0027-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "EXPLAIN SELECT conname FROM pg_catalog.pg_constraint WHERE conname = 'test_table1_pkey' AND connamespace = 2200;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0028-explain-select-conname-from-pg_catalog.pg_constraint", ColumnModes: []string{"explain"}},
+					Query: "EXPLAIN SELECT conname FROM pg_catalog.pg_constraint WHERE conname = 'test_table1_pkey' AND connamespace = 2200;",
+					Expected: []sql.Row{
+						{"Index Scan using pg_constraint_conname_nsp_index on pg_constraint  (cost=0.15..8.17 rows=1 width=32)"},
+						{"  Index Cond: (conname = 'test_table1_pkey' AND pg_constraint.connamespace = 2200::name)"},
+					},
 				},
 				{
-					Query: "EXPLAIN SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 3645786842 AND contypid > 0 order by 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0029-explain-select-conname-from-pg_catalog.pg_constraint", ColumnModes: []string{"explain"}},
+					Query: "EXPLAIN SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 'test_table1'::regclass AND contypid > 0 order by 1;",
+					Expected: []sql.Row{
+						{"Project"},
+						{" ├─ columns: [pg_constraint.conname]"},
+						{" └─ Sort(pg_constraint.conname ASC)"},
+						{"     └─ Filter"},
+						{`         ├─ (pg_constraint.conrelid = {Table:["public","test_table1"]} AND pg_constraint.contypid > 0)`},
+						{"         └─ IndexedTableAccess(pg_constraint)"},
+						{"             ├─ index: [pg_constraint.conrelid,pg_constraint.contypid,pg_constraint.conname]"},
+						{`             └─ filters: [{[{Table:["public","test_table1"]}, {Table:["public","test_table1"]}], ({OID:["0"]}, ∞), [NULL, ∞)}]`},
+					},
 				},
 			},
 		},
