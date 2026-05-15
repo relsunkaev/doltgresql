@@ -172,6 +172,8 @@ func (b *BinaryOperator) WithResolvedChildren(ctx context.Context, children []an
 	if !ok {
 		return nil, errors.Errorf("expected vitess child to be an expression but has type `%T`", children[1])
 	}
+	left = binaryOperatorTypedExpression(sqlCtx, left)
+	right = binaryOperatorTypedExpression(sqlCtx, right)
 	funcName := "internal_binary_operator_func_" + b.operator.String()
 	compiledFunc := framework.GetBinaryFunction(b.operator).Compile(sqlCtx, funcName, left, right)
 	if compiledFunc == nil {
@@ -181,6 +183,19 @@ func (b *BinaryOperator) WithResolvedChildren(ctx context.Context, children []an
 		return nil, binaryOperatorDoesNotExistError(sqlCtx, left, b.operator, right)
 	}
 	return newResolvedBinaryOperator(b.operator, compiledFunc), nil
+}
+
+func binaryOperatorTypedExpression(ctx *sql.Context, expr sql.Expression) sql.Expression {
+	if _, ok := expr.Type(ctx).(*pgtypes.DoltgresType); ok {
+		return expr
+	}
+	if _, ok := FunctionDoltgresType(ctx, expr); !ok {
+		return expr
+	}
+	if aggregation, ok := expr.(sql.Aggregation); ok {
+		return NewAggregationGMSCast(aggregation)
+	}
+	return NewGMSCast(expr)
 }
 
 func binaryOperatorDoesNotExistError(ctx *sql.Context, left sql.Expression, operator framework.Operator, right sql.Expression) error {

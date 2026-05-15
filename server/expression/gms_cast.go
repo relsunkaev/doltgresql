@@ -255,6 +255,8 @@ func FunctionDoltgresType(ctx *sql.Context, expr sql.Expression) (*pgtypes.Doltg
 		return avgDoltgresType(ctx, expr)
 	case "COALESCE":
 		return coalesceDoltgresType(ctx, expr)
+	case "MIN", "MAX":
+		return firstChildDoltgresType(ctx, expr)
 	case "SUM":
 		return sumDoltgresType(ctx, expr)
 	case "ROW_NUMBER", "RANK", "DENSE_RANK":
@@ -289,6 +291,14 @@ func coalesceDoltgresType(ctx *sql.Context, expr sql.Expression) (*pgtypes.Doltg
 		return nil, false
 	}
 	return result, true
+}
+
+func firstChildDoltgresType(ctx *sql.Context, expr sql.Expression) (*pgtypes.DoltgresType, bool) {
+	children := expr.Children()
+	if len(children) < 1 {
+		return nil, false
+	}
+	return expressionDoltgresType(ctx, children[0])
 }
 
 func expressionDoltgresType(ctx *sql.Context, expr sql.Expression) (*pgtypes.DoltgresType, bool) {
