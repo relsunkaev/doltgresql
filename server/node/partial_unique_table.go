@@ -746,6 +746,8 @@ func (p *partialIndexPredicate) validateColumns(expr tree.Expr) error {
 			return err
 		}
 		return p.validateColumns(expr.Right)
+	case *tree.CastExpr:
+		return p.validateColumns(expr.Expr)
 	case *tree.FuncExpr:
 		for _, fnExpr := range expr.Exprs {
 			if err := p.validateColumns(fnExpr); err != nil {
@@ -1155,6 +1157,8 @@ func (p *partialIndexPredicate) evalValue(ctx *sql.Context, row sql.Row, expr tr
 		return p.evalUnary(ctx, row, expr)
 	case *tree.BinaryExpr:
 		return p.evalBinary(ctx, row, expr)
+	case *tree.CastExpr:
+		return p.evalValue(ctx, row, expr.Expr)
 	case *tree.CoalesceExpr:
 		return p.evalCoalesce(ctx, row, expr)
 	case *tree.NullIfExpr:

@@ -1639,6 +1639,8 @@ func predicateLiteralKey(expr tree.Expr) (string, bool) {
 		return "b:" + strconv.FormatBool(value), true
 	}
 	switch expr := unwrapPredicateParens(expr).(type) {
+	case *tree.CastExpr:
+		return predicateLiteralKey(expr.Expr)
 	case *tree.DString:
 		return "s:" + string(*expr), true
 	case *tree.StrVal:
@@ -1649,6 +1651,8 @@ func predicateLiteralKey(expr tree.Expr) (string, bool) {
 
 func predicateStringLiteral(expr tree.Expr) (string, bool) {
 	switch expr := unwrapPredicateParens(expr).(type) {
+	case *tree.CastExpr:
+		return predicateStringLiteral(expr.Expr)
 	case *tree.DString:
 		return string(*expr), true
 	case *tree.StrVal:

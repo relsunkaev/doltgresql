@@ -25,6 +25,15 @@ func TestImpliesNumericRangeFromConjuncts(t *testing.T) {
 	}
 }
 
+func TestImpliesCastedLiteralPredicates(t *testing.T) {
+	if !Implies("status = 'active'::text", "user_id = 10 AND status = 'active'") {
+		t.Fatalf("expected uncasted query literal to imply casted text index predicate")
+	}
+	if Implies("status = 'active'::text", "user_id = 10 AND status = 'inactive'") {
+		t.Fatalf("did not expect different query literal to imply casted text index predicate")
+	}
+}
+
 func TestImpliesIsNotNullFromStrictPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

@@ -16,6 +16,8 @@ package node
 
 import (
 	"context"
+	"regexp"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
@@ -25,6 +27,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
+	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 // CreatePartialUniqueIndex builds partial unique indexes as non-unique Dolt
@@ -130,24 +133,27 @@ func (c *CreatePartialUniqueIndex) RowIter(ctx *sql.Context, _ sql.Row) (sql.Row
 	if !ok {
 		return nil, errors.Errorf(`relation "%s" does not support index alteration`, c.table)
 	}
-	check, err := partialUniqueIndexFromColumns(c.indexName, table.Name(), table.Schema(ctx), c.columns, c.metadata)
+	tableSchema := table.Schema(ctx)
+	metadata := c.metadata
+	metadata.Predicate = postgresTextLiteralPredicate(metadata.Predicate, tableSchema)
+	check, err := partialUniqueIndexFromColumns(c.indexName, table.Name(), tableSchema, c.columns, metadata)
 	if err != nil {
 		return nil, err
 	}
 	if err = validateNoPartialUniqueDuplicates(ctx, scanTableForPartialUniqueCheck(table), check); err != nil {
 		return nil, err
 	}
-	metadata := c.metadata
+	indexMetadata := metadata
 	if c.concurrently {
-		metadata.NotReady = true
-		metadata.Invalid = true
+		indexMetadata.NotReady = true
+		indexMetadata.Invalid = true
 	}
 	indexDef := sql.IndexDef{
 		Name:       c.indexName,
 		Columns:    append([]sql.IndexColumn(nil), c.columns...),
 		Constraint: sql.IndexConstraint_None,
 		Storage:    sql.IndexUsing_BTree,
-		Comment:    indexmetadata.EncodeComment(metadata),
+		Comment:    indexmetadata.EncodeComment(indexMetadata),
 	}
 	if err = alterable.CreateIndex(ctx, indexDef); err != nil {
 		if c.ifNotExists && sql.ErrDuplicateKey.Is(err) {
@@ -155,13 +161,13 @@ func (c *CreatePartialUniqueIndex) RowIter(ctx *sql.Context, _ sql.Row) (sql.Row
 		}
 		return nil, err
 	}
-	if err = c.finishConcurrentBuild(ctx, schemaName); err != nil {
+	if err = c.finishConcurrentBuild(ctx, schemaName, metadata); err != nil {
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
 }
 
-func (c *CreatePartialUniqueIndex) finishConcurrentBuild(ctx *sql.Context, schemaName string) error {
+func (c *CreatePartialUniqueIndex) finishConcurrentBuild(ctx *sql.Context, schemaName string, metadata indexmetadata.Metadata) error {
 	if !c.concurrently {
 		return nil
 	}
@@ -171,8 +177,54 @@ func (c *CreatePartialUniqueIndex) finishConcurrentBuild(ctx *sql.Context, schem
 	if testHookBetweenPhases != nil {
 		testHookBetweenPhases(ctx)
 	}
-	if err := flipIndexComment(ctx, schemaName, c.table, c.indexName, alteredIndexComment(c.metadata)); err != nil {
+	if err := flipIndexComment(ctx, schemaName, c.table, c.indexName, alteredIndexComment(metadata)); err != nil {
 		return err
 	}
 	return commitInterPhaseTransaction(ctx)
+}
+
+func postgresTextLiteralPredicate(predicate string, tableSchema sql.Schema) string {
+	if predicate == "" {
+		return predicate
+	}
+	for _, column := range tableSchema {
+		if !isPostgresTextColumn(column.Type) {
+			continue
+		}
+		predicate = castStringLiteralsComparedToColumn(predicate, column.Name)
+	}
+	return predicate
+}
+
+func isPostgresTextColumn(typ sql.Type) bool {
+	if dgType, ok := typ.(*pgtypes.DoltgresType); ok {
+		return dgType.ID.TypeName() == "text"
+	}
+	return strings.EqualFold(typ.String(), "text")
+}
+
+func castStringLiteralsComparedToColumn(predicate, columnName string) string {
+	quotedName := regexp.QuoteMeta(columnName)
+	quotedIdentifier := regexp.QuoteMeta(`"` + strings.ReplaceAll(columnName, `"`, `""`) + `"`)
+	identifier := `(?:(?i:\b` + quotedName + `\b)|` + quotedIdentifier + `)`
+	stringLiteral := `'(?:''|[^'])*'`
+	optionalCast := `(::[[:alpha:]_][[:alnum:]_]*(?:\[\])?)?`
+	leftColumn := regexp.MustCompile(`(` + identifier + `\s*=\s*)` + `(` + stringLiteral + `)` + optionalCast)
+	predicate = replaceUncastStringLiteral(leftColumn, predicate, 2, func(parts []string) string {
+		return parts[1] + parts[2] + "::text"
+	})
+	rightColumn := regexp.MustCompile(`(` + stringLiteral + `)` + optionalCast + `(\s*=\s*` + identifier + `)`)
+	return replaceUncastStringLiteral(rightColumn, predicate, 1, func(parts []string) string {
+		return parts[1] + "::text" + parts[3]
+	})
+}
+
+func replaceUncastStringLiteral(re *regexp.Regexp, predicate string, literalGroup int, replacement func([]string) string) string {
+	return re.ReplaceAllStringFunc(predicate, func(match string) string {
+		parts := re.FindStringSubmatch(match)
+		if len(parts) <= literalGroup+1 || parts[literalGroup] == "" || parts[literalGroup+1] != "" {
+			return match
+		}
+		return replacement(parts)
+	})
 }
