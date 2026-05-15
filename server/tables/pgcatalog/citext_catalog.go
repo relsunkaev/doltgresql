@@ -47,7 +47,7 @@ func appendCitextOpclasses(ctx *sql.Context, opclasses []opclass) ([]opclass, er
 	if err != nil || !ok {
 		return opclasses, err
 	}
-	next := make([]opclass, 0, len(opclasses)+1)
+	next := make([]opclass, 0, len(opclasses)+2)
 	next = append(next, opclasses...)
 	next = append(next, opclass{
 		oid:       pgCatalogOpclassID(indexmetadata.AccessMethodBtree, indexmetadata.OpClassCitextOps),
@@ -55,6 +55,15 @@ func appendCitextOpclasses(ctx *sql.Context, opclasses []opclass) ([]opclass, er
 		opcname:   indexmetadata.OpClassCitextOps,
 		namespace: namespace.AsId(),
 		family:    citextOpfamilyID(indexmetadata.AccessMethodBtree),
+		intype:    citextTypeID(namespace),
+		isDefault: true,
+	})
+	next = append(next, opclass{
+		oid:       pgCatalogOpclassID(accessMethodHash, indexmetadata.OpClassCitextOps),
+		opcmethod: id.NewAccessMethod(accessMethodHash).AsId(),
+		opcname:   indexmetadata.OpClassCitextOps,
+		namespace: namespace.AsId(),
+		family:    citextOpfamilyID(accessMethodHash),
 		intype:    citextTypeID(namespace),
 		isDefault: true,
 	})
@@ -66,11 +75,17 @@ func appendCitextOpfamilies(ctx *sql.Context, opfamilies []opfamily) ([]opfamily
 	if err != nil || !ok {
 		return opfamilies, err
 	}
-	next := make([]opfamily, 0, len(opfamilies)+1)
+	next := make([]opfamily, 0, len(opfamilies)+2)
 	next = append(next, opfamilies...)
 	next = append(next, opfamily{
 		oid:       citextOpfamilyID(indexmetadata.AccessMethodBtree),
 		opfmethod: id.NewAccessMethod(indexmetadata.AccessMethodBtree).AsId(),
+		opfname:   indexmetadata.OpClassCitextOps,
+		namespace: namespace.AsId(),
+	})
+	next = append(next, opfamily{
+		oid:       citextOpfamilyID(accessMethodHash),
+		opfmethod: id.NewAccessMethod(accessMethodHash).AsId(),
 		opfname:   indexmetadata.OpClassCitextOps,
 		namespace: namespace.AsId(),
 	})
@@ -82,7 +97,7 @@ func appendCitextAmops(ctx *sql.Context, amops []amop) ([]amop, error) {
 	if err != nil || !ok {
 		return amops, err
 	}
-	next := make([]amop, 0, len(amops)+len(citextComparisonOperators))
+	next := make([]amop, 0, len(amops)+len(citextComparisonOperators)+1)
 	next = append(next, amops...)
 	for _, operator := range citextComparisonOperators {
 		next = append(next, amop{
@@ -95,6 +110,15 @@ func appendCitextAmops(ctx *sql.Context, amops []amop) ([]amop, error) {
 			method:    id.NewAccessMethod(indexmetadata.AccessMethodBtree).AsId(),
 		})
 	}
+	next = append(next, amop{
+		oid:       citextAmopID(accessMethodHash, int16(1)),
+		family:    citextOpfamilyID(accessMethodHash),
+		leftType:  citextTypeID(namespace),
+		rightType: citextTypeID(namespace),
+		strategy:  int16(1),
+		operator:  citextOperatorID(namespace, "="),
+		method:    id.NewAccessMethod(accessMethodHash).AsId(),
+	})
 	return next, nil
 }
 
@@ -103,7 +127,7 @@ func appendCitextAmprocs(ctx *sql.Context, amprocs []amproc) ([]amproc, error) {
 	if err != nil || !ok {
 		return amprocs, err
 	}
-	next := make([]amproc, 0, len(amprocs)+1)
+	next := make([]amproc, 0, len(amprocs)+3)
 	next = append(next, amprocs...)
 	next = append(next, amproc{
 		oid:       citextAmprocID(indexmetadata.AccessMethodBtree, int16(1)),
@@ -112,6 +136,22 @@ func appendCitextAmprocs(ctx *sql.Context, amprocs []amproc) ([]amproc, error) {
 		rightType: citextTypeID(namespace),
 		procNum:   1,
 		proc:      "citext_cmp",
+	})
+	next = append(next, amproc{
+		oid:       citextAmprocID(accessMethodHash, int16(1)),
+		family:    citextOpfamilyID(accessMethodHash),
+		leftType:  citextTypeID(namespace),
+		rightType: citextTypeID(namespace),
+		procNum:   1,
+		proc:      "citext_hash",
+	})
+	next = append(next, amproc{
+		oid:       citextAmprocID(accessMethodHash, int16(2)),
+		family:    citextOpfamilyID(accessMethodHash),
+		leftType:  citextTypeID(namespace),
+		rightType: citextTypeID(namespace),
+		procNum:   2,
+		proc:      "citext_hash_extended",
 	})
 	return next, nil
 }

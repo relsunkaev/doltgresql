@@ -15,8 +15,11 @@
 package binary
 
 import (
+	"strings"
+
 	"github.com/dolthub/go-mysql-server/sql"
 
+	pgfunctions "github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -25,6 +28,8 @@ var citextType = pgtypes.NewUnresolvedDoltgresType("public", "citext")
 
 func initCitext() {
 	framework.RegisterFunction(citext_cmp)
+	framework.RegisterFunction(citext_hash)
+	framework.RegisterFunction(citext_hash_extended)
 }
 
 func citextCompare(ctx *sql.Context, params [3]*pgtypes.DoltgresType, val1 any, val2 any) (int, error) {
@@ -39,6 +44,26 @@ var citext_cmp = framework.Function2{
 	Callable: func(ctx *sql.Context, params [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 		res, err := citextCompare(ctx, params, val1, val2)
 		return int32(res), err
+	},
+}
+
+var citext_hash = framework.Function1{
+	Name:       "citext_hash",
+	Return:     pgtypes.Int32,
+	Parameters: [1]*pgtypes.DoltgresType{citextType},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		return int32(pgfunctions.PgHashBytes([]byte(strings.ToLower(val.(string))))), nil
+	},
+}
+
+var citext_hash_extended = framework.Function2{
+	Name:       "citext_hash_extended",
+	Return:     pgtypes.Int64,
+	Parameters: [2]*pgtypes.DoltgresType{citextType, pgtypes.Int64},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return int64(pgfunctions.PgHashBytesExtended([]byte(strings.ToLower(val1.(string))), uint64(val2.(int64)))), nil
 	},
 }
 
