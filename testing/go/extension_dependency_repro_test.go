@@ -130,16 +130,13 @@ func TestCreateExtensionVectorWithSchemaQualifiesTypesRepro(t *testing.T) {
 					Query: `SELECT e.extname, n.nspname
 						FROM pg_catalog.pg_extension e
 						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
-						WHERE e.extname = 'vector';`,
-					Expected: []sql.Row{{"vector", "extensions"}},
+						WHERE e.extname = 'vector';`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testcreateextensionvectorwithschemaqualifiestypesrepro-0001-select-e.extname-n.nspname-from-pg_catalog.pg_extension"},
 				},
 				{
-					Query:    `SELECT to_regtype('extensions.vector')::text;`,
-					Expected: []sql.Row{{"extensions.vector"}},
+					Query: `SELECT to_regtype('extensions.vector')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testcreateextensionvectorwithschemaqualifiestypesrepro-0002-select-to_regtype-extensions.vector-::text"},
 				},
 				{
-					Query:    `CREATE TABLE vector_schema_qualified_items (id INT PRIMARY KEY, embedding extensions.vector(3));`,
-					Expected: []sql.Row{},
+					Query: `CREATE TABLE vector_schema_qualified_items (id INT PRIMARY KEY, embedding extensions.vector(3));`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testcreateextensionvectorwithschemaqualifiestypesrepro-0003-create-table-vector_schema_qualified_items-id-int"},
 				},
 			},
 		},

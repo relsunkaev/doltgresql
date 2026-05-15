@@ -181,12 +181,24 @@
       "source": "testing/go/extension_dependency_repro_test.go:TestCreateExtensionVectorWithSchemaQualifiesTypesRepro",
       "ordinal": 1,
       "scriptName": "vector WITH SCHEMA qualifies vector type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "extension-dependency-repro-test-testcreateextensionvectorwithschemaqualifiestypesrepro-0001-select-e.extname-n.nspname-from-pg_catalog.pg_extension",
       "suggestedId": "extension-dependency-repro-test-testcreateextensionvectorwithschemaqualifiestypesrepro-0001-select-e.extname-n.nspname-from-pg_catalog.pg_extension",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT e.extname, n.nspname\n\t\t\t\t\t\tFROM pg_catalog.pg_extension e\n\t\t\t\t\t\tJOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace\n\t\t\t\t\t\tWHERE e.extname = 'vector';",
       "querySha256": "2ec3af0fff1efa1cee53ec8d41f0ab2012341c44fa507a81262ce8c5476cb768",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "vector"
+          },
+          {
+            "value": "extensions"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -194,12 +206,21 @@
       "source": "testing/go/extension_dependency_repro_test.go:TestCreateExtensionVectorWithSchemaQualifiesTypesRepro",
       "ordinal": 2,
       "scriptName": "vector WITH SCHEMA qualifies vector type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "extension-dependency-repro-test-testcreateextensionvectorwithschemaqualifiestypesrepro-0002-select-to_regtype-extensions.vector-::text",
       "suggestedId": "extension-dependency-repro-test-testcreateextensionvectorwithschemaqualifiestypesrepro-0002-select-to_regtype-extensions.vector-::text",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT to_regtype('extensions.vector')::text;",
       "querySha256": "e074b194c2add231c980bd1310a3edbe4f038919c9ece3f1f69574f56fe249bd",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "extensions.vector"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -207,12 +228,15 @@
       "source": "testing/go/extension_dependency_repro_test.go:TestCreateExtensionVectorWithSchemaQualifiesTypesRepro",
       "ordinal": 3,
       "scriptName": "vector WITH SCHEMA qualifies vector type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "extension-dependency-repro-test-testcreateextensionvectorwithschemaqualifiestypesrepro-0003-create-table-vector_schema_qualified_items-id-int",
       "suggestedId": "extension-dependency-repro-test-testcreateextensionvectorwithschemaqualifiestypesrepro-0003-create-table-vector_schema_qualified_items-id-int",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CREATE TABLE vector_schema_qualified_items (id INT PRIMARY KEY, embedding extensions.vector(3));",
       "querySha256": "cafcaa3e7b27fd028e26cb78df64865881b489946f1cc8315d910e40df01c653",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
