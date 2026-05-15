@@ -71,6 +71,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '3' || input; END; $$ LANGUAGE plpgsql;",
       "querySha256": "5c477601720ebd8638b62e193824322f5dd62714e7b18c629e4e67299e2d4db8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -84,6 +87,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -145,6 +151,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS INT2 AS $$ BEGIN RETURN '2' || input; END; $$ LANGUAGE plpgsql;",
       "querySha256": "13d521f91eb5d7dd800d948a999c0c5da191ca7ef4a66be72c080c004469adcf",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -158,6 +167,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -300,6 +312,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -361,6 +376,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '3' || input; END; $$ LANGUAGE plpgsql;",
       "querySha256": "5c477601720ebd8638b62e193824322f5dd62714e7b18c629e4e67299e2d4db8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -374,6 +392,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -435,6 +456,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '2' || input; END; $$ LANGUAGE plpgsql;",
       "querySha256": "00e951432f51de50fef0b200c9e5afdf28edc791a71fdb39d03b4802a722b180",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -448,6 +472,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -606,6 +633,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -667,6 +697,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '3' || input; END; $$ LANGUAGE plpgsql;",
       "querySha256": "5c477601720ebd8638b62e193824322f5dd62714e7b18c629e4e67299e2d4db8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -680,6 +713,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -741,6 +777,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '2' || input; END; $$ LANGUAGE plpgsql;",
       "querySha256": "00e951432f51de50fef0b200c9e5afdf28edc791a71fdb39d03b4802a722b180",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -754,6 +793,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -912,6 +954,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -973,6 +1018,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '3' || input; END; $$ LANGUAGE plpgsql;",
       "querySha256": "5c477601720ebd8638b62e193824322f5dd62714e7b18c629e4e67299e2d4db8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -986,6 +1034,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1047,6 +1098,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '2' || input; END; $$ LANGUAGE plpgsql;",
       "querySha256": "00e951432f51de50fef0b200c9e5afdf28edc791a71fdb39d03b4802a722b180",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1060,6 +1114,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1218,6 +1275,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1279,6 +1339,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS INT8 AS $$ BEGIN RETURN input || ''; END; $$ LANGUAGE plpgsql;",
       "querySha256": "11a519d8c8cb26cbfdb921456f33406d086b42cbb8e9743a84f31fe0b0a2113a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1292,6 +1355,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1353,6 +1419,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS FLOAT AS $$ BEGIN RETURN input || ''; END; $$ LANGUAGE plpgsql;",
       "querySha256": "09d3722e0cb18102dacdf670a100a701b65fe3126f3178d4f0ef5e0bbac29e47",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1366,6 +1435,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1540,6 +1612,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1553,6 +1628,9 @@
       "expectedKind": "error",
       "query": "SELECT interpreted_example('123456');",
       "querySha256": "11a369768035f2aaa3779b5e435000398b0aef43ea1a0af0fcfa4c4eee8d219d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1614,6 +1692,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '3' || input; END; $$ LANGUAGE plpgsql;",
       "querySha256": "5c477601720ebd8638b62e193824322f5dd62714e7b18c629e4e67299e2d4db8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1675,6 +1756,9 @@
       "expectedKind": "rows",
       "query": "DROP FUNCTION interpreted_example(input TEXT);",
       "querySha256": "92742bf0bbced11b7c2e99bf469c99d7926502766fd20acd028a7c8cb46a2581",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1801,6 +1885,9 @@
       "expectedKind": "error",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1862,6 +1949,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '3' || input; END; $$ LANGUAGE plpgsql;",
       "querySha256": "5c477601720ebd8638b62e193824322f5dd62714e7b18c629e4e67299e2d4db8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1923,6 +2013,9 @@
       "expectedKind": "rows",
       "query": "DROP FUNCTION interpreted_example(input TEXT);",
       "querySha256": "92742bf0bbced11b7c2e99bf469c99d7926502766fd20acd028a7c8cb46a2581",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2049,6 +2142,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2110,6 +2206,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '3' || input; END; $$ LANGUAGE plpgsql;",
       "querySha256": "5c477601720ebd8638b62e193824322f5dd62714e7b18c629e4e67299e2d4db8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2171,6 +2270,9 @@
       "expectedKind": "rows",
       "query": "DROP FUNCTION interpreted_example(input TEXT);",
       "querySha256": "92742bf0bbced11b7c2e99bf469c99d7926502766fd20acd028a7c8cb46a2581",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2297,6 +2399,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2358,6 +2463,9 @@
       "expectedKind": "rows",
       "query": "DROP FUNCTION interpreted_example(input TEXT);",
       "querySha256": "92742bf0bbced11b7c2e99bf469c99d7926502766fd20acd028a7c8cb46a2581",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2419,6 +2527,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '2' || input; END; $$ LANGUAGE plpgsql;",
       "querySha256": "00e951432f51de50fef0b200c9e5afdf28edc791a71fdb39d03b4802a722b180",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2545,6 +2656,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2606,6 +2720,9 @@
       "expectedKind": "rows",
       "query": "DROP FUNCTION interpreted_example(input TEXT);",
       "querySha256": "92742bf0bbced11b7c2e99bf469c99d7926502766fd20acd028a7c8cb46a2581",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2667,6 +2784,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '2' || input; END; $$ LANGUAGE plpgsql;",
       "querySha256": "00e951432f51de50fef0b200c9e5afdf28edc791a71fdb39d03b4802a722b180",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2793,6 +2913,9 @@
       "expectedKind": "error",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2854,6 +2977,9 @@
       "expectedKind": "rows",
       "query": "DROP FUNCTION interpreted_example(input TEXT);",
       "querySha256": "92742bf0bbced11b7c2e99bf469c99d7926502766fd20acd028a7c8cb46a2581",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2915,6 +3041,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '2' || input; END; $$ LANGUAGE plpgsql;",
       "querySha256": "00e951432f51de50fef0b200c9e5afdf28edc791a71fdb39d03b4802a722b180",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3041,6 +3170,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3102,6 +3234,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS INT8 AS $$ BEGIN RETURN input || '3'; END; $$ LANGUAGE plpgsql;",
       "querySha256": "9e1f223fb3998b2c4e8e323a940c2e2c07cb90394534f6da74cf310da90ea06d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3163,6 +3298,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS FLOAT AS $$ BEGIN RETURN input || '2'; END; $$ LANGUAGE plpgsql;",
       "querySha256": "3b488a9c5901fdab33995be4d53e74f1d35475065cbeccc8f332aa7ac6dc0b32",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3289,6 +3427,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3302,6 +3443,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('123456789012');",
       "querySha256": "f593311f8def7dbab237a8a7ef15455fd0538db26f6a4d7aefd1280073fae47e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3363,6 +3507,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS INT8 AS $$ BEGIN RETURN input || '3'; END; $$ LANGUAGE plpgsql;",
       "querySha256": "9e1f223fb3998b2c4e8e323a940c2e2c07cb90394534f6da74cf310da90ea06d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3424,6 +3571,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS FLOAT AS $$ BEGIN RETURN input || '2'; END; $$ LANGUAGE plpgsql;",
       "querySha256": "3b488a9c5901fdab33995be4d53e74f1d35475065cbeccc8f332aa7ac6dc0b32",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3550,6 +3700,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_example('12');",
       "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     }

@@ -23,6 +23,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t1",
       "querySha256": "60050f5b0dc42f13b9803380b8dd576e582c66fcac68db0cdd1af915db166843",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -36,6 +39,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t2",
       "querySha256": "08f3ac7114a2539fe48cb61a48b913624d639fbe968a8742d5583108b0e5d25e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -49,6 +55,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t1 order by a",
       "querySha256": "862c913d54aac0865e2b97b6ba59a70512b7933a25ca98485d39c3a7a58d3a21",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -62,6 +71,9 @@
       "expectedKind": "error",
       "query": "INSERT INTO t1 VALUES (5, '2019-12-31 00:00:00')",
       "querySha256": "7909553d0214d8858997bea779da4ca4df621f44e7899b993e66f40716be3933",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -75,6 +87,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t1 order by a",
       "querySha256": "862c913d54aac0865e2b97b6ba59a70512b7933a25ca98485d39c3a7a58d3a21",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -88,6 +103,9 @@
       "expectedKind": "error",
       "query": "INSERT INTO t1 VALUES (100, 2)",
       "querySha256": "1124702b1c21a1647252a2292b8c4bedb4fe811a3707309898fb68f7ce372ec3",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -101,6 +119,9 @@
       "expectedKind": "error",
       "query": "INSERT INTO t2 VALUES (100, 200)",
       "querySha256": "6c9b1b39cd82714f1d6b5a5d10a5eeaac3584b4ce897f9940012dc7015f167d2",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     }

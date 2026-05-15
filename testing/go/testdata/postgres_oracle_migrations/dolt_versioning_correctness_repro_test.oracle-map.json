@@ -103,6 +103,9 @@
       "expectedKind": "rows",
       "query": "SELECT label\n\t\t\t\t\t\tFROM \"postgres/serial_branch\".public.branch_plain_items\n\t\t\t\t\t\tWHERE id = 1;",
       "querySha256": "afdbe408d16e9cdfb8817b5e455cd3d64966093ae858d1ed7b7dc7537fcf428c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -116,6 +119,9 @@
       "expectedKind": "rows",
       "query": "SELECT id, label\n\t\t\t\t\t\tFROM \"postgres/serial_branch\".public.branch_serial_items\n\t\t\t\t\t\tORDER BY id;",
       "querySha256": "a4046023f38ed98734e5f3543f7fff6c13d3075efc038efea353f9d7dca52e2f",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -129,6 +135,9 @@
       "expectedKind": "rows",
       "query": "SELECT branch_function_value('abcd');",
       "querySha256": "089dd1dcb477665a26db00270e08b77fc29d90aece6400e7182b12818173b06a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -142,6 +151,9 @@
       "expectedKind": "rows",
       "query": "SELECT \"postgres/function_branch\".public.branch_function_value(55);",
       "querySha256": "dee2eeee5c1f3886490eb1ff8eede55add7aa200dc292997ba499c78cd6e42fa",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -171,6 +183,9 @@
       "expectedKind": "rows",
       "query": "SELECT branch_function_value(55);",
       "querySha256": "5865caa48b1a093f639db74bb957eedc4ca2a092467d3274f232afc48d5b36ec",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -184,6 +199,9 @@
       "expectedKind": "rows",
       "query": "CALL branch_procedure_value(4);",
       "querySha256": "fba217fca09ff24d09f8ca557b61f2cbac5f839cb5f84aea1014a69d592ddfb5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -197,6 +215,9 @@
       "expectedKind": "rows",
       "query": "CALL \"postgres/procedure_branch\".public.branch_procedure_value(55);",
       "querySha256": "8f0ed153e0f8f8347d80060aaeb5b5619eabf6aa99d6d68f78dafe5eb04d2701",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -226,6 +247,9 @@
       "expectedKind": "rows",
       "query": "CALL branch_procedure_value(55);",
       "querySha256": "e11376816daad4f79b246223cd1052638bc262d0da08028ae9fd39daffbfd289",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -256,7 +280,8 @@
       "query": "SELECT nextval('branch_plain_seq');",
       "querySha256": "dc1746556a2219b4c5764909808d43857f027e999f337dd7787fc3b7a508e1cb",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -287,6 +312,9 @@
       "expectedKind": "rows",
       "query": "SELECT 'ok'::branch_enum_mood::text;",
       "querySha256": "26d1a1a0e3ef590e8dec7f5b0c9b9d52bf6764c7e0ccc675578d1bfb2218acba",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -316,6 +344,9 @@
       "expectedKind": "rows",
       "query": "SELECT (ROW(7)::branch_pair_type).id;",
       "querySha256": "b925ffb6c42ee51cbc7acda60c641310a6899942e92f56832fe389aef59a41c0",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -345,6 +376,9 @@
       "expectedKind": "rows",
       "query": "SELECT 7::branch_positive_domain::integer;",
       "querySha256": "b62b4d252ef6732954e908fc268c1a1a9eaa3877b607a2263ed782f05e9fa753",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2273,6 +2307,9 @@
       "expectedKind": "rows",
       "query": "SELECT id, label\n\t\t\t\t\t\tFROM serial_default_branch_items\n\t\t\t\t\t\tORDER BY id;",
       "querySha256": "d8cde8602d57a58ca58e8128d77b1983e29b8bd909359ab994444f3b09dc1b17",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2302,6 +2339,9 @@
       "expectedKind": "rows",
       "query": "SELECT id, label\n\t\t\t\t\t\tFROM serial_default_branch_items\n\t\t\t\t\t\tORDER BY id;",
       "querySha256": "d8cde8602d57a58ca58e8128d77b1983e29b8bd909359ab994444f3b09dc1b17",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3269,6 +3309,9 @@
       "expectedKind": "rows",
       "query": "SELECT replace_committed_function_value();",
       "querySha256": "79560c5f8bad38ea197d7c74479275aaefdc73f5641e2397306e813def29b850",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },

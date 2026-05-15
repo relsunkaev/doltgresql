@@ -1561,6 +1561,20 @@ func hasDoltSpecificScriptName(scriptName string) bool {
 	return doltSpecificScriptNamePattern.MatchString(strings.ToLower(scriptName))
 }
 
+func hasDoltSpecificWorkflowSource(source string) bool {
+	sourceFile, _, _ := strings.Cut(source, ":")
+	switch sourceFile {
+	case "testing/go/as_of_test.go",
+		"testing/go/conflicts_root_object_test.go",
+		"testing/go/dolt_functions_test.go",
+		"testing/go/dolt_versioning_correctness_repro_test.go",
+		"testing/go/merge_test.go":
+		return true
+	default:
+		return false
+	}
+}
+
 func sqlCodeAndStringLiterals(statement string) (string, []string) {
 	var code strings.Builder
 	var literals []string
@@ -2412,6 +2426,9 @@ func migrationCandidatesFromScriptTestSlice(source string, ordinal *int, lit *as
 			}
 			candidate.NonLiteral = append(candidate.NonLiteral, scriptNonLiteral...)
 			if candidate.Oracle == "internal" && hasDoltSpecificScriptName(scriptName) {
+				candidate.NonLiteral = appendNonLiteral(candidate.NonLiteral, "DoltSpecific")
+			}
+			if candidate.Oracle == "internal" && hasDoltSpecificWorkflowSource(source) {
 				candidate.NonLiteral = appendNonLiteral(candidate.NonLiteral, "DoltSpecific")
 			}
 			candidate.NonLiteral = append(candidate.NonLiteral, priorNonLiteral...)

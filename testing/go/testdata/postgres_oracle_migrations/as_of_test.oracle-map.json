@@ -23,6 +23,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test AS OF 'HEAD^' as t1",
       "querySha256": "966728142e819049875726246ac538237ce015b4cfb79a292cb707396d83a0f0",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -36,6 +39,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test AS OF 'HEAD'",
       "querySha256": "7f9d4d4a1577f690926f78c7c0bfc62aa12520eb03330d27581ca98561b1d0d9",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -49,6 +55,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test AS OF 'HEAD~3' t1 join test2 AS OF 'HEAD~' t2 on t1.a = t2.b",
       "querySha256": "d6bea797d04f8aa00533d2aff6a55e5dc024b2cbd3017dd8c73e5ca273c60822",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -62,6 +71,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test AS OF 'HEAD~3' t1 join test2 AS t2 on t1.a = t2.b",
       "querySha256": "f68b8249ab86471568150df4591bc1d99496ec812e96f266f18efbc7002ee216",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -75,6 +87,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test t1 join test2 AS OF 'HEAD~' AS t2 on t1.a = t2.b",
       "querySha256": "3349d633e1f21c034235a32c9f2231b8cc49fed412db19d24293f6076907b46e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -88,6 +103,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test AS OF 'HEAD~3' t1 cross join test2 AS OF 'HEAD~' t2",
       "querySha256": "9b5af9b8a0adbf1b42a611cce679c68d4775196c36f3fb97b46bb51af7752d94",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -101,6 +119,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test AS OF 'HEAD' t1 cross join test2 AS OF 'HEAD~' t2",
       "querySha256": "85c7d5791780f73258e0d9b329fff174317b91479a0810154b00019c3bdba489",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -114,6 +135,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test AS OF 'HEAD~3' AS t1 join test2 AS OF 'HEAD' AS t2 on t1.a = t2.b",
       "querySha256": "7a85dd38e446b34d7355842d70e5ccd13bddb708b4fcbce1ba9d990ce1b07e9a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -127,6 +151,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test AS OF 'HEAD~3' t1 join test2 AS OF 'HEAD' t2 on t1.a = t2.b",
       "querySha256": "68a1669bad53c55fb93a39f0fbc489b813adf4e5436162e0c23fb329d68cf0c7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -140,6 +167,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test AS t1 join test2 AS OF 'HEAD~' t2 on t1.a = t2.b",
       "querySha256": "443ddd58637027b8c78943c0740df6f18f2acb93c38977621fbadec3113d743c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -153,6 +183,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test AS OF SYSTEM TIME 'HEAD~3' join test2 AS t2 on test.a = t2.b",
       "querySha256": "ec0137b30b9820be7ec3e33d8768cbf938411270b2094a87b7e944ebda2ccda3",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     }

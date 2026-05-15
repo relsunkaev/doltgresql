@@ -134,7 +134,8 @@
       "suggestedId": "dolt-functions-test-testdoltadd-0008",
       "expectedKind": "rows",
       "nonLiteral": [
-        "Query"
+        "Query",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -277,6 +278,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO t_simple VALUES (4);",
       "querySha256": "4101f8232a6515ea97da3724707f927291f3e0355728609f4089a7c17dec96d5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -354,6 +358,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t_simple;",
       "querySha256": "23273e684fc721c411114b198f07088cc281e3643d9eb593bbe2d569276c1596",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -399,6 +406,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t_simple;",
       "querySha256": "23273e684fc721c411114b198f07088cc281e3643d9eb593bbe2d569276c1596",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -428,6 +438,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t_simple;",
       "querySha256": "23273e684fc721c411114b198f07088cc281e3643d9eb593bbe2d569276c1596",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -457,6 +470,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t_simple;",
       "querySha256": "23273e684fc721c411114b198f07088cc281e3643d9eb593bbe2d569276c1596",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -566,6 +582,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t_simple;",
       "querySha256": "23273e684fc721c411114b198f07088cc281e3643d9eb593bbe2d569276c1596",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -629,6 +648,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t_simple;",
       "querySha256": "23273e684fc721c411114b198f07088cc281e3643d9eb593bbe2d569276c1596",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -674,6 +696,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t_simple;",
       "querySha256": "23273e684fc721c411114b198f07088cc281e3643d9eb593bbe2d569276c1596",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -703,6 +728,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t_simple;",
       "querySha256": "23273e684fc721c411114b198f07088cc281e3643d9eb593bbe2d569276c1596",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -716,6 +744,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t_simple;",
       "querySha256": "23273e684fc721c411114b198f07088cc281e3643d9eb593bbe2d569276c1596",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -745,6 +776,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t_simple;",
       "querySha256": "23273e684fc721c411114b198f07088cc281e3643d9eb593bbe2d569276c1596",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -854,6 +888,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t_simple;",
       "querySha256": "23273e684fc721c411114b198f07088cc281e3643d9eb593bbe2d569276c1596",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -882,7 +919,8 @@
       "suggestedId": "dolt-functions-test-testdoltclean-0009",
       "expectedKind": "rows",
       "nonLiteral": [
-        "Query"
+        "Query",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1137,6 +1175,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO t_simple VALUES (4);",
       "querySha256": "4101f8232a6515ea97da3724707f927291f3e0355728609f4089a7c17dec96d5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1150,6 +1191,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO t_composite VALUES (3, 100);",
       "querySha256": "7892ef985b7498719b7356ee8ceea77681c674d3c68a0ae98cdf6137215db256",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1163,6 +1207,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO t_array VALUES (ARRAY['stu']);",
       "querySha256": "2a566b338373aea185540e9a39a7a611cc17f1b2a8972abbbbdbfa8017fdf7cf",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1288,6 +1335,9 @@
       "expectedKind": "rows",
       "query": "BEGIN;",
       "querySha256": "09d5c7e4829721a8d33975034ec970f527d10fe2957088aecdd74a4bfde43190",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1350,6 +1400,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t_simple;",
       "querySha256": "23273e684fc721c411114b198f07088cc281e3643d9eb593bbe2d569276c1596",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1363,6 +1416,9 @@
       "expectedKind": "rows",
       "query": "BEGIN;",
       "querySha256": "09d5c7e4829721a8d33975034ec970f527d10fe2957088aecdd74a4bfde43190",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1425,6 +1481,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t_simple;",
       "querySha256": "23273e684fc721c411114b198f07088cc281e3643d9eb593bbe2d569276c1596",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1438,6 +1497,9 @@
       "expectedKind": "rows",
       "query": "BEGIN;",
       "querySha256": "09d5c7e4829721a8d33975034ec970f527d10fe2957088aecdd74a4bfde43190",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1500,6 +1562,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t_simple;",
       "querySha256": "23273e684fc721c411114b198f07088cc281e3643d9eb593bbe2d569276c1596",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1513,6 +1578,9 @@
       "expectedKind": "rows",
       "query": "BEGIN;",
       "querySha256": "09d5c7e4829721a8d33975034ec970f527d10fe2957088aecdd74a4bfde43190",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1575,6 +1643,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t_simple;",
       "querySha256": "23273e684fc721c411114b198f07088cc281e3643d9eb593bbe2d569276c1596",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2821,6 +2892,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t_simple;",
       "querySha256": "23273e684fc721c411114b198f07088cc281e3643d9eb593bbe2d569276c1596",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2834,6 +2908,9 @@
       "expectedKind": "rows",
       "query": "SELECT f_default();",
       "querySha256": "cc611e54c4dcad34d8554105de34b5a95ac6b5f8f60a5c5f5986b849cbae4837",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2863,6 +2940,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM t_simple;",
       "querySha256": "23273e684fc721c411114b198f07088cc281e3643d9eb593bbe2d569276c1596",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2876,6 +2956,9 @@
       "expectedKind": "rows",
       "query": "SELECT f_default();",
       "querySha256": "cc611e54c4dcad34d8554105de34b5a95ac6b5f8f60a5c5f5986b849cbae4837",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2904,7 +2987,8 @@
       "suggestedId": "dolt-functions-test-testdoltrm-0002",
       "expectedKind": "rows",
       "nonLiteral": [
-        "Query"
+        "Query",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
