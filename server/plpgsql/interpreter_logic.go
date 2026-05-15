@@ -60,14 +60,16 @@ type InterpretedFunction interface {
 var GetTypesCollectionFromContext func(ctx *sql.Context) (*typecollection.TypeCollection, error)
 
 const (
-	diagnosticOptionAction     = "pgContextAction"
-	diagnosticOptionLineNumber = "lineNumber"
-	diagnosticOptionStatement  = "pgContextStatement"
-	dmlReturningIntoOption     = "dmlReturningInto"
-	integerForLoopFoundOption  = "integerForLoopFound"
-	raiseValidationErrorOption = "raiseValidationError"
-	notNullVariableOption      = "notNullVariable"
-	transactionControlNoop     = "transactionControlNoop"
+	diagnosticOptionAction            = "pgContextAction"
+	diagnosticOptionLineNumber        = "lineNumber"
+	diagnosticOptionStatement         = "pgContextStatement"
+	dmlReturningIntoOption            = "dmlReturningInto"
+	integerForLoopFoundOption         = "integerForLoopFound"
+	raiseValidationErrorOption        = "raiseValidationError"
+	notNullVariableOption             = "notNullVariable"
+	transactionControlNoop            = "transactionControlNoop"
+	assertMessageQueryOption          = "assertMessageQuery"
+	assertConditionBindingCountOption = "assertConditionBindingCount"
 )
 
 // The interpreter has no async statement timeout hook, so bound runaway loops
@@ -308,6 +310,49 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 			if err != nil {
 				return nil, false, err
 			}
+		case OpCode_Assert:
+			conditionBindingCount := len(operation.SecondaryData)
+			if countText := operation.Options[assertConditionBindingCountOption]; countText != "" {
+				count, err := strconv.Atoi(countText)
+				if err != nil {
+					return nil, false, err
+				}
+				conditionBindingCount = count
+			}
+			if conditionBindingCount < 0 || conditionBindingCount > len(operation.SecondaryData) {
+				return nil, false, fmt.Errorf("invalid ASSERT binding count %d", conditionBindingCount)
+			}
+			conditionRefs := operation.SecondaryData[:conditionBindingCount]
+			messageRefs := operation.SecondaryData[conditionBindingCount:]
+			restoreCallSite := pushDiagnosticCallSite(ctx, operation)
+			retVal, err := iFunc.QuerySingleReturn(ctx, stack, operation.PrimaryData, pgtypes.Bool, conditionRefs)
+			restoreCallSite()
+			if err != nil {
+				state.lastExceptionContext = diagnosticPGExceptionContext(ctx, iFunc, operation)
+				return nil, false, err
+			}
+			condition, _ := retVal.(bool)
+			if condition {
+				continue
+			}
+			message := "assertion failed"
+			if messageQuery := operation.Options[assertMessageQueryOption]; messageQuery != "" {
+				restoreCallSite = pushDiagnosticCallSite(ctx, operation)
+				retVal, err = iFunc.QuerySingleReturn(ctx, stack, messageQuery, pgtypes.Text, messageRefs)
+				restoreCallSite()
+				if err != nil {
+					state.lastExceptionContext = diagnosticPGExceptionContext(ctx, iFunc, operation)
+					return nil, false, err
+				}
+				if retVal != nil {
+					message = fmt.Sprintf("%v", retVal)
+				}
+			}
+			return nil, false, plpgsqlExceptionErrorFromDiagnostics(plpgsqlExceptionDiagnostics{
+				MessageText:      message,
+				ReturnedSQLState: pgcode.AssertFailure.String(),
+				Context:          diagnosticPGExceptionContext(ctx, iFunc, operation),
+			})
 		case OpCode_Declare:
 			typeCollection, err := GetTypesCollectionFromContext(ctx)
 			if err != nil {

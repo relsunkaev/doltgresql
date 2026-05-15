@@ -65,6 +65,50 @@ func (stmt Assignment) AppendOperations(ops *[]InterpreterOperation, stack *Inte
 	return nil
 }
 
+// Assert represents an ASSERT statement.
+type Assert struct {
+	Condition  string
+	Message    string
+	LineNumber int32
+}
+
+var _ Statement = Assert{}
+
+// OperationSize implements the interface Statement.
+func (Assert) OperationSize() int32 {
+	return 1
+}
+
+// AppendOperations implements the interface Statement.
+func (stmt Assert) AppendOperations(ops *[]InterpreterOperation, stack *InterpreterStack) error {
+	condition, referencedVariables, err := substituteVariableReferences(stmt.Condition, stack)
+	if err != nil {
+		return err
+	}
+	options := diagnosticStatementOptions(stmt.LineNumber, "ASSERT", stmt.Condition)
+	message := strings.TrimSpace(stmt.Message)
+	if message != "" {
+		messageQuery, messageRefs, err := substituteVariableReferences(message, stack)
+		if err != nil {
+			return err
+		}
+		if options == nil {
+			options = make(map[string]string)
+		}
+		options[assertMessageQueryOption] = "SELECT (" + messageQuery + ")::text;"
+		options[assertConditionBindingCountOption] = strconv.Itoa(len(referencedVariables))
+		referencedVariables = append(referencedVariables, messageRefs...)
+	}
+
+	*ops = append(*ops, InterpreterOperation{
+		OpCode:        OpCode_Assert,
+		PrimaryData:   "SELECT " + condition + ";",
+		SecondaryData: referencedVariables,
+		Options:       options,
+	})
+	return nil
+}
+
 // Alias represents an ALIAS FOR declaration.
 type Alias struct {
 	Name   string

@@ -213,6 +213,8 @@ func (conv jsonConversionContext) convertStatement(stmt statement) (Statement, e
 	switch {
 	case stmt.Assignment != nil:
 		return stmt.Assignment.Convert()
+	case stmt.Assert != nil:
+		return stmt.Assert.Convert(), nil
 	case stmt.Block != nil:
 		stmts, err := conv.convertBlockBody(*stmt.Block)
 		if err != nil {

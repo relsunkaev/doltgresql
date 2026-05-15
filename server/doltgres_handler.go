@@ -302,6 +302,7 @@ func castSQLError(err error) error {
 	case pgcode.ActiveSQLTransaction,
 		pgcode.AmbiguousFunction,
 		pgcode.ArraySubscript,
+		pgcode.AssertFailure,
 		pgcode.CardinalityViolation,
 		pgcode.CaseNotFound,
 		pgcode.DeadlockDetected,

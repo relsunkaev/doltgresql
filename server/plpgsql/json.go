@@ -118,6 +118,13 @@ type plpgSQL_stmt_assign struct {
 	LineNumber     int32 `json:"lineno"`
 }
 
+// plpgSQL_stmt_assert exists to match the expected JSON format.
+type plpgSQL_stmt_assert struct {
+	LineNumber int32 `json:"lineno"`
+	Condition  cond  `json:"cond"`
+	Message    expr  `json:"message"`
+}
+
 // plpgSQL_stmt_block exists to match the expected JSON format.
 type plpgSQL_stmt_block struct {
 	Body       []statement                `json:"body"`
@@ -375,6 +382,7 @@ type sqlstmt struct {
 // having a singular expected implementation.
 type statement struct {
 	Assignment  *plpgSQL_stmt_assign       `json:"PLpgSQL_stmt_assign"`
+	Assert      *plpgSQL_stmt_assert       `json:"PLpgSQL_stmt_assert"`
 	Block       *plpgSQL_stmt_block        `json:"PLpgSQL_stmt_block"`
 	Call        *plpgSQL_stmt_call         `json:"PLpgSQL_stmt_call"`
 	Case        *plpgSQL_stmt_case         `json:"PLpgSQL_stmt_case"`
@@ -418,6 +426,15 @@ func (stmt *plpgSQL_stmt_assign) Convert() (Assignment, error) {
 		VariableIndex: stmt.VariableNumber,
 		LineNumber:    stmt.LineNumber,
 	}, nil
+}
+
+// Convert converts the JSON statement into its output form.
+func (stmt *plpgSQL_stmt_assert) Convert() Assert {
+	return Assert{
+		Condition:  stmt.Condition.Expression.Query,
+		Message:    stmt.Message.Expression.Query,
+		LineNumber: stmt.LineNumber,
+	}
 }
 
 // Convert converts the JSON statement into its output form.

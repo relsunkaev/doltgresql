@@ -112,6 +112,35 @@ func TestParseRaiseDuplicateOptionValidation(t *testing.T) {
 	t.Fatalf("expected raise operation; ops: %#v", ops)
 }
 
+func TestParseAssertOperation(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION plpgsql_assert_positive(input_value INT)
+		RETURNS INT AS $$
+		BEGIN
+			ASSERT input_value > 0, 'input must be positive';
+			RETURN input_value;
+		END;
+		$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, op := range ops {
+		if op.OpCode == OpCode_Assert {
+			if op.PrimaryData != "SELECT $1 > 0 ;" {
+				t.Fatalf("assert condition query = %q; op: %#v", op.PrimaryData, op)
+			}
+			if len(op.SecondaryData) != 1 || op.SecondaryData[0] != "input_value" {
+				t.Fatalf("assert bindings = %#v; op: %#v", op.SecondaryData, op)
+			}
+			if op.Options[assertMessageQueryOption] != "SELECT ('input must be positive' )::text;" {
+				t.Fatalf("assert message query = %q; op: %#v", op.Options[assertMessageQueryOption], op)
+			}
+			return
+		}
+	}
+	t.Fatalf("expected assert operation; ops: %#v", ops)
+}
+
 func TestParseCaseWithoutElseRaisesCaseNotFound(t *testing.T) {
 	ops, err := Parse(`CREATE FUNCTION plpgsql_case_without_else(v INT)
 		RETURNS void AS $$
