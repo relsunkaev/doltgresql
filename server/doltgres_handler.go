@@ -156,6 +156,7 @@ func (h *DoltgresHandler) ComBind(ctx context.Context, c *mysql.Conn, query stri
 		}
 		return nil, nil, err
 	}
+	queryPlan = wrapPostgresExplainPlan(queryPlan)
 	fields, err := schemaToFieldDescriptionsWithSource(sqlCtx, queryPlan.Schema(sqlCtx), queryPlan, formatCodes)
 	return queryPlan, fields, err
 }
@@ -228,6 +229,7 @@ func (h *DoltgresHandler) ComPrepareParsed(ctx context.Context, c *mysql.Conn, q
 			logrus.WithField("query", query).Errorf("unable to prepare query: %s", err.Error())
 			return nil, nil, castSQLError(err)
 		}
+		analyzed = wrapPostgresExplainPlan(analyzed)
 	}
 
 	var fields []pgproto3.FieldDescription
@@ -648,13 +650,33 @@ type QueryExecutor func(ctx *sql.Context, query string, parsed sqlparser.Stateme
 // executeQuery is a QueryExecutor that calls QueryWithBindings on the given engine using the given query and parsed
 // statement, which may be nil.
 func (h *DoltgresHandler) executeQuery(ctx *sql.Context, query string, parsed sqlparser.Statement, _ sql.Node) (sql.Schema, sql.RowIter, *sql.QueryFlags, error) {
+	if isPostgresExplainPlan(parsed) {
+		analyzed, err := h.e.BoundQueryPlan(ctx, query, parsed, nil)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		return h.e.PrepQueryPlanForExecution(ctx, query, wrapPostgresExplainPlan(analyzed), nil)
+	}
 	return h.e.QueryWithBindings(ctx, query, parsed, nil, nil)
 }
 
 // executeBoundPlan is a QueryExecutor that calls QueryWithBindings on the given engine using the given query and parsed
 // statement, which may be nil.
 func (h *DoltgresHandler) executeBoundPlan(ctx *sql.Context, query string, _ sqlparser.Statement, plan sql.Node) (sql.Schema, sql.RowIter, *sql.QueryFlags, error) {
-	return h.e.PrepQueryPlanForExecution(ctx, query, plan, nil)
+	return h.e.PrepQueryPlanForExecution(ctx, query, wrapPostgresExplainPlan(plan), nil)
+}
+
+func isPostgresExplainPlan(parsed sqlparser.Statement) bool {
+	explain, ok := parsed.(*sqlparser.Explain)
+	return ok && explain.ExplainFormat == sqlparser.TreeStr
+}
+
+func wrapPostgresExplainPlan(planNode sql.Node) sql.Node {
+	describeQuery, ok := planNode.(*plan.DescribeQuery)
+	if !ok || !describeQuery.Format.Plan {
+		return planNode
+	}
+	return node.NewPostgresExplain(describeQuery.Format, describeQuery.Query())
 }
 
 // maybeReleaseAllLocks makes a best effort attempt to release all locks on the given connection. If the attempt fails,
